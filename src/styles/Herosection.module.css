@@ -1,0 +1,212 @@
+.herosection {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    position: relative;
+    width: 100%;
+    /* max-height: 100vh; */
+}
+
+.heroimgcon {
+    width: 100%;
+    height: 80vh;
+}
+
+.herovideo {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    pointer-events: none;
+}
+
+.heroimg {
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.herogradient {
+    width: 100%;
+    height: 101%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 40%, #000000 100%), linear-gradient(180deg, rgba(0, 0, 0, .6235294118) 0%, rgba(255, 255, 255, 0) 30%), linear-gradient(270deg, rgba(253, 253, 253, 0) 40%, rgba(0, 0, 0, .5411764706) 80%);
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    z-index: 1;
+}
+
+.herotrending {
+    position: absolute;
+    bottom: -70%;
+    max-width: 90%;
+}
+
+.spotlight{
+    font-size: 1.3rem;
+    margin: 5px 0;
+    color: rgb(210, 52, 52);
+    font-weight: 500;
+}
+.heroinfo {
+    position: absolute;
+    width: 50%;
+    bottom: 70px;
+    /* left: 140px; */
+    left: 7%;
+    z-index: 2;
+}
+
+.herotitle {
+    color: #FFFFFF;
+    font-size: 2.7rem;
+    font-weight: 600;
+    line-height: normal;
+    text-overflow: ellipsis;
+    overflow: hidden; 
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.herocontent{
+    margin: 10px 0 10px 0;
+    display: flex;
+    gap: 15px;
+    font-size: 0.95rem;
+    color: #FFFFFF;
+}
+
+.activestatus{
+    color: #2fc867;
+}
+
+.herodescription {
+    color: #d6d6d6;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    margin: 0 0 20px 0;
+}
+
+.herobuttons {
+    display: flex;
+    gap: 20px;
+}
+
+.watchnowbutton {
+    padding: 8px 18px;
+    background-color: #D23434;
+    border-radius: 30px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+.watchnowbutton:hover {
+    background-color: #4d148c;
+    transition: background-color 0.3s ease;
+}
+
+.detailsbutton {
+    padding: 8px 18px;
+    background-color: rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(8px);
+    border-radius: 30px;
+    font-weight: 500;
+}
+
+.carouselDots {
+    position: absolute; /* Đặt các chấm tuyệt đối so với .herosection */
+    bottom: 20px; /* Cách đáy herosection 20px */
+    left: 50%; /* Dịch sang 50% từ trái */
+    transform: translateX(-50%); /* Căn giữa hoàn hảo */
+    display: flex;
+    gap: 8px; /* Khoảng cách giữa các chấm */
+    z-index: 5; /* Đảm bảo các chấm nằm trên tất cả các lớp khác (ảnh, gradient, info) */
+}
+
+.dot {
+    width: 10px; /* Chiều rộng của mỗi chấm */
+    height: 10px; /* Chiều cao của mỗi chấm */
+    background-color: rgba(255, 255, 255, 0.5); /* Màu mặc định của chấm (mờ) */
+    border-radius: 50%; /* Biến thành hình tròn */
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Hiệu ứng chuyển động mượt mà khi hover/active */
+}
+
+.dot.activeDot {
+    background-color: #D23434; /* Màu của chấm khi đang hoạt động (trắng sáng) */
+}
+
+
+@media(max-width:1280px) {
+    .heroinfo {
+        left: 70px;
+    }
+}
+
+@media(max-width:1024px) {
+    .heroinfo {
+        width: 80%;
+        left: 40px;
+        bottom: 50px;
+    }
+}
+
+@media(max-width:768px) {
+    .heroimgcon {
+        height: 60vh;
+    }
+
+    .heroinfo {
+        left: 30px;
+        bottom: 10%;
+    }
+
+    .herodescription {
+        -webkit-line-clamp: 2;
+    }
+}
+
+@media(max-width:640px) {
+    .heroimgcon {
+        height: 45vh;
+    }
+
+    .herocontent{
+        font-size: 0.8rem;
+        gap: 12px;
+        margin: 6px 0 10px 0;
+    }
+    .heroinfo {
+        left: 4%;
+    }
+
+    .spotlight{
+        font-size: 0.9rem;
+    }
+
+    .herotitle {
+        font-size: 1.3rem;
+        max-width: 85%;
+    }
+
+    .herodescription {
+        display: none;
+    }
+
+    .watchnowbutton {
+        padding: 5px 12px;
+        font-weight: 500;
+    }
+
+    .detailsbutton {
+        padding: 6px 12px;
+        font-weight: 500;
+    }
+}

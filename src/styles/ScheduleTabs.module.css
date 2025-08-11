@@ -1,0 +1,146 @@
+/* ScheduleTabs.module.css */
+
+.tabsContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+.scheduleHeader {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.scheduleTitle {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 0.25rem;
+}
+
+.scheduleSubtitle {
+  font-size: 1rem;
+  color: #a1a1aa; /* text-secondary */
+}
+
+.tabsWrapper {
+  background-color: rgba(26, 26, 26, 0.9);
+  border: 1px solid #2c2c2c;
+  backdrop-filter: blur(8px);
+  border-radius: 1rem;
+  padding: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: fit-content;
+  justify-content: center;
+}
+
+.tabButton {
+  position: relative;
+  padding: 1rem 1.5rem;
+  min-width: 120px;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  color: #c5c5c5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  background: transparent;
+  font-family: sans-serif;
+}
+
+.tabButton:hover {
+  color: white;
+  background-color: #27272c;
+}
+
+.activeTab {
+  background-color: #d14836;
+  color: white;
+  scale: 1.05;
+  box-shadow: 0 0 8px rgb(209, 72, 54);
+}
+
+.activeOverlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.75rem;
+  background-color: #d14836;
+  opacity: 1;
+  z-index: -1;
+}
+
+.tabBadge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #bcbcbc;
+}
+
+.tabBadgeActive {
+  color: #e4e4ff;
+}
+
+/* Thêm hiệu ứng shimmer cho các phần tử loading */
+.skeletonShimmer {
+  /* Màu nền của skeleton */
+  background: linear-gradient(to right, #2a2a2e 0%, #3a3a3e 20%, #2a2a2e 40%, #2a2a2e 100%);
+  background-size: 200% 100%; /* Kích thước lớn hơn để gradient có thể di chuyển */
+  animation: shimmer 1.5s infinite linear; /* Thời gian và kiểu animation */
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0; /* Bắt đầu từ bên trái */
+  }
+  100% {
+    background-position: 200% 0; /* Di chuyển sang bên phải */
+  }
+}
+
+/* Thêm hiệu ứng pulse (nếu bạn muốn kết hợp hoặc chỉ dùng cái này cho các khối con) */
+.pulseAnimation {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+/* Responsive */
+@media (max-width: 768px) {
+  .tabsWrapper {
+    display: none;
+  }
+
+  .dropdownWrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .dropdownSelect {
+    background-color: rgba(26, 26, 26, 0.9);
+    border: 1px solid #2c2c2c;
+    color: white;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    font-size: 0.95rem;
+    outline: none;
+    width: 90%;
+  }
+}
