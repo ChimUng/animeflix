@@ -158,10 +158,10 @@ function PlayerEpisodeList({ isLoading, id, data, onprovider, epnum, allProvider
       ) : (
         <div className={styles.episodetop}>
           <div className={styles.episodetopleft}>
-            <span className="text-xs lg:text-xs">You are Watching</span>
-            <span className="font-bold text-sm md:text-white">Episode {epnum}</span>
+            <span className="text-xs lg:text-xs">Bạn đang xem</span>
+            <span className="font-bold text-sm md:text-white">Tập {epnum}</span>
             <span className="!leading-tight !text-[0.8rem] flex flex-col items-center justify-center text-center">
-              If current server doesn't work please try other servers beside.
+              Nếu server hiện tại không hoạt động, vui lòng thử các server khác.
             </span>
           </div>
           <div className={styles.episodetopright}>
@@ -219,145 +219,150 @@ function PlayerEpisodeList({ isLoading, id, data, onprovider, epnum, allProvider
         </div>
       )}
       <div className={styles.episodebottom}>
-         {isLoading ? (
-                // 1. Nếu đang loading, chỉ hiển thị Skeleton
-                <Skeleton className="bg-[#18181b] w-full h-[200px] rounded-lg" />
-            ) : currentEpisodes && currentEpisodes.length > 0 ? (
-                // 2. Nếu không loading VÀ có tập phim, hiển thị danh sách
-                <>
-                <div className={styles.episodetitle}>
-                  <div className={styles.epleft}>
-                    <h3 className={styles.epheading}>Episodes</h3>
-                    <Tooltip content="Refresh Episodes">
-                      <button className={styles.refresh} onClick={refreshEpisodes}>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth="1.5"
-                          stroke="currentColor"
-                          className={`w-[22px] h-[22px] ${refreshLoading ? "animate-spin" : ""}`}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
-                          />
-                        </svg>
-                      </button>
-                    </Tooltip>
-                  </div>
-                  <div className={styles.epright}>
-                    {currentEpisodes && currentEpisodes.length > itemsPerPage && (
-                      <Select
-                        label=""
-                        aria-label="Episode Range"
-                        placeholder="Episodes"
-                        labelPlacement="outside"
-                        selectedKeys={[currentPage.toString()]}
-                        disallowEmptySelection={true}
-                        classNames={{
-                          base: "!m-0 !p-0 ",
-                          mainWrapper: "p-0 m-0 h-[34px]",
-                          trigger: "m-0 !min-h-[30px] w-[120px] pr-0",
-                          value: "",
-                          listbox: "m-0 p-0",
-                        }}
-                        radius="sm"
-                        onChange={(e) => setCurrentPage(parseInt(e.target.value))}
-                      >
-                        {Array.from({ length: Math.ceil(currentEpisodes.length / itemsPerPage) }, (_, i) => i + 1).map((page) => {
-                          const startIdx = (page - 1) * itemsPerPage + 1;
-                          const endIdx = Math.min(page * itemsPerPage, currentEpisodes.length);
+        {isLoading ? (
+            // 1. Nếu đang loading, chỉ hiển thị Skeleton
+            <Skeleton className="bg-[#18181b] w-full h-[200px] rounded-lg" />
+        ) : currentEpisodes && currentEpisodes.length > 0 ? (
+            // 2. Nếu không loading VÀ có tập phim, hiển thị danh sách
+            <>
+            <div className={styles.episodetitle}>
+              <div className={styles.epleft}>
+                <h3 className={styles.epheading}>Danh sách tập</h3>
+                <Tooltip content="Refresh Episodes">
+                  <button className={styles.refresh} onClick={refreshEpisodes}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="1.5"
+                      stroke="currentColor"
+                      className={`w-[22px] h-[22px] ${refreshLoading ? "animate-spin" : ""}`}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+                      />
+                    </svg>
+                  </button>
+                </Tooltip>
+              </div>
+              <div className={styles.epright}>
+                {currentEpisodes && currentEpisodes.length > itemsPerPage && (
+                  <Select
+                    label=""
+                    aria-label="Episode Range"
+                    placeholder="Episodes"
+                    labelPlacement="outside"
+                    selectedKeys={[currentPage.toString()]}
+                    disallowEmptySelection={true}
+                    classNames={{
+                      base: "!m-0 !p-0 ",
+                      mainWrapper: "p-0 m-0 h-[34px]",
+                      trigger: "m-0 !min-h-[30px] w-[120px] pr-0",
+                      value: "",
+                      listbox: "m-0 p-0",
+                    }}
+                    radius="sm"
+                    onChange={(e) => setCurrentPage(parseInt(e.target.value))}
+                  >
+                    {Array.from({ length: Math.ceil(currentEpisodes.length / itemsPerPage) }, (_, i) => i + 1).map((page) => {
+                      const startIdx = (page - 1) * itemsPerPage + 1;
+                      const endIdx = Math.min(page * itemsPerPage, currentEpisodes.length);
 
-                          return (
-                            <SelectItem key={page} value={page}>
-                              {`${startIdx}-${endIdx}`}
-                            </SelectItem>
-                          );
-                        })}
-                      </Select>
-                    )}
-                    <span
-                      className={`cursor-pointer ${epListType === 2 ? 'selected' : ''}`}
-                      onClick={() => handleOptionClick(2)}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                        stroke={epListType === 2 ? '#ca1313' : 'currentColor'}
-                        className="w-6 h-6"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M6 6.878V6a2.25 2.25 0 0 1 2.25-2.25h7.5A2.25 2.25 0 0 1 18 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 0 0 4.5 9v.878m13.5-3A2.25 2.25 0 0 1 19.5 9v.878m0 0a2.246 2.246 0 0 0-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0 1 21 12v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6c0-.98.626-1.813 1.5-2.122"
-                        />
-                      </svg>
-                    </span>
-                    <span
-                      className={`cursor-pointer ${epListType === 3 ? 'selected' : ''}`}
-                      onClick={() => handleOptionClick(3)}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                        stroke={epListType === 3 ? '#ca1313' : 'currentColor'}
-                        className="w-6 h-6"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
-                      </svg>
-                    </span>
-                    <span onClick={reverseToggle} className="cursor-pointer">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                        stroke="currentColor"
-                        className="w-6 h-6"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"
-                        />
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-                {epListType === 2 && (
-                  <div className="mt-3">
-                    <EpImgContent
-                      data={data}
-                      epdata={filteredEp}
-                      defaultProvider={onprovider}
-                      subtype={subtype}
-                      epnum={epnum}
-                      progress={progress}
-                    />
-                  </div>
+                      return (
+                        <SelectItem key={page} value={page}>
+                          {`${startIdx}-${endIdx}`}
+                        </SelectItem>
+                      );
+                    })}
+                  </Select>
                 )}
-                {epListType === 3 && (
-                  <div className={styles.epnumlist}>
-                    <EpNumList
-                      data={data}
-                      epdata={filteredEp}
-                      defaultProvider={onprovider}
-                      subtype={subtype}
-                      epnum={epnum}
+                <span
+                  className={`cursor-pointer ${epListType === 2 ? 'selected' : ''}`}
+                  onClick={() => handleOptionClick(2)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke={epListType === 2 ? '#ca1313' : 'currentColor'}
+                    className="w-6 h-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 6.878V6a2.25 2.25 0 0 1 2.25-2.25h7.5A2.25 2.25 0 0 1 18 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 0 0 4.5 9v.878m13.5-3A2.25 2.25 0 0 1 19.5 9v.878m0 0a2.246 2.246 0 0 0-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0 1 21 12v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6c0-.98.626-1.813 1.5-2.122"
                     />
-                  </div>
-                )}
-              </>
-               ) : (
-                // 3. Nếu không loading VÀ không có tập phim, hiển thị "No episodes found"
-                <div className='text-center bg-[#18181b] py-2 rounded-lg'>No episodes found for this server/type.</div>
+                  </svg>
+                </span>
+                <span
+                  className={`cursor-pointer ${epListType === 3 ? 'selected' : ''}`}
+                  onClick={() => handleOptionClick(3)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke={epListType === 3 ? '#ca1313' : 'currentColor'}
+                    className="w-6 h-6"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+                  </svg>
+                </span>
+                <span onClick={reverseToggle} className="cursor-pointer">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"
+                    />
+                  </svg>
+                </span>
+              </div>
+            </div>
+            {epListType === 2 && (
+              <div className="mt-3">
+                <EpImgContent
+                  data={data}
+                  epdata={filteredEp}
+                  defaultProvider={onprovider}
+                  subtype={subtype}
+                  epnum={epnum}
+                  progress={progress}
+                />
+              </div>
             )}
+            {epListType === 3 && (
+              <div className={styles.epnumlist}>
+                <EpNumList
+                  data={data}
+                  epdata={filteredEp}
+                  defaultProvider={onprovider}
+                  subtype={subtype}
+                  epnum={epnum}
+                />
+              </div>
+            )}
+          </>
+            ) : (
+            // 3. Nếu không loading VÀ không có tập phim, hiển thị "No episodes found"
+            <div className='text-center bg-[#18181b] py-2 rounded-lg'>
+              <p className="text-center mt-2">Oh no!</p>
+              <p className="text-center mb-2">
+                  This anime is currently unavailable. Check back later for updates!
+              </p>
+            </div>
+        )}
       </div>
     </div>
   );

@@ -41,6 +41,14 @@ interface Source {
   sources: { url: string; quality: string; isM3U8: boolean }[];
   tracks?: { src: string; label: string; kind: string; default?: boolean }[];
   download?: string;
+  intro?: {
+    start: number;
+    end: number;
+  };
+  outro?: {
+    start: number;
+    end: number;
+  };
 }
 
 // Định nghĩa interface cho savedep
@@ -121,42 +129,67 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
 
          // ✅ BƯỚC 2: LẤY VÀ XỬ LÝ NGUỒN VIDEO TRONG KHỐI TRY...CATCH RIÊNG
       try {
-        const sourceResponse = await getSources(id, provider, epId, parseInt(epNum), subdub);
-        if (!sourceResponse?.sources || sourceResponse.sources.length === 0) {
-          throw new Error("Không thể tải nguồn video cho tập này.");
-        }
-        setSourceData(sourceResponse);
+      const sourceResponse = await getSources(id, provider, epId, parseInt(epNum), subdub);
+      if (!sourceResponse?.sources || sourceResponse.sources.length === 0) {
+        throw new Error("Không thể tải nguồn video cho tập này.");
+      }
+      setSourceData(sourceResponse);
 
-        if (data?.idMal) {
-          const skipResponse = await fetch(`https://api.aniskip.com/v2/skip-times/${data.idMal}/${parseInt(epNum)}?types[]=op&types[]=ed`);
+      // ✅ Xử lý skip times (ưu tiên Aniskip, fallback API nguồn)
+      if (data?.idMal) {
+        const episodeLength =
+          sourceResponse?.outro?.end ||
+          sourceResponse?.intro?.end ||
+          1500; // fallback 25 phút nếu không có
+
+        let skipFetched = false;
+        try {
+          const skipResponse = await fetch(
+            `https://api.aniskip.com/v2/skip-times/${data.idMal}/${parseInt(epNum)}?types[]=op&types[]=ed&episodeLength=${episodeLength}`
+          );
           if (skipResponse.ok) {
             const skipData = await skipResponse.json();
-            const op = skipData?.results?.find((item: any) => item.skipType === "op");
-            const ed = skipData?.results?.find((item: any) => item.skipType === "ed");
-            const newSkipTimes: SkipTime[] = [];
-            if (op?.interval) newSkipTimes.push({ startTime: op.interval.startTime, endTime: op.interval.endTime, text: "Opening" });
-            if (ed?.interval) newSkipTimes.push({ startTime: ed.interval.startTime, endTime: ed.interval.endTime, text: "Ending" });
-            setSkipTimes(newSkipTimes);
+            if (skipData?.found && skipData?.results?.length > 0) {
+              const op = skipData.results.find((item: any) => item.skipType === "op");
+              const ed = skipData.results.find((item: any) => item.skipType === "ed");
+              const newSkipTimes: SkipTime[] = [];
+              if (op?.interval) newSkipTimes.push({ startTime: op.interval.startTime, endTime: op.interval.endTime, text: "Opening" });
+              if (ed?.interval) newSkipTimes.push({ startTime: ed.interval.startTime, endTime: ed.interval.endTime, text: "Ending" });
+              setSkipTimes(newSkipTimes);
+              skipFetched = true;
+            }
           }
+        } catch (err) {
+          console.warn("⚠️ Lỗi gọi Aniskip:", err);
         }
-        
-        if (data) { // ✅ Chỉ cập nhật store nếu `data` không phải là `null`
-            useDataInfo.setState({ dataInfo: data });
-        }
-        useNowPlaying.setState({ nowPlaying: { epId, provider, epNum, subtype: subdub } });
 
-      } catch (err: any) {
-        console.error("Lỗi khi fetch Sources:", err);
-        const errorMessage = err.message || "Lỗi tải nguồn video.";
-        toast.error(errorMessage); // Chỉ thông báo lỗi của bước này
-        setError(errorMessage); // Set lỗi để hiển thị ở khu vực player
-      } finally {
-        setIsPlayerLoading(false);
+        // ✅ Fallback nếu Aniskip không có hoặc lỗi
+        if (!skipFetched) {
+          console.log("📌 Fallback skip times từ API nguồn");
+          const newSkipTimes: SkipTime[] = [];
+          if (sourceResponse.intro) newSkipTimes.push({ startTime: sourceResponse.intro.start, endTime: sourceResponse.intro.end, text: "Opening" });
+          if (sourceResponse.outro) newSkipTimes.push({ startTime: sourceResponse.outro.start, endTime: sourceResponse.outro.end, text: "Ending" });
+          setSkipTimes(newSkipTimes);
+        }
       }
-    };
 
-    fetchDataSequentially();
-  }, [id, provider, epId, epNum, subdub, data]);
+      if (data) {
+        useDataInfo.setState({ dataInfo: data });
+      }
+      useNowPlaying.setState({ nowPlaying: { epId, provider, epNum, subtype: subdub } });
+
+    } catch (err: any) {
+      console.error("Lỗi khi fetch Sources:", err);
+      const errorMessage = err.message || "Lỗi tải nguồn video.";
+      toast.error(errorMessage);
+      setError(errorMessage);
+    } finally {
+      setIsPlayerLoading(false);
+    }
+  };
+
+  fetchDataSequentially();
+}, [id, provider, epId, epNum, subdub, data]);
 
   // useEffect tính toán tập trước/sau
   useEffect(() => {
@@ -245,7 +278,7 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
                 dataInfo={validData || undefined}
                 id={id}
                 groupedEp={groupedEp}
-                session={session as Session | undefined}
+                session={adaptedSession}
                 savedep={savedep}
                 src={src}
                 subtitles={subtitles}

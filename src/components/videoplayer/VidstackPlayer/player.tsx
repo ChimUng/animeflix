@@ -28,36 +28,7 @@ import { saveProgress } from "@/lib/AnilistUser";
 import { useSettings, useTitle, useNowPlaying } from '@/lib/store';
 import { AnimeItem, GroupedEpisodes, EpisodeInfo } from '@/lib/types';
 
-// --- Type Definitions ---
 
-// Type for a single episode
-// interface EpisodeInfo {
-//   id?: string;
-//   episodeId?: string;
-//   number?: number;
-//   title?: string;
-//   img?: string;
-//   image?: string;
-// }
-
-// // Type for grouped episodes prop
-// interface GroupedEpisodes {
-//   previousep?: EpisodeInfo;
-//   currentep?: EpisodeInfo;
-//   nextep?: EpisodeInfo;
-// }
-
-// Type for the main anime data
-// interface AnimeInfo {
-//   id?: string | number;
-//   title?: {
-//     [key: string]: string | null | undefined;
-//   };
-//   bannerImage?: string;
-//   coverImage?: {
-//     extraLarge?: string;
-//   };
-// }
 
 // Type for session object
 interface Session {

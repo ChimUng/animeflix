@@ -95,6 +95,7 @@ function Animecards({ data, cardid, show = true }: AnimecardsProps) {
     const scrollRight = () => smoothScroll(500);
 
     const renderItem = (item: AnimeItem) => {
+        // console.log('Item trong renderItem:', item);
         let anime: AnimeItem;
         // console.log('anime:', item);
         // console.log('item:', item.title?.romaji, '| currentEpisode:', item.currentEpisode);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { JSX } from 'react';
 
 // CSS Modules imports
 import captionStyles from '../../styles/captions.module.css';

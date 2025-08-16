@@ -62,6 +62,14 @@ export interface Source {
   }[];
   headers?: Record<string, string>;
   download?: string;
+  intro?: {
+    start: number;
+    end: number;
+  };
+  outro?: {
+    start: number;
+    end: number;
+  };
 }
 
 export const getRecentEpisodes = async (): Promise<RecentEpisode[] | undefined> => {

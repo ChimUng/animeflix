@@ -40,9 +40,9 @@ export interface AnimeItem {
     chapters?: number | null;
     nextAiringEpisode?: NextAiringEpisode | null;
     recommendations?: {
-        nodes: { node: AnimeItem }[] | null;
-    } | null;
-    relations?: {
+        nodes: { mediaRecommendation: AnimeItem }[] | null; // Sửa từ node thành mediaRecommendation
+    };
+        relations?: {
         edges: { node: AnimeItem; relationType: string }[] | null;
     } | null;
     episodesData?: {

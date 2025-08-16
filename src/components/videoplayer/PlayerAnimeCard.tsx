@@ -10,53 +10,6 @@ import { useTitle } from '../../lib/store';
 import { useStore } from "zustand";
 import { AnimeItem } from '@/lib/types'; // Import interface chung
 
-// --- Type Definitions ---
-// Sử dụng lại các interface chi tiết từ Animecards.tsx để đồng bộ hóa
-// Đây là cách làm tốt nhất để đảm bảo các component hiểu cùng một cấu trúc dữ liệu.
-// interface CoverImage {
-//     large: string;
-//     medium: string;
-//     extraLarge?: string;
-// }
-
-// // Kiểu dữ liệu chính cho một bộ Anime
-// export interface AnimeItem {
-//     id: string;
-//     idMal?: number | null;
-//     title: {
-//         romaji: string | null;
-//         english: string | null;
-//         [key: string]: string | null;
-//     };
-//     status?: 'RELEASING' | 'FINISHED' | 'NOT_YET_RELEASED' | 'CANCELLED' | 'HIATUS' | null;
-//     type?: 'ANIME' | 'MANGA' | string;
-//     coverImage?: {
-//         extraLarge: string | null;
-//         large: string | null;
-//         medium?: string; // Thêm medium cho đầy đủ
-//     };
-//     description?: string | null;
-//     recommendations?: {
-//         // Kiểu dữ liệu của nodes cần chính xác hơn
-//         nodes: { node: AnimeItem }[] | null;
-//     };
-//     relations?: {
-//         edges: { node: AnimeItem; relationType: string }[] | null;
-//     };
-//     nextAiringEpisode?: {
-//         episode: number;
-//         airingAt: number;
-//         timeUntilAiring: number;
-//     } | null;
-
-//     // --- CÁC THUỘC TÍNH CẦN THÊM VÀO ĐỂ ĐỒNG BỘ ---
-//     format: string;
-//     episodes?: number | null;
-//     chapters?: number | null;
-//     // ---------------------------------------------
-    
-//     [key: string]: any;
-// }
 
 interface DataItem {
     node?: AnimeItem;
@@ -162,12 +115,12 @@ useEffect(() => {
             })}
             {id !== 'Recommendations' && data && data.length > visibleItems && (
             <div className={styles.showButton} onClick={handleShowMore}>
-                Show More
+                Mở rộng
             </div>
             )}
             {id !== 'Recommendations' && visibleItems > 5 && (
             <div className={styles.showButton} onClick={handleShowLess}>
-                Show Less
+                Thu gọn
             </div>
             )}
         </div>

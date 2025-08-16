@@ -133,14 +133,13 @@ async function AnimeWatch({ searchParams }: PageProps) {
         </div>
         <div className="h-full lg:flex lg:flex-col md:max-lg:w-full gap-10">
           <div className="rounded-lg hidden lg:block lg:max-w-[280px] xl:max-w-[380px] w-full xl:overflow-y-scroll xl:overflow-x-hidden overflow-hidden scrollbar-hide">
-            <PlayerAnimeCard data={data?.recommendations?.nodes} id="Recommendations" />
+            <PlayerAnimeCard data={data?.recommendations?.nodes} id="Đề xuất" />
           </div>
         </div>
         <div className="lg:hidden">
           <Animecards 
-              // Dùng .map() để lấy ra anime object bên trong mỗi 'node'
-              data={data?.recommendations?.nodes?.map(item => item.node) || null} 
-              cardid={"Recommendations"}
+            data={data?.recommendations?.nodes?.map(item => item.mediaRecommendation) || null} 
+            cardid="Đề xuất"
           />
         </div>
       </div>

@@ -20,7 +20,7 @@
     align-items: center;
     justify-content: center;
     padding: 1rem;
-    background-color: #4d148c;
+    background-color: #d14836;
     border-radius: 10px;
 }
 .episodetopright{
@@ -48,14 +48,14 @@
     background-color: #403c44;
 }
 .provider:hover{
-    background-color: #4d148c;
+    background-color: #d14836;
 }
 .providerselected{
     padding: 5px 10px;
     border-radius: 8px;
     cursor: pointer;
     font-size: 14px;
-    background-color: #4d148c;
+    background-color: #d14836;
 }
 .eptopsection{
     display: flex;

@@ -60,9 +60,9 @@ module.exports = {
 	darkMode: "class",
 	plugins: [
 		nextui(),
-		// require("@vidstack/react/tailwind.cjs")({
-		//   prefix: "media",
-		// }),
+		require("@vidstack/react/tailwind.cjs")({
+			prefix: "media",
+		}),
 		require('tailwindcss-animate'),
 		customVariants
 	]

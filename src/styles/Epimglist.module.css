@@ -91,11 +91,11 @@
 }
 
 .selectedEpnum{
-    background-color: #4d148c;
+    background-color: #d14836;
     color: white;
 }
 .selectedEpnum:hover{
-    background-color: #4d148c!important;
+    background-color: #d14836!important;
 }
 
 .epdiv:hover{

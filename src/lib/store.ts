@@ -92,7 +92,11 @@ interface DataInfoState {
     dataInfo: Record<string, any>; 
     setDataInfo: (dataInfo: Record<string, any>) => void;
 }
-
+// dùng để lưu thông tin anime, như title, coverImage, description, v.v.
+// sử dụng đề xuất anime cùng thể loại với anime đang xem
+// sử dụng thông tin anime chi tiết trong page watching
+//  Nút "Thêm vào danh sách yêu thích" ❤️
+// Nút "Chia sẻ lên mạng xã hội"
 export const useDataInfo = create<DataInfoState>()((set) => ({
     dataInfo: {},
     setDataInfo: (dataInfo) => set({ dataInfo }),
