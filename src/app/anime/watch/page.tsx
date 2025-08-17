@@ -4,6 +4,7 @@ import { Session } from "next-auth";
 import { AnimeInfoAnilist } from "@/lib/Anilistfunctions";
 import NextAiringDate from "@/components/videoplayer/NextAiringDate";
 import PlayerAnimeCard from "@/components/videoplayer/PlayerAnimeCard";
+import PlayerAnimeInfo from "@/components/videoplayer/PlayerAnimeInfo";
 import Navbarcomponent from "@/components/navbar/Navbar";
 import PlayerComponent from "@/components/videoplayer/PlayerComponent";
 import Animecards from "@/components/CardComponent/Animecards";
@@ -136,6 +137,24 @@ async function AnimeWatch({ searchParams }: PageProps) {
             <PlayerAnimeCard data={data?.recommendations?.nodes} id="Đề xuất" />
           </div>
         </div>
+        {/* <div className="lg:hidden">
+          <Animecards 
+            data={data?.recommendations?.nodes?.map(item => item.mediaRecommendation) || null} 
+            cardid="Đề xuất"
+          />
+        </div> */}
+      </div>
+    {/* === KHỐI 2: THÔNG TIN CHI TIẾT VÀ LIÊN QUAN === */}
+      <div className="w-full flex flex-col lg:flex-row lg:max-w-[98%] mx-auto xl:max-w-[94%] lg:gap-[6px] mt-[3px]">
+        <div className="flex-grow w-full h-full">
+          <PlayerAnimeInfo data={data} />
+        </div>
+        <div className="h-full lg:flex lg:flex-col md:max-lg:w-full gap-10">
+          <div className="rounded-lg hidden lg:block lg:max-w-[280px] xl:max-w-[380px] w-full xl:overflow-y-scroll xl:overflow-x-hidden overflow-hidden scrollbar-hide">
+            <PlayerAnimeCard data={data?.relations?.edges} id="Liên quan" />
+          </div>
+        </div>
+        {/* PHẦN ĐỀ XUẤT CHO MOBILE */}
         <div className="lg:hidden">
           <Animecards 
             data={data?.recommendations?.nodes?.map(item => item.mediaRecommendation) || null} 

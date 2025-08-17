@@ -34,7 +34,8 @@ useEffect(() => {
     }, [data, id]);
 
     const handleShowMore = () => {
-        if (data) setVisibleItems(data.length);
+        // if (data) setVisibleItems(data.length);
+        setVisibleItems(8);
     };
 
     const handleShowLess = () => {
@@ -113,7 +114,7 @@ useEffect(() => {
                 </div>
             );
             })}
-            {id !== 'Recommendations' && data && data.length > visibleItems && (
+            {id !== 'Recommendations' && data && data.length > visibleItems && visibleItems < 8 && (
             <div className={styles.showButton} onClick={handleShowMore}>
                 Mở rộng
             </div>

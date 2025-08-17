@@ -38,6 +38,7 @@ export interface AnimeItem {
     totalEpisodes?: number | null;
     currentEpisode?: number | null;
     chapters?: number | null;
+    genres?: string[] | null;
     nextAiringEpisode?: NextAiringEpisode | null;
     recommendations?: {
         nodes: { mediaRecommendation: AnimeItem }[] | null; // Sửa từ node thành mediaRecommendation
