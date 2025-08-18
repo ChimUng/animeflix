@@ -1,46 +1,67 @@
-import { NextRequest, NextResponse } from 'next/server';
+// app/api/stream/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import axios from "axios";
 
 export async function GET(req: NextRequest) {
-  const url = req.nextUrl.searchParams.get('url');
-  const referer = req.nextUrl.searchParams.get('referer');
+  try {
+    const { searchParams } = new URL(req.url);
+    const url = searchParams.get("url");
+    const referer = searchParams.get("referer") || "";
 
-  if (!url) {
-    return NextResponse.json({ error: 'Missing URL' }, { status: 400 });
-  }
+    if (!url) {
+      return NextResponse.json({ error: "Thiếu URL" }, { status: 400 });
+    }
 
-  // Forward toàn bộ header từ client, nhưng override Referer
-  const headers: Record<string, string> = {};
-  req.headers.forEach((value, key) => {
-    headers[key] = value;
-  });
-  if (referer) headers['referer'] = referer;
+    // Forward headers quan trọng
+    const headers: Record<string, string> = {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+      Accept: "*/*",
+      Referer: referer,
+      Origin: referer ? new URL(referer).origin : "",
+    };
 
-  const res = await fetch(url, { headers });
-
-  const contentType = res.headers.get('content-type') || '';
-
-  // Rewrite nếu là playlist m3u8
-  if (contentType.includes('application/vnd.apple.mpegurl')) {
-    let playlist = await res.text();
-    const baseUrl = url.substring(0, url.lastIndexOf('/') + 1);
-
-    playlist = playlist.replace(/^(?!#)(.*)$/gm, (match) => {
-      const absUrl = match.startsWith('http')
-        ? match
-        : new URL(match, baseUrl).href;
-      return `/api/stream?url=${encodeURIComponent(absUrl)}&referer=${encodeURIComponent(referer || '')}`;
+    const response = await axios.get(url, {
+      headers,
+      responseType: "arraybuffer",
     });
 
-    return new NextResponse(playlist, {
-      headers: { 'Content-Type': 'application/vnd.apple.mpegurl' }
+    let contentType = response.headers["content-type"] || "";
+    if (url.endsWith(".m3u8")) {
+      contentType = "application/vnd.apple.mpegurl";
+
+      // Chuyển text sang string để rewrite
+      let playlist = response.data.toString();
+
+      const baseUrl = url.substring(0, url.lastIndexOf("/") + 1);
+
+      playlist = playlist.replace(/^(?!#)(.*)$/gm, (match: string) => {
+        if (match.startsWith("http")) return match;
+        const absUrl = new URL(match, baseUrl).href;
+        return `/api/stream?url=${encodeURIComponent(absUrl)}&referer=${encodeURIComponent(referer)}`;
+      });
+
+      return new NextResponse(playlist, {
+        headers: {
+          "Content-Type": contentType,
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    }
+
+    // Forward segment/video
+    return new NextResponse(response.data, {
+      status: 200,
+      headers: {
+        "Content-Type": contentType || "application/octet-stream",
+        "Access-Control-Allow-Origin": "*",
+      },
     });
+  } catch (error: any) {
+    console.error("❌ Lỗi stream:", error.message);
+    return NextResponse.json(
+      { error: "Không lấy được stream", detail: error.message },
+      { status: 500 }
+    );
   }
-
-  // Forward nguyên stream + headers cho segment/video
-  const responseHeaders: Record<string, string> = {};
-  res.headers.forEach((value, key) => {
-    responseHeaders[key] = value;
-  });
-
-  return new NextResponse(res.body, { headers: responseHeaders });
 }
