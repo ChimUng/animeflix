@@ -55,10 +55,16 @@ export interface Source {
     url: string;
     quality: string;
     isM3U8: boolean;
+    isEmbed?: boolean;
   }[];
-  subtitles?: {
-    lang: string;
+  // subtitles?: {
+  //   lang: string;
+  //   url: string;
+  // }[];
+   tracks?: {
     url: string;
+    lang: string;
+    kind?: string; // Thêm 'kind' để có thể chứa cả thumbnails
   }[];
   headers?: Record<string, string>;
   download?: string;
@@ -140,14 +146,42 @@ export const getSources = async (
     if (!response.ok) throw new Error("Failed to fetch episodes");
 
     const data = await response.json();
-    // ✅ Chèn proxy URL ở đây
+    
+     // ✅ LOGIC PROXY TOÀN DIỆN
     if (data?.sources?.length > 0) {
       const referer = data?.headers?.Referer || "";
-      data.sources = data.sources.map((s: any) => ({
-        ...s,
-        url: `${checkEnvironment()}/api/stream?url=${encodeURIComponent(s.url)}&referer=${encodeURIComponent(referer)}`
-      }));
+      const hasEmbedSourceFromApi = data.sources.some((source: any) => !source.url.includes(".m3u8"));
+
+      data.sources = data.sources.map((source: any) => {
+        const originalUrl = source.url;
+        if (originalUrl.includes(".m3u8")) {
+          return {
+            ...source,
+            url: `${checkEnvironment()}/api/stream?url=${encodeURIComponent(originalUrl)}&referer=${encodeURIComponent(referer)}`,
+            isEmbed: false,
+          };
+        }
+        return {
+          ...source,
+          url: `${checkEnvironment()}/api/embed?url=${encodeURIComponent(originalUrl)}`,
+          isEmbed: true,
+        };
+      });
+
+      if (!hasEmbedSourceFromApi && referer) {
+        console.log("🛠️ API chỉ có HLS, đang tạo nguồn embed dự phòng...");
+        
+        // ✅ SỬA LỖI Ở ĐÂY: Tạo URL embed đúng cấu trúc
+        const fallbackEmbedUrl = `https://megaplay.buzz/stream/s-2/${epid.split('/')[0]}/${subdub}`;
+        
+        data.sources.push({
+          url: `${checkEnvironment()}/api/embed?url=${encodeURIComponent(fallbackEmbedUrl)}`,
+          quality: 'auto-fallback',
+          isEmbed: true,
+        });
+      }
     }
+
     console.log(`🎬 Phản hồi API Nguồn cho ID ${id}, Tập ${epnum}:`, JSON.stringify(data, null, 2));
     return data as Source;
   } catch (error) {

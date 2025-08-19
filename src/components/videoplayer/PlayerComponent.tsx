@@ -9,7 +9,8 @@ import { useTitle, useNowPlaying, useDataInfo } from "../../lib/store";
 import { useStore } from "zustand";
 import { Session as NextAuthSession } from "next-auth";
 import { AnimeItem, EpisodeInfo } from "@/lib/types";
-import { Provider } from "@/lib/getData";
+import { Provider, Source } from "@/lib/getData";
+import { checkEnvironment } from "@/lib/checkEnvironment"; // Import checkEnvironment
 
 // Định nghĩa interface cho skiptimes
 interface SkipTime {
@@ -36,20 +37,20 @@ interface GroupedEp {
 }
 
 // Định nghĩa interface cho sourceData
-interface Source {
-  headers?: { [key: string]: string };
-  sources: { url: string; quality: string; isM3U8: boolean }[];
-  tracks?: { src: string; label: string; kind: string; default?: boolean }[];
-  download?: string;
-  intro?: {
-    start: number;
-    end: number;
-  };
-  outro?: {
-    start: number;
-    end: number;
-  };
-}
+// interface Source {
+//   headers?: { [key: string]: string };
+//   sources: { url: string; quality: string; isM3U8: boolean; isEmbed?: boolean; }[];
+//   tracks?: { src: string; label: string; kind: string; default?: boolean }[];
+//   download?: string;
+//   intro?: {
+//     start: number;
+//     end: number;
+//   };
+//   outro?: {
+//     start: number;
+//     end: number;
+//   };
+// }
 
 // Định nghĩa interface cho savedep
 interface SavedEpisode {
@@ -99,6 +100,8 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
   const [isPlayerLoading, setIsPlayerLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // ✅ THÊM STATE ĐỂ XỬ LÝ FALLBACK
+  const [hlsError, setHlsError] = useState(false);
 
   // useEffect chính, điều khiển việc fetch tuần tự
   useEffect(() => {
@@ -106,6 +109,7 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
       setIsEpisodeListLoading(true);
       setIsPlayerLoading(true);
       setError(null);
+      setHlsError(false); 
       setSkipTimes([]);
       
       // ✅ BƯỚC 1: LẤY VÀ XỬ LÝ DANH SÁCH TẬP PHIM TRONG KHỐI TRY...CATCH RIÊNG
@@ -214,28 +218,45 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
     }
   }, [allProvidersData, provider, epNum, subdub]);
 
-  const src =
-    sourceData?.sources?.find((i) => i.quality === "default" || i.quality === "auto")?.url ||
-    sourceData?.sources?.find((i) => i.quality === "1080p")?.url ||
-    sourceData?.sources?.[0]?.url ||
-    "";
+  const primarySource = 
+    sourceData?.sources?.find((i) => i.quality === "default" || i.quality === "auto" && !i.isEmbed) ||
+    sourceData?.sources?.find((i) => i.quality === "1080p" && !i.isEmbed) ||
+    sourceData?.sources?.find((i) => !i.isEmbed); // Ưu tiên nguồn HLS đầu tiên
 
+  const embedFallbackSource = sourceData?.sources?.find(s => s.isEmbed);
+
+  const isInitiallyEmbed = !primarySource; // Nếu không có nguồn HLS nào, mặc định là embed
+  const src = primarySource?.url || "";
+  // ✅ HÀM XỬ LÝ KHI VIDSTACK GẶP LỖI
+  const handleHlsError = () => {
+    console.warn("🔥 Lỗi HLS, đang thử fallback sang iframe...");
+    if (embedFallbackSource) {
+      setHlsError(true);
+    } else {
+      toast.error("Nguồn HLS bị lỗi và không có nguồn dự phòng.");
+    }
+  };
+
+  const referer = sourceData?.headers?.Referer || "";
+
+   // ✅ SỬA LỖI Ở ĐÂY: Bọc URL phụ đề và thumbnail qua proxy /api/stream
   const subtitles: TextTrackInit[] =
     sourceData?.tracks
-      ?.filter((t) => t.kind === "subtitles" && t.src)
-      .map((t) => ({
-        src: t.src!,
-        label: t.label,
-        kind: t.kind as TextTrackInit["kind"],
-        default: t.default,
+      ?.filter(track => track.lang !== 'Thumbnails' && track.url)
+      ?.map((track) => ({
+        src: `${checkEnvironment()}/api/stream?url=${encodeURIComponent(track.url)}&referer=${encodeURIComponent(referer)}`,
+        label: track.lang,
+        kind: 'subtitles',
+        default: track.lang.toLowerCase().includes('vi'),
       })) || [];
 
   const thumbnails: { src: string }[] =
     sourceData?.tracks
-      ?.filter((t) => t.kind === "thumbnails" && t.src)
-      .map((t) => ({
-        src: t.src!,
+      ?.filter(track => track.lang === 'Thumbnails' && track.url)
+      ?.map((track) => ({
+        src: `${checkEnvironment()}/api/stream?url=${encodeURIComponent(track.url)}&referer=${encodeURIComponent(referer)}`,
       })) || [];
+
 
   // Xử lý session để tương thích với player.tsx
   const adaptedSession: Session | undefined = session
@@ -274,6 +295,16 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
             </div>
           ) : (
             <div className="h-full w-full aspect-video overflow-hidden">
+              {(isInitiallyEmbed || hlsError) && embedFallbackSource ? (
+                <iframe
+                  src={embedFallbackSource.url}
+                  width="100%"
+                  height="100%"
+                  className="w-full h-full"
+                  allowFullScreen
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                />
+            ) : (
               <Player
                 dataInfo={validData || undefined}
                 id={id}
@@ -284,7 +315,9 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
                 subtitles={subtitles}
                 thumbnails={thumbnails}
                 skiptimes={skiptimes}
+                onError={handleHlsError} 
               />
+            )}
             </div>
           )}
         </div>

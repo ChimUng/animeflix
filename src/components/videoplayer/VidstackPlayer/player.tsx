@@ -13,6 +13,7 @@ import {
   MediaPlayerInstance, // Correct type for the ref
   TextTrackInit,
   MediaLoadingStrategy, // Import type for subtitles
+  MediaErrorEvent,
 } from "@vidstack/react";
 import { DefaultKeyboardDisplay } from '@vidstack/react/player/layouts/default';
 // import { FastForwardIcon, FastBackwardIcon } from '@vidstack/react/icons';
@@ -61,6 +62,7 @@ interface PlayerProps {
   subtitles?: TextTrackInit[]; // Use the imported type from Vidstack
   thumbnails?: { src: string }[];
   skiptimes?: SkipTime[];
+  onError?: () => void; // Callback for error handling
 }
 
 // --- Component ---
@@ -74,7 +76,8 @@ const Player: React.FC<PlayerProps> = ({
   savedep,
   subtitles,
   thumbnails,
-  skiptimes
+  skiptimes,
+  onError
 }) => {
   const settings = useStore(useSettings, (state) => state.settings);
   const animetitle = useStore(useTitle, (state) => state.animetitle);
@@ -307,6 +310,7 @@ const Player: React.FC<PlayerProps> = ({
       onLoadedMetadata={onLoadedMetadata}
       onTimeUpdate={onTimeUpdate}
       onSourceChange={onSourceChange}
+      onError={onError}
     >
       <MediaProvider>
         {subtitles?.map((track) => (
