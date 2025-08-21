@@ -4,6 +4,7 @@ import { redis } from '@/lib/rediscache';
 import { Redis } from 'ioredis';
 import { NextRequest, NextResponse } from 'next/server';
 import { CombineEpisodeMeta, Episode, Provider, ImageDataItem } from '@/utils/EpisodeFunctions';
+import AnimePahe from '@/components/providers/animepahe';
 
 type MalSyncEntry = {
   providerId: string;
@@ -196,6 +197,32 @@ async function fetchZoro(id: string): Promise<Provider[]> {
   }
 }
 
+// ⬇️ THÊM HÀM MỚI ĐỂ FETCH TỪ ANIMEPAHE ⬇️
+async function fetchAnimePahe(malId: number): Promise<Provider[]> { // Sửa: Trả về một MẢNG Provider
+    try {
+        const pahe = new AnimePahe(malId);
+        const page1 = await pahe.getEpisodes(1);
+        const page2 = await pahe.getEpisodes(2);
+        const page3 = await pahe.getEpisodes(3);
+        const allEpisodes = [...page1, ...page2, ...page3];
+
+        if (allEpisodes.length > 0) {
+            // Sửa: Bọc đối tượng kết quả trong một mảng
+            return [{
+                providerId: 'animepahe',
+                id: 'animepahe',
+                episodes: allEpisodes,
+            }];
+        }
+        // Sửa: Trả về một mảng rỗng thay vì null
+        return [];
+    } catch (error) {
+        console.error('Lỗi khi fetch từ AnimePahe:', error);
+        // Sửa: Trả về một mảng rỗng thay vì null
+        return [];
+    }
+}
+
 async function fetchEpisodeMeta(id: string, skip = false): Promise<ImageDataItem[]> {
   try {
     if (skip) return [];
@@ -242,6 +269,9 @@ async function fetchAndCacheData(
     }
   }
 
+   // ⬇️ THÊM PAHE VÀO PROMISES BẤT KỂ KẾT QUẢ MALSINC ⬇️
+    // promises.push(fetchAnimePahe(Number(id)));
+    
   // Correctly assign results from promises
   const results = await Promise.all(promises);
   const combined = results.flat().filter((provider) => {

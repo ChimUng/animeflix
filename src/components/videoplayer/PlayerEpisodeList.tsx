@@ -21,9 +21,10 @@ interface PlayerEpisodeListProps {
   onprovider: string;
   epnum: number;
   allProvidersData: Provider[] | null; 
+  episodeMap: Record<number, Record<string, string>>;
 }
 
-function PlayerEpisodeList({ isLoading, id, data, onprovider, epnum, allProvidersData }: PlayerEpisodeListProps) {
+function PlayerEpisodeList({ isLoading, id, data, onprovider, epnum, allProvidersData, episodeMap }: PlayerEpisodeListProps) {
   const subtype = useStore(useSubtype, (state: { subtype: string }) => state.subtype);
   const router = useRouter();
 
@@ -107,31 +108,32 @@ function PlayerEpisodeList({ isLoading, id, data, onprovider, epnum, allProvider
   
   // ✅ Hàm đổi provider đã được VIẾT LẠI
   const handleProviderChange = (newProvider: string, newSubtype: string = "sub") => {
-    const providerData = allProvidersData?.find(p => p.providerId === newProvider);
-    if (!providerData) {
-        toast.error("Không tìm thấy server được chọn.");
-        return;
-    }
-    
-    let episodes: EpisodeInfo[] = [];
-    if (providerData.consumet) {
-        const episodesObj = providerData.episodes as { sub?: EpisodeInfo[]; dub?: EpisodeInfo[] };
-        episodes = newSubtype === 'sub' ? episodesObj.sub ?? [] : episodesObj.dub ?? [];
-    } else {
-        episodes = providerData.episodes as EpisodeInfo[];
-    }
-    
-    const targetEpisode = episodes.find(e => e.number === epnum);
+    // Dùng map để tìm ID của tập hiện tại trên provider mới
+    const idsForCurrentEpisode = episodeMap[epnum];
 
-    if (targetEpisode?.id || targetEpisode?.episodeId) {
-        router.push(`/anime/watch?id=${id}&host=${newProvider}&epid=${targetEpisode.id || targetEpisode.episodeId}&ep=${epnum}&type=${newSubtype}`);
+    if (idsForCurrentEpisode && idsForCurrentEpisode[newProvider]) {
+        // Tìm thấy tập tương ứng -> Điều hướng
+        const correctEpisodeId = idsForCurrentEpisode[newProvider];
+        router.push(`/anime/watch?id=${id}&host=${newProvider}&epid=${correctEpisodeId}&ep=${epnum}&type=${newSubtype}`);
     } else {
-        const firstEpisode = episodes[0];
-        if (firstEpisode?.id || firstEpisode?.episodeId) {
-            toast.info(`Không tìm thấy tập ${epnum}, chuyển về tập đầu tiên.`);
-            router.push(`/anime/watch?id=${id}&host=${newProvider}&epid=${firstEpisode.id || firstEpisode.episodeId}&ep=${firstEpisode.number}&type=${newSubtype}`);
+        // Không tìm thấy tập tương ứng -> Tìm tập đầu tiên của provider mới
+        const providerData = allProvidersData?.find(p => p.providerId === newProvider);
+        if (providerData) {
+            let firstEpisode: EpisodeInfo | undefined;
+            if (Array.isArray(providerData.episodes)) {
+                firstEpisode = providerData.episodes[0];
+            } else {
+                firstEpisode = newSubtype === 'sub' ? providerData.episodes.sub?.[0] : providerData.episodes.dub?.[0];
+            }
+
+            if (firstEpisode) {
+                toast.info(`Không tìm thấy tập ${epnum}, chuyển về tập đầu tiên.`);
+                router.push(`/anime/watch?id=${id}&host=${newProvider}&epid=${firstEpisode.id || firstEpisode.episodeId}&ep=${firstEpisode.number}&type=${newSubtype}`);
+            } else {
+                toast.error("Không có tập phim nào ở server này.");
+            }
         } else {
-            toast.error("Không có tập phim nào ở server này.");
+            toast.error("Không tìm thấy server được chọn.");
         }
     }
   };

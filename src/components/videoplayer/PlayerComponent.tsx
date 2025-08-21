@@ -11,6 +11,7 @@ import { Session as NextAuthSession } from "next-auth";
 import { AnimeItem, EpisodeInfo } from "@/lib/types";
 import { Provider, Source } from "@/lib/getData";
 import { checkEnvironment } from "@/lib/checkEnvironment"; // Import checkEnvironment
+import { Episode as EpisodeFromApi } from "@/lib/getData"; // ⬅️ THÊM IMPORT NÀY
 
 // Định nghĩa interface cho skiptimes
 interface SkipTime {
@@ -102,6 +103,8 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
 
   // ✅ THÊM STATE ĐỂ XỬ LÝ FALLBACK
   const [hlsError, setHlsError] = useState(false);
+  const [episodeMap, setEpisodeMap] = useState<Record<number, Record<string, string>>>({});
+
 
   // useEffect chính, điều khiển việc fetch tuần tự
   useEffect(() => {
@@ -215,6 +218,33 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
                 nextep: episodes.find(e => e.number === epNumInt + 1),
             });
         }
+        // --- LOGIC MỚI: XÂY DỰNG MAP ---
+        const newEpisodeMap: Record<number, Record<string, string>> = {};
+
+        allProvidersData.forEach(prov => {
+          const providerId = prov.providerId;
+          let episodes: EpisodeFromApi[] = [];
+
+          if (Array.isArray(prov.episodes)) {
+            episodes = prov.episodes;
+          } else if (prov.episodes.sub && prov.episodes.sub.length > 0) {
+            episodes = prov.episodes.sub;
+          } else if (prov.episodes.dub) {
+            episodes = prov.episodes.dub;
+          }
+
+          episodes.forEach(ep => {
+            const epNumber = ep.number;
+            const episodeId = ep.id || ep.episodeId;
+            if (!episodeId) return;
+
+            if (!newEpisodeMap[epNumber]) {
+              newEpisodeMap[epNumber] = {};
+            }
+            newEpisodeMap[epNumber][providerId] = episodeId;
+          });
+        });
+        setEpisodeMap(newEpisodeMap);
     }
   }, [allProvidersData, provider, epNum, subdub]);
 
@@ -334,6 +364,7 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
           onprovider={provider}
           epnum={parseInt(epNum)}
           allProvidersData={allProvidersData}
+          episodeMap={episodeMap}
         />
       </div>
     </div>

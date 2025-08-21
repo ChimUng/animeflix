@@ -28,7 +28,13 @@ export default class AnimePahe extends Provider {
   public identifier: ProviderName = 'animepahe';
   private baseUrl = 'https://animepahe.ru/';
   public malSyncId = 'animepahe';
-  private client = axios.create({ baseURL: this.baseUrl });
+  private client = axios.create({ 
+    baseURL: this.baseUrl,
+    headers: {
+        'Referer': 'https://animepahe.ru/',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36'
+    }
+  });
 
   async getProviderId(): Promise<string> {
     const int_id = await MalSync.getProviderId(this.malId, 'animepahe');
