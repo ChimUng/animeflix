@@ -37,19 +37,21 @@
   z-index: 0;
   position: absolute;
   width: 100%;
-  height: 5px;
+  height: 3px;
   top: 50%;
   left: 0;
-  border-radius: 2px;
+  /* border-radius: 2px; bên class tailwind thì round-sm*/ 
   transform: translateY(-50%) translateZ(0);
-  background-color: rgb(255 255 255 / 0.3);
+  /* background-color: rgb(255 255 255 / 0.3); */
+  background-color: #0F1416;
   contain: strict;
 }
 
 
 .trackFill {
   z-index: 2; /** above track and track progress. */
-  background-color: var(--media-brand);
+  /* background-color: var(--media-brand); */
+  background-color: #e50914;
   width: var(--slider-fill, 0%);
   will-change: width;
 }
@@ -161,7 +163,8 @@
   height: 15px;
   border: 1px solid #cacaca;
   border-radius: 9999px;
-  background-color: #fff;
+  /* background-color: #fff; */
+  background-color: #E50914;
   transform: translate(-50%, -50%) translateZ(0);
   transition: opacity 0.15s ease-in;
   pointer-events: none;

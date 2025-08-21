@@ -60,7 +60,7 @@ export const VideoLayout: React.FC<VideoLayoutProps> = ({ groupedEp, thumbnails,
 
         {/* Desktop Playbtn */}
         <Controls.Group
-          className={`hidden media-paused:opacity-100 media-paused:scale-100 backdrop-blur-lg scale-[150%] opacity-0 duration-200 ease-out sm:flex shadow bg-black/65 rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2`}
+          className={`hidden media-paused:opacity-100 media-paused:scale-100 backdrop-blur-lg scale-[150%] opacity-0 duration-200 ease-out sm:flex shadow bg-black/50 rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2`}
         >
           <Buttons.DesktopPlayButton tooltipPlacement="top center" />
         </Controls.Group>
@@ -68,11 +68,11 @@ export const VideoLayout: React.FC<VideoLayoutProps> = ({ groupedEp, thumbnails,
         {/* LOADING */}
         <div className="pointer-events-none absolute inset-0 z-[100] flex h-full w-full items-center justify-center">
           <Spinner.Root
-            className="text-white opacity-0 transition-opacity duration-200 ease-linear media-buffering:animate-spin media-buffering:opacity-100"
+            className="opacity-0 transition-opacity duration-200 ease-linear media-buffering:animate-spin media-buffering:opacity-100"
             size={88}
           >
             <Spinner.Track className="opacity-25" width={8} />
-            <Spinner.TrackFill className="opacity-75" width={8} />
+            <Spinner.TrackFill className="opacity-75" width={8} style={{ color: '#d14836' }}/>
           </Spinner.Root>
         </div>
 
@@ -108,6 +108,8 @@ export const VideoLayout: React.FC<VideoLayoutProps> = ({ groupedEp, thumbnails,
           <TimeGroup />
           <Titleb />
           <div className={styles.spacer} />
+          <Buttons.SeekBackwardButton tooltipPlacement="top" />
+          <Buttons.SeekForwardButton tooltipPlacement="top" />
           <Buttons.Caption tooltipPlacement="top" />
           {/* <Buttons.Download tooltipPlacement='top'/> */}
           <Menus.Settings placement="top end" tooltipPlacement="top end" subtitles={subtitles} />

@@ -24,16 +24,16 @@ export function Time({ thumbnails }: TimeSliderProps) {
     <TimeSlider.Root className={`time-slider ${styles.slider}`}>
       <TimeSlider.Chapters className={styles.chapters}>
         {(cues, forwardRef) =>
-          cues.map((cue) => (
+          cues.map((cue, index) => ( 
             <div
               className="last-child:mr-0 group/slider relative mr-0.5 flex h-full w-full items-center rounded-[1px]"
               style={{ contain: "layout style" }}
-              key={cue.startTime}
+              key={`${cue.startTime}-${index}`}
               ref={forwardRef}
             >
-              <TimeSlider.Track className="relative ring-media-focus z-0 h-[5px] group-hover/slider:h-[10px] transition-all duration-100 w-full rounded-sm bg-white/30 group-data-[focus]:ring-[3px]">
-                <TimeSlider.TrackFill className="bg-white absolute h-full w-[var(--chapter-fill)] rounded-sm will-change-[width]" />
-                <TimeSlider.Progress className="absolute z-10 h-full w-[var(--chapter-progress)] rounded-sm bg-white/50 will-change-[width]" />
+              <TimeSlider.Track className="relative ring-media-focus z-0 h-[3px] group-hover/slider:h-[5px] transition-all duration-100 w-full bg-[#0F1416] group-hover/slider:bg-white/30 group-data-[focus]:ring-[3px]">
+                <TimeSlider.TrackFill className="bg-[#e50914] absolute h-full w-[var(--chapter-fill)] will-change-[width]" />
+                <TimeSlider.Progress className="absolute z-10 h-full w-[var(--chapter-progress)] bg-white/50 will-change-[width]" /> 
               </TimeSlider.Track>
             </div>
           ))

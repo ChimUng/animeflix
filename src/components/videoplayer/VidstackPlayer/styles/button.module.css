@@ -30,9 +30,9 @@
 }
 
 .button > svg {
-  width: 80%;
-  height: 80%;
-  border-radius: 2px;
+  width: 60%;
+  height: 60%;
+  /* border-radius: 2px; */
 }
 
 .button[data-focus] > svg {
@@ -41,6 +41,10 @@
 
 @media (hover: hover) and (pointer: fine) {
   .button:hover {
-    background-color: rgb(255 255 255 / 0.2);
+    /* background-color: rgb(255 255 255 / 0.2); */
+    background-color: transparent; 
+  }
+  .button:hover > svg {
+    color: #d14836; /* Đổi màu icon thành đỏ khi hover */
   }
 }

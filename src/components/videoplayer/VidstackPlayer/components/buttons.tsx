@@ -32,8 +32,9 @@ import {
   FaBackward,
   FaChromecast,
 } from "react-icons/fa";
-import { IoAirplane } from "react-icons/io5"; // Nhập IoAirplay từ react-icons/io5
-import { RiReplay10Fill as ReplayIcon } from "react-icons/ri";
+import { IoAirplane, IoPlaySkipBack, IoPlaySkipForward } from "react-icons/io5"; // Nhập IoAirplay từ react-icons/io5
+import { RiReplay10Fill as ReplayIcon, RiPictureInPicture2Fill } from "react-icons/ri";
+import { GrBackTen, GrForwardTen } from "react-icons/gr";
 
 export interface MediaButtonProps {
   tooltipPlacement: TooltipPlacement;
@@ -58,7 +59,7 @@ export function Play({ tooltipPlacement, offset }: MediaButtonProps) {
         placement={tooltipPlacement}
         offset={offset}
       >
-        {isPaused ? "Play" : "Pause"}
+        {isPaused ? "Phát" : "Ngưng"}
       </Tooltip.Content>
     </Tooltip.Root>
   );
@@ -69,7 +70,7 @@ export function SeekForwardButton({ tooltipPlacement, offset }: MediaButtonProps
     <Tooltip.Root>
       <Tooltip.Trigger asChild>
         <SeekButton seconds={10} className={`play-button ${buttonStyles.button}`}>
-          <FaForward className="w-8 h-8" />
+          <GrForwardTen className="w-8 h-8" />
         </SeekButton>
       </Tooltip.Trigger>
       <Tooltip.Content
@@ -77,7 +78,7 @@ export function SeekForwardButton({ tooltipPlacement, offset }: MediaButtonProps
         className={`${tooltipStyles.tooltip} parent-data-[open]:hidden`}
         placement={tooltipPlacement}
       >
-        Forward 10sec
+        Tua 10s
       </Tooltip.Content>
     </Tooltip.Root>
   );
@@ -88,7 +89,7 @@ export function SeekBackwardButton({ tooltipPlacement, offset }: MediaButtonProp
     <Tooltip.Root>
       <Tooltip.Trigger asChild>
         <SeekButton seconds={-10} className={`play-button ${buttonStyles.button}`}>
-          <FaBackward className="w-8 h-8" />
+          <GrBackTen className="w-8 h-8" />
         </SeekButton>
       </Tooltip.Trigger>
       <Tooltip.Content
@@ -96,7 +97,7 @@ export function SeekBackwardButton({ tooltipPlacement, offset }: MediaButtonProp
         className={`${tooltipStyles.tooltip} parent-data-[open]:hidden`}
         placement={tooltipPlacement}
       >
-        Backward 10sec
+        Tua 10s
       </Tooltip.Content>
     </Tooltip.Root>
   );
@@ -121,7 +122,7 @@ export function NextEpisode({ tooltipPlacement, offset, groupedEp }: MediaButton
             onTouchEnd={handleNext}
             className={`play-button ${buttonStyles.button}`}
           >
-            <FaForward className="w-7 h-7" />
+            <IoPlaySkipForward className="w-7 h-7" />
           </div>
         </Tooltip.Trigger>
         <Tooltip.Content
@@ -129,7 +130,7 @@ export function NextEpisode({ tooltipPlacement, offset, groupedEp }: MediaButton
           className={`${tooltipStyles.tooltip} parent-data-[open]:hidden`}
           placement={tooltipPlacement}
         >
-          Next Episode
+          Tập tiếp theo
         </Tooltip.Content>
       </Tooltip.Root>
     )
@@ -155,7 +156,7 @@ export function PreviousEpisode({ tooltipPlacement, offset, groupedEp }: MediaBu
             onTouchEnd={handlePrev}
             className={`play-button mt-[0px] ${buttonStyles.button}`}
           >
-            <FaBackward className="w-7 h-7" />
+            <IoPlaySkipBack className="w-7 h-7" />
           </div>
         </Tooltip.Trigger>
         <Tooltip.Content
@@ -163,7 +164,7 @@ export function PreviousEpisode({ tooltipPlacement, offset, groupedEp }: MediaBu
           className={`${tooltipStyles.tooltip} parent-data-[open]:hidden`}
           placement={tooltipPlacement}
         >
-          Previous Episode
+          Tập trước
         </Tooltip.Content>
       </Tooltip.Root>
     )
@@ -176,9 +177,9 @@ export function DesktopPlayButton({ tooltipPlacement }: MediaButtonProps) {
     Icon = ended ? ReplayIcon : isPaused ? FaPlay : FaPause;
   return (
     <PlayButton
-      className={`group ring-media-focus relative inline-flex h-16 w-16 media-paused:cursor-pointer cursor-default items-center justify-center rounded-full outline-none`}
+      className={`group ring-media-focus relative inline-flex h-20 w-20 media-paused:cursor-pointer cursor-default items-center justify-center rounded-full outline-none border-2 border-white/70`}
     >
-      <Icon className="w-10 h-10" />
+      <Icon className="w-12 h-12 text-[#d14836] relative left-[3px]" />
     </PlayButton>
   );
 }
@@ -189,9 +190,9 @@ export function MobilePlayButton({ tooltipPlacement }: MediaButtonProps) {
     Icon = ended ? ReplayIcon : isPaused ? FaPlay : FaPause;
   return (
     <PlayButton
-      className={`group ring-media-focus relative inline-flex h-12 w-12 cursor-pointer items-center justify-center rounded-full outline-none`}
+      className={`group ring-media-focus relative inline-flex h-12 w-12 cursor-pointer items-center justify-center rounded-full outline-none border-1 border-white/70`}
     >
-      <Icon className="w-8 h-8" />
+      <Icon className="w-8 h-8 text-[#d14836] relative left-[2px]" />
     </PlayButton>
   );
 }
@@ -230,7 +231,11 @@ export function Caption({ tooltipPlacement, offset }: MediaButtonProps) {
     <Tooltip.Root>
       <Tooltip.Trigger asChild>
         <CaptionButton className={`play-button ${buttonStyles.button}`}>
-          <FaClosedCaptioning className="w-8 h-8" />
+          <FaClosedCaptioning
+            className={`w-8 h-8 transition-colors ${
+              isOn ? "text-[#d14836]" : "text-white hover:text-[#d14836]"
+            }`}
+          />
         </CaptionButton>
       </Tooltip.Trigger>
       <Tooltip.Content
@@ -238,7 +243,7 @@ export function Caption({ tooltipPlacement, offset }: MediaButtonProps) {
         className={`${tooltipStyles.tooltip} parent-data-[open]:hidden`}
         placement={tooltipPlacement}
       >
-        {isOn ? "Closed-Captions On" : "Closed-Captions Off"}
+        {isOn ? "Đóng phụ đề" : "Mở phụ đề"}
       </Tooltip.Content>
     </Tooltip.Root>
   );
@@ -250,7 +255,7 @@ export function PIP({ tooltipPlacement, offset }: MediaButtonProps) {
     <Tooltip.Root>
       <Tooltip.Trigger asChild>
         <PIPButton className={`play-button ${buttonStyles.button}`}>
-          <FaImage className="w-8 h-8" />
+          <RiPictureInPicture2Fill className="w-8 h-8" />
         </PIPButton>
       </Tooltip.Trigger>
       <Tooltip.Content
@@ -258,7 +263,7 @@ export function PIP({ tooltipPlacement, offset }: MediaButtonProps) {
         className={`${tooltipStyles.tooltip} parent-data-[open]:hidden`}
         placement={tooltipPlacement}
       >
-        {isActive ? "Exit PIP" : "Enter PIP"}
+        {isActive ? "Thoát PIP" : "Mở PIP"}
       </Tooltip.Content>
     </Tooltip.Root>
   );
@@ -278,9 +283,9 @@ export function PlayNextButton({ tooltipPlacement, groupedEp }: MediaButtonProps
           );
         }
       }}
-      className="nextbtn hidden absolute bottom-[70px] sm:bottom-[83px] text-[15px] right-4 z-[40] bg-white text-black py-2 px-3 rounded-[4px] font-medium"
+      className="nextbtn hidden absolute bottom-[70px] sm:bottom-[83px] text-[15px] right-4 z-[40] bg-[d14836] text-black py-2 px-3 rounded-[4px] font-medium"
     >
-      Next Episode
+      Chuyển tập
     </button>
   );
 }
@@ -299,7 +304,7 @@ export function Fullscreen({ tooltipPlacement, offset }: MediaButtonProps) {
         className={`${tooltipStyles.tooltip} parent-data-[open]:hidden`}
         placement={tooltipPlacement}
       >
-        {isActive ? "Exit Fullscreen" : "Enter Fullscreen"}
+        {isActive ? "Thoát chế độ" : "Toàn màn hình"}
       </Tooltip.Content>
     </Tooltip.Root>
   );
