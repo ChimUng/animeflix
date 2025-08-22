@@ -19,6 +19,11 @@ import {
   FaCheckCircle,
   FaTachometerAlt,
 } from "react-icons/fa";
+import { HiAdjustmentsHorizontal } from "react-icons/hi2";
+import { BsFillSkipForwardCircleFill } from "react-icons/bs";
+import { MdQueuePlayNext } from "react-icons/md";
+import { IoMdTimer } from "react-icons/io";
+
 import { IconType } from "react-icons";
 import buttonStyles from '../styles/button.module.css';
 import styles from '../styles/menu.module.css';
@@ -70,7 +75,7 @@ function SpeedSubmenu() {
   return (
     <Menu.Root>
       <SubmenuButton
-        label="Playback Rate"
+        label="Tốc độ phát"
         hint={hint}
         icon={FaTachometerAlt}
         disabled={options.disabled}
@@ -97,7 +102,7 @@ function CaptionSubmenu() {
   return (
     <Menu.Root>
       <SubmenuButton
-        label="Captions"
+        label="Phụ đề"
         hint={hint}
         disabled={options.disabled}
         icon={FaClosedCaptioning}
@@ -140,7 +145,7 @@ function AutoPlay() {
             ? options.find((option) => option.value === settings?.autoplay)?.label
             : options.find((option) => option.selected)?.label
         }
-        icon={FaCog}
+        icon={IoMdTimer}
       />
       <Menu.Content className={styles.submenu}>
         <Menu.RadioGroup
@@ -194,7 +199,7 @@ function AutoNext() {
             ? options.find((option) => option.value === settings?.autonext)?.label
             : options.find((option) => option.selected)?.label
         }
-        icon={FaCog}
+        icon={MdQueuePlayNext}
       />
       <Menu.Content className={styles.submenu}>
         <Menu.RadioGroup
@@ -248,7 +253,7 @@ function AutoSkip() {
             ? options.find((option) => option.value === settings?.autoskip)?.label
             : options.find((option) => option.selected)?.label
         }
-        icon={FaCog}
+        icon={BsFillSkipForwardCircleFill}
       />
       <Menu.Content className={styles.submenu}>
         <Menu.RadioGroup
@@ -285,10 +290,10 @@ function QualitySubmenu() {
   return (
     <Menu.Root>
       <SubmenuButton
-        label="Quality"
+        label="Chất lượng"
         hint={autoQuality ? `Auto (${currentQualityText})` : currentQualityText}
         disabled={options.disabled}
-        icon={FaCog}
+        icon={HiAdjustmentsHorizontal}
       />
       <Menu.Content className={styles.submenu}>
         <Menu.RadioGroup
