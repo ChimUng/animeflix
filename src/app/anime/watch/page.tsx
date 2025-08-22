@@ -55,7 +55,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const data = await getInfo(id);
   const epnum = params.ep || "1";
 
-  const title = `Episode ${epnum} - ${data?.title?.english || data?.title?.romaji || "Anime"}`;
+  const title = `Tập ${epnum} - ${data?.title?.english || data?.title?.romaji || "Anime"}`;
   const description = data?.description?.slice(0, 180) || "Xem anime Online.";
 
   return {
