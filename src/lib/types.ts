@@ -10,6 +10,7 @@ export interface CoverImage {
     large: string | null;
     medium?: string | null;
     extraLarge?: string | null;
+    color?: string | null;
 }
 
 export interface NextAiringEpisode {
