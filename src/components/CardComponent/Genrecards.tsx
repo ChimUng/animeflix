@@ -69,13 +69,13 @@ function GenreCard() {
             ref={containerRef}
             className={styles.genrecontainer}
             onScroll={handleScroll}
-            {...events}
+            {...events} 
             >
             {genreOptions.map((genre) => {
                 const cover = genreCovers[genre.value as keyof typeof genreCovers];
                 if (!cover) return null;
                 return (
-                <Link href={`/catalog?genres=${genre.value}`} key={genre.value} className="mr-3">
+                <Link href={`anime/catalog?genres=${genre.value}&year=2025`} key={genre.value} className="mr-3">
                     <div className="relative group w-44 h-24 md:w-48 md:h-28 lg:w-60 lg:h-32 rounded-2xl overflow-hidden">
                     <img
                         src={cover}
