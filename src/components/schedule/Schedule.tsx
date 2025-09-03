@@ -23,42 +23,24 @@ const getTodayName = (): string => {
 export default function Schedule() {
     const [selectedDay, setSelectedDay] = useState<string>(getTodayName());
     const [episodeCounts, setEpisodeCounts] = useState<{ day: string; count: number }[]>([]);
-    const [animeList, setAnimeList] = useState<any[]>([]);
+    const [allAnimes, setAllAnimes] = useState<any[]>([]);
 
     // Fetch số tập của từng ngày (1 lần)
     useEffect(() => {
-        const fetchEpisodeCounts = async () => {
+        const fetchSchedule = async () => {
         try {
-            const counts = await Promise.all(
-            daysOfWeek.map(async (day) => {
-                const res = await fetch(`/api/schedule?day=${day}`);
-                const data = await res.json();
-                return { day, count: data?.length || 0 };
-            })
-            );
-            setEpisodeCounts(counts);
+            const res = await fetch("/api/schedule");
+            const data = await res.json();
+            setEpisodeCounts(data.days || []);
+            setAllAnimes(data.animes || []);
         } catch (err) {
-            console.error("Lỗi khi fetch episode counts:", err);
+            console.error("Lỗi khi fetch schedule:", err);
         }
         };
-
-        fetchEpisodeCounts();
+        fetchSchedule();
     }, []);
 
-    // Fetch danh sách anime mỗi khi `selectedDay` thay đổi
-    useEffect(() => {
-        const fetchAnimeList = async () => {
-        try {
-            const res = await fetch(`/api/schedule?day=${selectedDay}`);
-            const data = await res.json();
-            setAnimeList(data || []);
-        } catch (err) {
-            console.error("Lỗi khi fetch anime list:", err);
-        }
-        };
-
-        fetchAnimeList();
-    }, [selectedDay]);
+    const animeList = allAnimes.filter((a) => a.day === selectedDay);
 
     return (
         <div className="min-h-screen max-w-[95.5%] sm:max-w-[95%] md:max-w-[95%] mx-auto flex flex-col lg:pl-12 xl:pl-15 mt-[75px]">

@@ -75,7 +75,7 @@ function Footer() {
                             <div>
                                 <ul className="font-semibold flex flex-col gap-2 lg:text-[0.85rem] text-[0.7rem] text-[#ffffffb2]">
                                     <li>
-                                        <Link href="/dmca" className="hover:text-white">Điều khoản</Link>
+                                        <Link href="/clause" className="hover:text-white">Điều khoản</Link>
                                     </li>
                                     <li>
                                         <DonatePopup />
