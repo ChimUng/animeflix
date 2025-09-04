@@ -25,7 +25,7 @@ const SwitchSetting: React.FC<SwitchSettingProps> = ({ value, onValueChange }) =
         thumb: cn(
           "w-6 h-6 border-2 shadow-lg",
           "group-data-[hover=true]:border-[#ff6378]",
-          "group-data-[selected=true]:ml-auto",
+          "group-data-[selected=true]:ml-6",
           "group-data-[pressed=true]:w-7",
           "group-data-[selected]:group-data-[pressed]:ml-auto"
         ),
@@ -58,7 +58,7 @@ const SettingsPage: React.FC = () => {
                       <div className='flex items-center w-[100%] justify-between'>
                             <div className='mr-4 w-full'>
                                 <p className='text-[18px] md:text-[21px] font-medium'>Homepage Trailer</p>
-                                <p className='text-[11px] md:text-[13px] text-[#bfc6d0] lg:max-w-[55%] line-clamp-3'> Toggle this feature to stop video previews on homepage. Enabled by default for a streamlined experience, consumes more data. </p>
+                                <p className='text-[11px] md:text-[13px] text-[#bfc6d0] lg:max-w-[55%] line-clamp-3'> Chuyển đổi tính năng này để dừng video xem trước ở trang chủ. Được bật tự động để nâng cao trải nghiệm. </p>
                             </div>
                             <SwitchSetting
                                 value={settings.herotrailer}
@@ -68,7 +68,7 @@ const SettingsPage: React.FC = () => {
                         <div className='flex items-center w-[100%] justify-between'>
                             <div className='mr-4 w-full'>
                                 <p className='text-[18px] md:text-[21px] font-medium'>AutoSkip</p>
-                                <p className='text-[11px] md:text-[13px] text-[#bfc6d0] lg:max-w-[55%] line-clamp-3'>Experience uninterrupted content with our autoskip feature! It automatically skips through intros, outros, so you can enjoy without clicking.</p>
+                                <p className='text-[11px] md:text-[13px] text-[#bfc6d0] lg:max-w-[55%] line-clamp-3'>Trải nghiệm nội dung không bị gián đoạn với tính năng tự động bỏ qua! Nó tự động bỏ qua các phần mở đầu, kết thúc.</p>
                             </div>
                             <SwitchSetting
                                 value={settings.autoskip}
@@ -78,7 +78,7 @@ const SettingsPage: React.FC = () => {
                         <div className='flex items-center w-[100%] justify-between'>
                             <div className='mr-4 w-full'>
                                 <p className='text-[18px] md:text-[21px] font-medium'>AutoPlay</p>
-                                <p className='text-[11px] md:text-[13px] text-[#bfc6d0] lg:max-w-[55%] line-clamp-3'>Let the entertainment roll with our autoplay feature! No need to press play—the next video starts automatically, ensuring a seamless viewing experience.</p>
+                                <p className='text-[11px] md:text-[13px] text-[#bfc6d0] lg:max-w-[55%] line-clamp-3'>Tự động phát video sau khi chuyển tập, tăng trải nghiệm không bị gián đoạn.</p>
                             </div>
                             <SwitchSetting
                                 value={settings.autoplay}
@@ -88,7 +88,7 @@ const SettingsPage: React.FC = () => {
                         <div className='flex items-center w-[100%] justify-between'>
                             <div className='mr-4 w-full'>
                                 <p className='text-[18px] md:text-[21px] font-medium'>AutoNext</p>
-                                <p className='text-[11px] md:text-[13px] text-[#bfc6d0] lg:max-w-[55%] line-clamp-3'>Experience non-stop entertainment with our autonext feature! It automatically plays the next video, so you can enjoy a continuous streaming experience without lifting a finger.</p>
+                                <p className='text-[11px] md:text-[13px] text-[#bfc6d0] lg:max-w-[55%] line-clamp-3'>Trải nghiệm với tính năng tự động chuyển tập.</p>
                             </div>
                             <SwitchSetting
                                 value={settings.autonext}
@@ -98,7 +98,7 @@ const SettingsPage: React.FC = () => {
                         <div className='flex items-center w-[100%] justify-between'>
                             <div className='mr-4 w-full'>
                                 <p className='text-[18px] md:text-[21px] font-medium'>Mute Audio</p>
-                                <p className='text-[11px] md:text-[13px] text-[#bfc6d0] lg:max-w-[55%] line-clamp-3'>Choose whether to mute the audio or not.</p>
+                                <p className='text-[11px] md:text-[13px] text-[#bfc6d0] lg:max-w-[55%] line-clamp-3'>Chọn khi muốn tắt âm thanh mỗi khi xem phim.</p>
                             </div>
                             <SwitchSetting
                                 value={settings.audio}
@@ -106,12 +106,12 @@ const SettingsPage: React.FC = () => {
                             />
                         </div>
                         <div className='flex flex-col w-[100%]'>
-                            <p className='text-[18px] md:text-[21px] font-medium mb-2'>Choose How Video Loads</p>
+                            <p className='text-[18px] md:text-[21px] font-medium mb-2'>Lựa chọn trải nghiệm video</p>
                             <div className='flex items-center w-[100%] justify-between mb-3'>
                                 <div className='mr-4 w-[100%] ml-4 md:ml-6 mx-auto'>
                                     <p className='text-[15px] md:text-[18px] font-medium'>1&#41; Idle</p>
                                     <p className='text-[11px] md:text-[13px] text-[#bfc6d0] lg:max-w-[55%] line-clamp-3'>
-                                        Video will be loaded after the page has loaded completely. (Recommended)
+                                        Video sẽ được tải sau khi trang được tải xong. (Recommended)
                                     </p>
                                 </div>
                                 <SwitchSetting
@@ -123,7 +123,7 @@ const SettingsPage: React.FC = () => {
                                 <div className='mr-4 w-[100%] ml-4 md:ml-6 mx-auto'>
                                     <p className='text-[15px] md:text-[18px] font-medium'>2&#41; Visible</p>
                                     <p className='text-[11px] md:text-[13px] text-[#bfc6d0] lg:max-w-[55%] line-clamp-3'>
-                                        Video will only start loading when it becomes visible on the screen.
+                                        Video sẽ chỉ bắt đầu tải khi nó trở nên hiển thị trên màn hình.
                                     </p>
                                 </div>
                                 <SwitchSetting
@@ -135,7 +135,7 @@ const SettingsPage: React.FC = () => {
                                 <div className='mr-4 w-[100%] ml-4 md:ml-6 mx-auto'>
                                     <p className='text-[15px] md:text-[18px] font-medium'>3&#41; Eager</p>
                                     <p className='text-[11px] md:text-[13px] text-[#bfc6d0] lg:max-w-[55%] line-clamp-3'>
-                                        Video will be loaded immediately.Consumes more Internet. (Advanced)
+                                        Video sẽ được tải ngay lập tức.Yêu cầu nhiều băng thông hơn. (Advanced)
                                     </p>
                                 </div>
                                 <SwitchSetting
