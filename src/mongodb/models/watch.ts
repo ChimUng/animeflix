@@ -11,6 +11,11 @@ export interface IWatch extends Document {
     image?: string | null;
     epId?: string | null;
     epNum: number;
+    
+// optional field để tránh lỗi TypeScript khi gọi sai key
+    epid?: string | null;
+    epnum?: number | null;
+
     timeWatched?: number | null;
     duration?: number | null;
     provider?: string | null;

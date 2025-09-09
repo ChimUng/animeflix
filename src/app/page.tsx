@@ -8,6 +8,7 @@ import { MotionDiv } from '@/utils/MotionDiv'
 import VerticalList from '@/components/home/VerticalList'
 import RecentEpisodes from '@/components/home/RecentEpisodes'
 import GenreSlider from '@/components/CardComponent/Genrecards';
+import ContinueWatching from '@/components//home/ContinueWatching'
 import { getAuthSession } from './api/auth/[...nextauth]/route'
 import { redis } from '@/lib/rediscache'
 import type { Session } from 'next-auth' // Import type Session từ next-auth
@@ -119,14 +120,14 @@ async function Home() {
       <Navbarcomponent home={true} />
       <Herosection data={herodata} />
       <div className='sm:max-w-[97%] md:max-w-[95%] lg:max-w-[90%] xl:max-w-[85%] mx-auto flex flex-col md:gap-11 sm:gap-7 gap-5 mt-8'>
-        {/* <MotionDiv
+        <MotionDiv
           initial={{ y: 10, opacity: 0 }}
           whileInView={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4 }}
           viewport={{ once: true }}
         >
           <ContinueWatching session={session} />
-        </MotionDiv> */}
+        </MotionDiv>
         <MotionDiv
           initial={{ y: 10, opacity: 0 }}
           whileInView={{ y: 0, opacity: 1 }}

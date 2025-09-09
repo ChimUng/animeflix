@@ -61,8 +61,8 @@ export const authOptions: NextAuthOptions = {
             const userLists = data.Viewer?.mediaListOptions.animeList.customLists;
             let customLists = userLists || [];
 
-            if (!userLists?.includes("Watched Via Aniplay")) {
-                customLists.push("Watched Via Aniplay");
+            if (!userLists?.includes("Watched Via Animeflix")) {
+                customLists.push("Watched Via Animeflix");
                 const fetchGraphQL = async (query: string, variables: any) => {
                 const response = await fetch("https://graphql.anilist.co/", {
                     method: "POST",

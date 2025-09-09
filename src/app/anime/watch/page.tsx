@@ -13,6 +13,7 @@ import { redis } from "@/lib/rediscache";
 import { AnimeItem } from "@/lib/types";
 import { getAuthSession } from "../../api/auth/[...nextauth]/route";
 import { IWatch } from "@/mongodb/models/watch";
+import { updateEp } from "@/lib/EpHistoryfunctions";
 
 // Interface cho SavedEpisode (khớp với player.tsx)
 interface SavedEpisode {
@@ -75,10 +76,25 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   };
 }
 
-async function Ephistory(session: any, aniId: string, epNum: number): Promise<void | IWatch[] | null> {
+async function Ephistory(session: any, aniId: string, epNum: number, data: AnimeItem, epId: string): Promise<void | IWatch[] | null> {
   try {
     if (session && aniId && epNum) {
+      // 1. Lưu lịch sử cơ bản
       await createWatchEp(aniId, epNum);
+
+      // 2. Update thêm metadata từ data
+      await updateEp({
+        aniId,
+        epNum,
+        epId,
+        aniTitle: data?.title?.english || data?.title?.romaji || data?.title?.native || "Unknown",
+        image: data?.bannerImage || 
+          data?.coverImage?.extraLarge || 
+          data?.coverImage?.large || "",
+        subtype: "sub", // hoặc lấy từ searchParams.type
+      });
+
+      // 3. Lấy episode đã lưu
       return await getEpisode(aniId, epNum);
     }
     return null;
@@ -102,7 +118,7 @@ async function AnimeWatch({ searchParams }: PageProps) {
   }
 
   const data = await getInfo(id);
-  const savedepRaw = await Ephistory(session, id, parseInt(epNum));
+  const savedepRaw = await Ephistory(session, id, parseInt(epNum), data!, epId);
 
   // Chuyển đổi savedep sang SavedEpisode[]
   const savedep: SavedEpisode[] = Array.isArray(savedepRaw)
