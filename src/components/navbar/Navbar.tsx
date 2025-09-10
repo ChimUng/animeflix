@@ -186,7 +186,7 @@ function Navbarcomponent({ home = false }: NavbarProps) {
                     type="button"
                     title="Search"
                     onClick={() => setIsopen(true)} // Đã sửa: dùng setIsopen thay vì useSearchbar.setState
-                    className="w-[26px] h-[26px] outline-none transition duration-200 hover:scale-110 hover:text-d148"
+                    className="w-[26px] h-[26px] outline-none transition duration-200 hover:scale-110 hover:text-warning"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -212,7 +212,7 @@ function Navbarcomponent({ home = false }: NavbarProps) {
                             <DropdownTrigger>
                                 <div className='w-[26px] h-[26px] mr-2 mt-[2px] cursor-pointer '>
                                     <Badge color="danger" content={todayNotifications?.length} shape="circle" showOutline={false} size="sm">
-                                        <NotificationIcon className="text-white duration-200 hover:scale-110 hover:text-d148" style={{ filter: 'drop-shadow(1px 1px 2px rgba(0,0,0,0.6))' }}/>
+                                        <NotificationIcon className="text-white duration-200 hover:scale-110 hover:text-warning" style={{ filter: 'drop-shadow(1px 1px 2px rgba(0,0,0,0.6))' }}/>
                                     </Badge>
                                 </div>
                             </DropdownTrigger>
@@ -355,7 +355,7 @@ function Navbarcomponent({ home = false }: NavbarProps) {
                         isDisabled={status === 'loading'}
                         as="button"
                         className="transition-transform w-[27px] h-[27px] backdrop-blur-sm"
-                        color="secondary"
+                        color="warning"
                         name={data?.user?.name || undefined}
                         size="sm"
                         src={

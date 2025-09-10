@@ -133,7 +133,7 @@ function Search(){
                                     `flex items-center gap-3 py-[8px] px-5 border-b border-solid border-gray-800  ${active ? "bg-black/20 cursor-pointer" : ""}`
                                 }
                                 >
-                                <Link href={`/anime/info/${item.id}`} onClick={() => useSearchbar.setState({ Isopen: false })}>
+                                <Link href={`/anime/info/${item.id}`} onClick={() => useSearchbar.setState({ Isopen: false })} onMouseDown={(e) => e.preventDefault()}>
                                     <div className="shrink-0">
                                     <img
                                         src={item.image || item.coverImage?.large || ''}
@@ -144,7 +144,7 @@ function Search(){
                                     />
                                     </div>
                                 </Link>
-                                <Link href={`/anime/info/${item.id}`} onClick={() => useSearchbar.setState({ Isopen: false })}>
+                                <Link href={`/anime/info/${item.id}`} onClick={() => useSearchbar.setState({ Isopen: false })} onMouseDown={(e) => e.preventDefault()}>
                                     <div className="flex flex-col overflow-hidden">
                                     <p className="line-clamp-2 text-base">
                                         {item.title[animetitle] || item.title.romaji}
