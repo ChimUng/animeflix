@@ -168,7 +168,7 @@ function Search(){
                             ))
                             ) : query !== '' && (
                             <p className="flex items-center justify-center py-4 gap-1">
-                                Không tìm thấy kết quả nào cho <span className="text-[#4d148c] font-bold">"{query}"</span>
+                                Không tìm thấy kết quả nào cho <span className="text-danger font-bold">"{query}"</span>
                             </p>
                             )}
                             {data && nextPage && (
