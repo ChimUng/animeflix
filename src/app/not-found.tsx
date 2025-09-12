@@ -11,13 +11,13 @@ function NotFound() {
             <Navbarcomponent home={true} />
             <div className='flex items-center flex-col justify-center h-full'>
                 <div className='text-[25px] font-semibold'>
-                    Ooopsie!
+                    Whoops...!
                 </div>
                 <div className='!max-w-[750px] !max-h-[300px] px-3 mt-5 mb-6'>
                     <Image src="/404notfound.svg" alt='' width={200} height={200} className='object-contain w-full h-full' />
                 </div>
                 <div className='text-[25px] font-semibold text-[#DBDCDD]'>
-                    Page Not Found
+                    Xin lỗi, Trang bạn truy cập không có hoặc đã bị xóa trước đó.
                 </div>
                 <div className='flex flex-row gap-5 mt-3 items-center'>
                     <button className='flex flex-row items-center notf' onClick={() => { router.back(); }} >
@@ -39,7 +39,7 @@ function NotFound() {
                                 </span>
                             </div>
                         </div> */}
-                        <div className='bg-white text-black p-2 rounded-lg font-medium'>Go back</div>
+                        <div className='bg-white text-black p-2 rounded-lg font-medium'>Trở về</div>
                     </button>
                     <button
                         type="button"
@@ -48,7 +48,7 @@ function NotFound() {
                         }}
                         className="bg-white text-black font-medium px-2 h-[40px] rounded-lg"
                     >
-                        Return Home
+                        Trang chủ
                     </button>
                 </div>
             </div>
