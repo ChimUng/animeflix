@@ -1,5 +1,5 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
-import { MongoDBAdapter } from "@auth/mongodb-adapter";
+import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
 import clientPromise from "@/mongodb/db";
 import { getServerSession } from "next-auth";
 import { JWT } from "next-auth/jwt";

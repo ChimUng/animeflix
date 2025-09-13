@@ -5,6 +5,7 @@ import Link from 'next/link';
 import styles from '../../styles/Navbar.module.css';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { FeedbackIcon, LoginIcon, LogoutIcon, SettingsIcon, ProfileIcon, NotificationIcon } from '@/lib/SvgIcons';
+import Feedbackform from './Feedbackform';
 import { Usernotifications } from '@/lib/AnilistUser';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 import { NotificationTime } from '@/utils/TimeFunctions';
@@ -394,6 +395,7 @@ function Navbarcomponent({ home = false }: NavbarProps) {
                         </DropdownMenu>
                     )}
                 </Dropdown>
+                <Feedbackform isOpen={isOpen} onOpenChange={onOpenChange} />
             </div>
         </motion.nav>
     )
