@@ -8,23 +8,7 @@ import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useTitle } from '@/lib/store';
 import { useStore } from 'zustand';
-
-type User = {
-    name?: string | null;
-    email?: string | null;
-    image?: {
-        large?: string;
-        medium?: string;
-    } | null;
-    token?: string;
-    createdAt: number;
-    list: string[];
-};
-
-type SessionData = {
-    user?: User;
-    // expires: string;
-};
+import { Session } from 'next-auth';
 
 interface PageInfo {
     hasNextPage: boolean;
@@ -45,7 +29,7 @@ interface NotificationResponse {
 }
 
 type NotificationProps = {
-    session?: SessionData  | null;
+    session?: Session  | null;
 };
 
 function Notifications ( {session} :NotificationProps ) {
@@ -96,8 +80,8 @@ function Notifications ( {session} :NotificationProps ) {
                             <Image alt="Image" width="100" height="100" src={session?.user?.image?.large ?? 'https://i.pravatar.cc'} className='w-[70px] rounded-md h-full' />
                             <span className='text-sl text-[#DBDCDD] font-bold'>{session?.user?.name}</span>
                         </div>
-                        <p className='text-[#DBDCDD] mt-3 text-xs md:text-sm'>Tạo ngày : {formatTimeStamp(session?.user?.createdAt)}</p>
-                        {session?.user?.list?.length > 0 && (
+                        <p className='text-[#DBDCDD] mt-3 text-xs md:text-sm'>Tạo ngày : {session?.user?.createdAt ? formatTimeStamp(session.user.createdAt) : "Chưa rõ"}</p>
+                        {session?.user?.list && session.user.list.length > 0 && (
                             <>
                                 <h2 className='mt-3 mb-[2px] text-warning'>Custom Lists</h2>
                                 <div>
