@@ -15,22 +15,22 @@ export default function Feedbackform({ isOpen, onOpenChange }: FeedbackFormProps
     const [severityLevel, setSeverityLevel] = useState<string>('');
 
     const options = [
-        { label: 'Suggestion', value: 'Suggestion' },
-        { label: 'Bug Report', value: 'Bug Report' },
-        { label: 'Feature Request', value: 'Feature Request' },
-        { label: 'Other', value: 'Other' },
+        { label: 'Gợi ý', value: 'Suggestion' },
+        { label: 'Báo lỗi', value: 'Bug Report' },
+        { label: 'Yêu cầu tính năng', value: 'Feature Request' },
+        { label: 'Khác', value: 'Other' },
     ];
 
     const severityOptions = [
-        { label: 'Low', value: 'Low' },
-        { label: 'Medium', value: 'Medium' },
-        { label: 'High', value: 'High' },
-        { label: 'Critical', value: 'Critical' },
+        { label: 'Thấp', value: 'Low' },
+        { label: 'Trung bình', value: 'Medium' },
+        { label: 'Cao', value: 'High' },
+        { label: 'Nguy cấp', value: 'Critical' },
     ];
 
     const handleSubmit = async () => {
         if (!title || !description) {
-        toast.error('Title and Description are required!');
+        toast.error('Tiêu đề và mô tả bắt buộc!');
         return;
         }
 
@@ -49,17 +49,17 @@ export default function Feedbackform({ isOpen, onOpenChange }: FeedbackFormProps
         });
 
         if (response.status === 201) {
-            toast.success('Feedback report successfully submitted');
+            toast.success('Báo cáo phản hồi đã được gửi thành công');
             setTitle('');
             setDescription('');
             setFeedbackType('');
             setSeverityLevel('');
         } else {
-            toast.error('Failed to submit feedback report. Please try again later.');
+            toast.error('Không thể gửi báo cáo phản hồi. Vui lòng thử lại sau.');
         }
         } catch (error) {
         console.error('Error submitting feedback report:', error);
-        toast.error('An error occurred while submitting the feedback report. Please try again later.');
+        toast.error('Đã xảy ra lỗi khi gửi báo cáo phản hồi. Vui lòng thử lại sau.');
         }
     };
 
@@ -68,20 +68,20 @@ export default function Feedbackform({ isOpen, onOpenChange }: FeedbackFormProps
         <ModalContent>
             {(onClose) => (
             <>
-                <ModalHeader className="flex flex-col gap-1">Feedback Form</ModalHeader>
+                <ModalHeader className="flex flex-col gap-1">Phản hồi</ModalHeader>
                 <ModalBody>
                 <Input
                     type="text"
-                    label="Title"
-                    placeholder="Enter Title"
+                    label="Tiêu đề"
+                    placeholder="Nhập tiêu đề"
                     isRequired
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                 />
                 <Textarea
                     variant="flat"
-                    label="Description"
-                    placeholder="Enter your description"
+                    label="Mô tả"
+                    placeholder="Nhập mô tả của bạn"
                     className="md:col-span-6 mb-0"
                     isRequired
                     value={description}
@@ -89,8 +89,8 @@ export default function Feedbackform({ isOpen, onOpenChange }: FeedbackFormProps
                 />
                 <div className="flex flex-row flex-wrap gap-2 justify-between">
                     <Select
-                    label="Feedback Type"
-                    placeholder="Select an option"
+                    label="Loại phản hồi"
+                    placeholder="Chọn loại"
                     className="flex-grow sm:max-w-[185px]"
                     selectedKeys={feedbackType ? [feedbackType] : []}
                     onChange={(e) => setFeedbackType(e.target.value)}
@@ -102,8 +102,8 @@ export default function Feedbackform({ isOpen, onOpenChange }: FeedbackFormProps
                     ))}
                     </Select>
                     <Select
-                    label="Severity Level"
-                    placeholder="Select severity"
+                    label="Mức độ nghiêm trọng"
+                    placeholder="Chọn mức độ"
                     className="flex-grow sm:max-w-[185px] mt-1 sm:mt-0"
                     selectedKeys={severityLevel ? [severityLevel] : []}
                     onChange={(e) => setSeverityLevel(e.target.value)}
@@ -118,14 +118,14 @@ export default function Feedbackform({ isOpen, onOpenChange }: FeedbackFormProps
                 </ModalBody>
                 <ModalFooter>
                 <Button color="danger" variant="flat" onPress={onClose}>
-                    Cancel
+                    Hủy
                 </Button>
                 <Button
                     className={`bg-[#4D148c] ${!title || !description ? 'pointer-events-none' : ''}`}
                     onClick={handleSubmit}
                     onPress={onClose}
                 >
-                    Submit
+                    Gửi
                 </Button>
                 </ModalFooter>
             </>

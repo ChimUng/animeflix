@@ -93,3 +93,4 @@ export interface Provider {
     consumet?: boolean;
     episodes: Episode[] | { sub?: Episode[]; dub?: Episode[] };
 }
+
