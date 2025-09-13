@@ -25,7 +25,7 @@ export default function ErrorPage({
         <Navbarcomponent/>
         <div className="flex h-screen flex-col items-center justify-center gap-8">
             <h2 className="text-center font-bold text-3xl leading-tight">
-            Oops! Something went wrong!
+            Oops! Có một số lỗi xảy ra!
             </h2>
             <div className="flex flex-row gap-4">
             <button className="bg-white text-black font-medium py-2 px-3 rounded-lg"
@@ -34,14 +34,14 @@ export default function ErrorPage({
                 () => reset()
                 }
             >
-                Try again
+                Thử lại
             </button>
             <button className="bg-white text-black font-medium py-2 px-3 rounded-lg"
                 onClick={() => {
                     router.push("/");
                 }}
             >
-                Go Home
+               Trang chủ
             </button>
             </div>
         </div>
