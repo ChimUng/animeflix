@@ -5,32 +5,6 @@ import styles from "../../styles/Epimglist.module.css";
 import Link from "next/link";
 import { AnimeItem, EpisodeInfo } from "@/lib/types";
 
-// Kiểu dữ liệu cho từng episode
-// export interface Episode {
-//     id?: string;
-//     episodeId?: string;
-//     number: number | undefined
-//     title?: string;
-//     description?: string;
-//     img?: string;
-//     image?: string;
-//     isFiller?: boolean;
-// }
-
-// Kiểu dữ liệu cho `data` (anime)
-// export interface AnimeItem {
-//     id: string | number;
-//     bannerImage?: string;
-//     coverImage?: {
-//         extraLarge?: string;
-//     };
-//     type?: string;
-//     status?: string;
-//     nextAiringEpisode?: {
-//         episode: number;
-//     };
-// }
-
 interface EpImgContentProps {
     data: AnimeItem;
     epdata: EpisodeInfo[];

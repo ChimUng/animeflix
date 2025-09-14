@@ -12,46 +12,6 @@ import { useSubtype } from '@/lib/store';
 import { useStore } from 'zustand';
 import { AnimeItem, Episode, Provider } from '@/lib/types';
 
-// export interface Episode {
-//     id?: string;
-//     episodeId?: string;
-//     number: number;
-//     title?: string;
-//     description?: string;
-//     img?: string;
-//     image?: string;
-//     isFiller?: boolean;
-// }
-
-// export interface Provider {
-//     providerId: string;
-//     consumet?: boolean;
-//     episodes: Episode[] | { sub?: Episode[]; dub?: Episode[] };
-// }
-
-// export interface AnimeTitle {
-//     romaji: string | null;
-//     english?: string | null;
-//     native?: string | null;
-//     vi?: string | null;
-//     [key: string]: string | null | undefined;
-// }
-
-
-// export interface AnimeItem {
-//     id: string | number;
-//     title: AnimeTitle;
-//     bannerImage?: string;
-//     coverImage?: {
-//         extraLarge?: string;
-//     };
-//     type?: string;
-//     status?: string;
-//     nextAiringEpisode?: {
-//         episode: number;
-//     };
-// }
-
 interface Props {
     data: AnimeItem;
     id: string | number;

@@ -6,53 +6,6 @@ import Link from 'next/link';
 import ItemContent from './ItemContent';
 import { AnimeItem } from '@/lib/types'; // Import interface chung
 
-// interface AnimeTitle {
-//     romaji: string;
-//     english?: string;
-//     native?: string;
-//     vi?: string;
-// }
-
-// interface CoverImage {
-//     large: string;
-//     medium?: string;
-//     extraLarge?: string;
-// }
-
-// interface NextAiringEpisode {
-//     episode: number;
-//     timeUntilAiring: number;
-// }
-
-// interface GogoEpisode {
-//     id: string;
-//     number: number;
-// }
-
-// interface AnimeItem {
-//     id: number | string;
-//     title: AnimeTitle;
-//     coverImage: CoverImage;
-//     bannerImage?: string | null;
-//     description?: string;
-//     trailer?: any;
-//     status: string;
-//     format: string;
-//     episodes?: number;
-//     totalEpisodes?: number;
-//     currentEpisode?: number;
-//     nextAiringEpisode?: NextAiringEpisode;
-//     relationType?: string;
-//     episodesData?: {
-//         data: {
-//         providerId: string;
-//         episodes: GogoEpisode[];
-//         }[];
-//     };
-//     mediaRecommendation?: AnimeItem;
-//     node?: AnimeItem;
-// }
-
 interface AnimecardsProps {
     data: AnimeItem[] | null;
     cardid: string;

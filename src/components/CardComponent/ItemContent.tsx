@@ -7,43 +7,6 @@ import { useStore } from 'zustand';   // Giữ import này
 import { useTranslationCache } from '@/lib/useTranslationCache';
 import { AnimeItem, AnimeTitle } from '@/lib/types'; // Import AnimeTitle và AnimeItem
 
-// Định nghĩa các kiểu dữ liệu cần thiết trực tiếp trong file này
-// interface AnimeTitle {
-//     romaji: string;
-//     english?: string;
-//     native?: string;
-//     vi?: string;   // ← thêm dòng này
-//     }
-
-//     interface CoverImage {
-//     large: string;
-//     medium?: string;
-//     extraLarge?: string;
-//     }
-
-//     interface NextAiringEpisode {
-//     episode: number;
-//     timeUntilAiring: number;
-//     }
-
-//     // Kiểu AnimeItem này phải chứa tất cả các thuộc tính mà ItemContent sử dụng
-//     interface AnimeItem {
-//     id: number | string; // Cập nhật kiểu id cho phù hợp với Animecards.tsx
-//     title: AnimeTitle;
-//     coverImage: CoverImage;
-//     bannerImage?: string | null;
-//     description?: string;
-//     trailer?: any;
-//     status: 'RELEASING' | 'NOT_YET_RELEASED' | 'FINISHED' | 'CANCELLED' | string;
-//     format: string;
-//     episodes?: number;
-//     nextAiringEpisode?: NextAiringEpisode;
-//     currentEpisode?: number; // Dùng cho 'Recent Episodes'
-//     totalEpisodes?: number;  // Dùng cho 'Recent Episodes'
-//     relationType?: string;   // Dùng cho 'Related Anime'
-//     // Thêm các thuộc tính khác nếu dữ liệu của bạn có và cần được sử dụng
-//     }
-
     // Định nghĩa kiểu props cho component ItemContent
     interface ItemContentProps {
     anime: AnimeItem; // Sử dụng kiểu AnimeItem đã định nghĩa ở trên

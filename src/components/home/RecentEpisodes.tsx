@@ -7,31 +7,6 @@ import ItemContent from '../CardComponent/ItemContent';
 import { getRecentEpisodes } from '@/lib/getData';
 import { AnimeItem, AnimeTitle } from '@/lib/types'; // Import AnimeTitle và AnimeItem
 
-// interface AnimeTitle {
-//   romaji: string;
-//   english?: string;
-//   native?: string;
-//   vi?: string;
-// }
-
-// interface CoverImage {
-//   large: string;
-//   medium: string;
-//   extraLarge?: string;
-// }
-
-// interface AnimeItem {
-//   id: number | string;
-//   title: AnimeTitle;
-//   coverImage: CoverImage;
-//   status: string;
-//   format: string;
-//   latestEpisode?: string;
-//   totalEpisodes?: number;
-//   currentEpisode?: number;
-//   description?: string; // Thêm description
-// }
-
 interface RecentEpisodesProps {
   cardid: string;
 }

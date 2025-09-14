@@ -15,7 +15,6 @@ interface DeleteParams {
   aniId?: string;
 }
 
-
 // Nếu chưa có type Session thì tạm dùng any
 interface ContinueWatchingProps {
     session: any;
