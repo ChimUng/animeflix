@@ -49,6 +49,12 @@ export const metadata = {
     'dubbed anime streaming',
     'aniplay latest anime',
     'xem anime vietsub',
+    'xem anime không quảng cáo',
+    'anime hay nhất',
+    'anime mới nhất',
+    'anime hot nhất',
+    'anime full hd',
+    'anime vietsub mới',
   ],
   manifest: "/manifest.json",
   appleWebApp: {
@@ -97,8 +103,8 @@ export default async function RootLayout({ children }: RootLayoutProps) {
       </Script>
       <head>
         <meta name="google-site-verification" content="9Cj5Gd0-OuGDtGb4HpRqNfBXy3FuFCcFNWSvTPOlTzE" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/luffy_apple-touch.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/luffy_android-chrome-192x192.png" />
         {/* <script src="https://kit.fontawesome.com/c189d5d7c5.js" crossOrigin="anonymous" async></script> */}
       </head>
       <body className={inter.className}>
