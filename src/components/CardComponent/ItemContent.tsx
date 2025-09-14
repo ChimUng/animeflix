@@ -58,7 +58,7 @@ import { AnimeItem, AnimeTitle } from '@/lib/types'; // Import AnimeTitle và An
             <div className={styles.cardimgcontainer}>
                 {!imageLoaded && <div className={`${styles.cardimgcontainer} ${styles.pulse}`} />}
                 <Image
-                    src={anime?.coverImage?.extraLarge || anime?.coverImage?.large || anime?.coverImage?.medium || '/default-anime-image.png'}
+                    src={anime?.coverImage?.extraLarge || anime?.coverImage?.large || anime?.coverImage?.medium || '/default.png'}
                     alt={anime?.title?.romaji || 'Anime Image'}
                     fill
                     quality={100}
