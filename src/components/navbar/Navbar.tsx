@@ -158,7 +158,10 @@ function Navbarcomponent({ home = false }: NavbarProps) {
         : home
         ? styles.homenavbar
         : styles.navbar;
-
+    function getYear() {
+        const year = new Date().getFullYear();
+        return year;
+    }
     return (
         <motion.nav suppressHydrationWarning className={navbarClass}
             variants={{
@@ -178,7 +181,7 @@ function Navbarcomponent({ home = false }: NavbarProps) {
                     <Link href="/anime/catalog" className={styles.navItem}>Danh mục</Link>
                     <Link href="/anime/topanime" className={styles.navItem}>Top anime</Link>
                     <Link href="/anime/schedule" className={styles.navItem}>Lịch chiếu</Link>
-                    <Link href="/anime/catalog?season=SUMMER&year=2024" className={styles.navItem}>Season</Link>
+                    <Link href={`/anime/catalog?season=SUMMER&year=${getYear()}`} className={styles.navItem}>Season</Link>
                     <Link href="https://www.instagram.com/dong_huy_197/?fbclid=IwZXh0bgNhZW0CMTAAYnJpZBExdHpkcmUwQVVkb1RFaXQ1UgEeqtLbIljwlQbnl6wItKtsh9msx1ADHF1syXhaXPMNYl0ihSKj6qDjxjQnI5s_aem_flDvo4KKCd6LnSsGHH8AOA#" className={styles.navItem}>Cộng đồng</Link>
                 </div>
             </div>

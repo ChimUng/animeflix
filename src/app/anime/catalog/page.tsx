@@ -5,14 +5,14 @@ import { Metadata } from 'next';
 
 // Kiểu dữ liệu cho props của page
 interface PageProps {
-    searchParams: {
-        year?: string;
-        season?: string;
-        format?: string;
-        genre?: string[] | string;
-        search?: string;
-        sortby?: string;
-    };
+  searchParams: Promise<{
+    year?: string;
+    season?: string;
+    format?: string;
+    genre?: string[] | string;
+    search?: string;
+    sortby?: string;
+  }>;
 }
 
 // Metadata cho SEO
@@ -30,15 +30,15 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // Component chính
-const Page: React.FC<PageProps> = ({ searchParams }) => {
-    const {
-        year,
-        season,
-        format,
-        genre,
-        search,
-        sortby
-    } = searchParams;
+const Page = async ({ searchParams }: PageProps) => {
+  const {
+    year,
+    season,
+    format,
+    genre,
+    search,
+    sortby,
+  } = await searchParams;
 
     return (
         <div>

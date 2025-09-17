@@ -6,7 +6,7 @@ import Navbarcomponent from '@/components/navbar/Navbar';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Top Anime - AnimeWorld',
+    title: 'Top Anime - Bảng xếp hạng',
     description: 'Danh sách anime top được yêu thích nhất hiện nay',
 };
 

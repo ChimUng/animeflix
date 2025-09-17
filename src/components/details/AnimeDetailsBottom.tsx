@@ -23,7 +23,7 @@ const AnimeDetailsBottom: React.FC<AnimeDetailsBottomProps> = ({ data, id }) => 
         { name: "Overview", label: "Tổng quan" },
         { name: "Relations", label: "Mối quan hệ" },
         { name: "Characters", label: "Nhân vật" },
-        { name: "Staff", label: "Nhân viên" },
+        { name: "Banner", label: "Hình ảnh" },
     ];
 
     const [activeTab, setActiveTab] = useState<TabItem>(tabs[0]);
@@ -85,7 +85,7 @@ const AnimeDetailsBottom: React.FC<AnimeDetailsBottomProps> = ({ data, id }) => 
                 </div>
                 )}
 
-                {activeTab.name === "Staff" && (
+                {activeTab.name === "Banner" && (
                 <div className={styles.detailscard}>Coming Soon</div>
                 )}
             </motion.div>

@@ -31,6 +31,11 @@ function Footer() {
         }
     }
 
+    function getYear() {
+        const year = new Date().getFullYear();
+        return year;
+    }
+
     const format: Array<'WINTER' | 'SPRING' | 'SUMMER' | 'FALL'> = ['WINTER', 'SPRING', 'SUMMER', 'FALL'];
 
     function nextSeason(currentSeason: 'WINTER' | 'SPRING' | 'SUMMER' | 'FALL'): 'WINTER' | 'SPRING' | 'SUMMER' | 'FALL' {
@@ -59,10 +64,10 @@ function Footer() {
                             <div>
                                 <ul className=" font-semibold flex flex-col gap-2 lg:text-[0.85rem] text-[0.7rem] text-[#ffffffb2] ">
                                     <li>
-                                        <Link href={`/anime/catalog?season=${getSeason(month + 1)}&year=2024`} className="hover:text-white">Mùa này</Link>
+                                        <Link href={`/anime/catalog?season=${getSeason(month + 1)}&year=${getYear()}`} className="hover:text-white">Mùa này</Link>
                                     </li>
                                     <li>
-                                        <Link href={`/anime/catalog?season=${nextSeason(getSeason(month + 1))}&year=2024`} className="hover:text-white">Mùa tới</Link>
+                                        <Link href={`/anime/catalog?season=${nextSeason(getSeason(month + 1))}&year=${getYear() + 1}`} className="hover:text-white">Mùa tới</Link>
                                     </li>
                                     <li>
                                         <Link href="/anime/catalog?format=MOVIE" className="hover:text-white">Movies</Link>

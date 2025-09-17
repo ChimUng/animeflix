@@ -144,8 +144,8 @@ function Search(){
                                     />
                                     </div>
                                 </Link>
-                                <Link href={`/anime/info/${item.id}`} onClick={() => useSearchbar.setState({ Isopen: false })} onMouseDown={(e) => e.preventDefault()}>
-                                    <div className="flex flex-col overflow-hidden">
+                                <Link   className="flex-1" href={`/anime/info/${item.id}`} onClick={() => useSearchbar.setState({ Isopen: false })} onMouseDown={(e) => e.preventDefault()}>
+                                    <div className="flex flex-col overflow-hidden w-full">
                                     <p className="line-clamp-2 text-base">
                                         {item.title[animetitle] || item.title.romaji}
                                     </p>
@@ -162,7 +162,7 @@ function Search(){
                                         <span className='mx-1 mb-[5px]'>.</span>
                                         <span>{item.status}</span>
                                     </div>
-                                    </div>
+                                    </div>  
                                 </Link>
                                 </Combobox.Option>
                             ))

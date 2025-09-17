@@ -2,7 +2,7 @@
 
 import Navbarcomponent from "@/components/navbar/Navbar";
 import { useRouter } from 'next-nprogress-bar';
-// import { useEffect } from 'react'; // Bỏ comment nếu bạn muốn sử dụng useEffect để log lỗi
+// import { useEffect } from 'react';
 
 interface ErrorPageProps {
   error: Error; // 'error' là một đối tượng Error

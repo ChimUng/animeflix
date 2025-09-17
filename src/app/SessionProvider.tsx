@@ -18,10 +18,13 @@ export function AuthProvider({ children, session }: AuthProviderProps) {
         const hasToastShown = sessionStorage.getItem("toastShown");
 
         if (!hasToastShown && session?.user) {
-            toast.success(
-            `Welcome Back, ${session.user.name}! You are currently logged in. Enjoy your time with us.`
-            );
+           setTimeout(() => {
+            toast.success(`Chào mừng, ${session.user?.name}! Bạn hiện đang đăng nhập.`);
+        }, 300);
             sessionStorage.setItem("toastShown", "true");
+        }
+        if (!session?.user) {
+            sessionStorage.removeItem("toastShown");
         }
         }
     }, [session]);

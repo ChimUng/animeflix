@@ -464,7 +464,7 @@ function Catalog({ searchParams }: { searchParams: SearchParams }) {
                 <Accordion isCompact variant="splitted" defaultExpandedKeys={['season']}>
                 <AccordionItem key="season" aria-label="Season" title="Mùa">
                     <RadioGroup
-                    color="secondary"
+                    color="danger"
                     value={seasonvalue}
                     onValueChange={setSeasonvalue}
                     >
@@ -481,7 +481,7 @@ function Catalog({ searchParams }: { searchParams: SearchParams }) {
                 <Accordion isCompact variant="splitted" defaultExpandedKeys={['format']}>
                 <AccordionItem key="format" aria-label="Format" title="Loại">
                     <RadioGroup
-                    color="secondary"
+                    color="danger"
                     value={formatvalue}
                     onValueChange={setFormatvalue}
                     >

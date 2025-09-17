@@ -5,13 +5,13 @@ import ScheduleTabs from "@/components/schedule/ScheduleTabs";
 import AnimeCardList from "@/components/schedule/AnimeCardList";
 
 const daysOfWeek = [
-    "sunday",
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday"
+    "Chủ nhật",
+    "Thứ hai",
+    "Thứ ba",
+    "Thứ tư",
+    "Thứ năm",
+    "Thứ sáu",
+    "Thứ bảy"
 ];
 
 // Lấy tên ngày hôm nay theo `daysOfWeek`
@@ -28,10 +28,11 @@ export default function Schedule() {
     // Fetch số tập của từng ngày (1 lần)
     useEffect(() => {
         const fetchSchedule = async () => {
-        try {
+        try {   
             const res = await fetch("/api/schedule");
             const data = await res.json();
             setEpisodeCounts(data.days || []);
+            console.log("Fetched schedule days:", data);
             setAllAnimes(data.animes || []);
         } catch (err) {
             console.error("Lỗi khi fetch schedule:", err);

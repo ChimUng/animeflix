@@ -70,8 +70,8 @@ interface SearchcardProps {
     <div className={styles.searchcard}>
       {!loading && searchdata && searchdata.length === 0 && (
         <div className="text-center w-[100%] h-[100%] text-semibold text-2xl">
-          <p>Oops!</p>
-          No results for <span className="text-3xl text-[#864abb]">"{searchvalue}"</span>
+          <p>whoops!</p>
+          Không tìm thấy kết quả <span className="text-3xl text-d234">"{searchvalue}"</span>
         </div>
       )}
 
@@ -101,10 +101,11 @@ interface SearchcardProps {
                     <Image
                       src={item.coverImage?.extraLarge ?? item.image ?? ""}
                       alt={item.title?.english ?? item.title?.romaji ?? "Anime Title"}
-                      width={155}
-                      height={230}
-                      style={{ height: "auto" }}
+                      // width={155}
+                      // height={230}
+                      // style={{ height: "auto" }}
                       placeholder="blur"
+                      fill
                       blurDataURL={item.coverImage?.extraLarge ?? item.image ?? ""}
                       className={styles.cardimage}
                     />
@@ -165,7 +166,7 @@ interface SearchcardProps {
         <div className={styles.cardbottom}>
           <Pagination
             total={lastpage}
-            color="secondary"
+            color="danger"
             page={currentPage}
             onChange={setCurrentPage}
           />
