@@ -179,7 +179,7 @@ function Search(){
                                     useSearchbar.setState({ Isopen: false });
                                     setQuery("");
                                 }}
-                                className="flex w-full items-center justify-center gap-2 py-4 transition duration-300 ease-in-out cursor-pointer border-none bg-[#4d148c] text-white text-base z-[5]">
+                                className="flex w-full items-center justify-center gap-2 py-4 transition duration-300 ease-in-out cursor-pointer border-none bg-d234 text-white text-base z-[5]">
                                 Xem kết quả
                                 </button>
                             </Link>
