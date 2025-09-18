@@ -5,6 +5,7 @@ import Animecards from "../CardComponent/Animecards";
 import { AnimatePresence, motion } from "framer-motion";
 import Characters from "./Characters";
 import Overview from "./tabs/Overview";
+import Image from "next/image";
 
 // Kiểu cho mỗi tab
 interface TabItem {
@@ -86,7 +87,16 @@ const AnimeDetailsBottom: React.FC<AnimeDetailsBottomProps> = ({ data, id }) => 
                 )}
 
                 {activeTab.name === "Banner" && (
-                <div className={styles.detailscard}>Coming Soon</div>
+                <div className={styles.detailscard}>
+                    <div className={styles.detailsbgimage}>
+                        <Image 
+                        src={data?.bannerImage || data?.coverImage?.extraLarge || "/fallback.jpg"} 
+                        alt="Banner"
+                        fill
+                        style={{ objectFit: "cover" }}
+                        />
+                    </div>
+                </div>
                 )}
             </motion.div>
             </AnimatePresence>
