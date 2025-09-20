@@ -485,7 +485,7 @@ const Episodesection: React.FC<Props> = ({ data, id, progress, setUrl }) => {
                 <div className="text-[17px] font-semibold">
                 <p className="text-center mt-4">Coming Soon!</p>
                 <p className="text-center mb-4">
-                    Sorry, this anime isn't out yet. Keep an eye out for updates!
+                    {`Sorry, this anime isn't out yet. Keep an eye out for updates!`}
                 </p>
                 </div>
             ) : (

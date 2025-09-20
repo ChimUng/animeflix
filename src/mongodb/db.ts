@@ -1,37 +1,43 @@
 // mongodb/db.ts
-import { MongoClient } from 'mongodb';
-import mongoose from 'mongoose';
+import { MongoClient, MongoClientOptions } from "mongodb";
+import mongoose from "mongoose";
 
-const uri = process.env.MONGODB_URI as string; // Lấy URI từ biến môi trường
-const options = {}; // Các tùy chọn MongoDB client
+const uri = process.env.MONGODB_URI;
+if (!uri) {
+  throw new Error("Please add your MONGODB_URI to .env.local");
+}
+
+const options: MongoClientOptions = {}; // thêm tùy chọn nếu cần
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 
-if (!uri) {
-    throw new Error('Please add your MONGODB_URI to .env.local');
+declare global {
+  // Khai báo biến global để TypeScript không báo lỗi
+  // eslint-disable-next-line no-var
+  var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-if (process.env.NODE_ENV === 'development') {
-  // Trong môi trường phát triển, sử dụng biến global để không tạo nhiều kết nối
-    if (!(global as any)._mongoClientPromise) {
+// Sử dụng biến global cho development để tránh tạo nhiều kết nối
+if (process.env.NODE_ENV === "development") {
+  if (!global._mongoClientPromise) {
     client = new MongoClient(uri, options);
-    (global as any)._mongoClientPromise = client.connect();
-    }
-    clientPromise = (global as any)._mongoClientPromise;
+    global._mongoClientPromise = client.connect();
+  }
+  clientPromise = global._mongoClientPromise;
 } else {
-  // Trong môi trường production, tạo kết nối mới
-    client = new MongoClient(uri, options);
-    clientPromise = client.connect();
+  client = new MongoClient(uri, options);
+  clientPromise = client.connect();
 }
 
-export const connectMongo = async () => {
-    if (!uri) return;
-    try {
-        mongoose.connect(uri);
-    } catch (err) {
-        console.log(err)
-    }
-}
+// Hàm connect Mongoose
+export const connectMongo = async (): Promise<typeof mongoose> => {
+  try {
+    return await mongoose.connect(uri);
+  } catch (err) {
+    console.error("MongoDB connection error:", err);
+    throw err; // ném lỗi để caller biết
+  }
+};
 
-export default clientPromise; // Export promise để sử dụng
+export default clientPromise;

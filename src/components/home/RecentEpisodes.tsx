@@ -5,7 +5,7 @@ import { useDraggable } from 'react-use-draggable-scroll';
 import Link from 'next/link';
 import ItemContent from '../CardComponent/ItemContent';
 import { getRecentEpisodes } from '@/lib/getData';
-import { AnimeItem, AnimeTitle } from '@/lib/types'; // Import AnimeTitle và AnimeItem
+import { AnimeItem } from '@/lib/types'; 
 
 interface RecentEpisodesProps {
   cardid: string;
@@ -23,11 +23,11 @@ function RecentEpisodes({ cardid }: RecentEpisodesProps) {
       const response = await getRecentEpisodes();
       // console.log("Recent Episodes Data:", response);
       setData(
-        response?.map((item: any) => ({
-          ...item,
-          description: item.description || "No description available", // Thêm description mặc định cho bản vi hoạt động
-        })) ?? []
-      );
+  (response ?? []).map((item) => ({
+    ...(item as AnimeItem),
+    description: item.description || "No description available",
+  }))
+);
     };
     getRecent();
   }, []);

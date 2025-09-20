@@ -27,6 +27,37 @@ export interface Provider {
   episodes: Episode[] | { sub?: Episode[]; dub?: Episode[] };
 }
 
+export interface RawEpisode {
+  id?: string;            // gogoanime, consumet
+  episodeId?: string;     // zoro
+  number: number;         // tất cả đều có
+  title?: string;         // zoro, consumet
+  url?: string;           // gogoanime
+  isFiller?: boolean;     // zoro, gogoanime
+  img?: string;           // consumet
+  image?: string;         // consumet
+  description?: string;   // consumet
+}
+export interface AnifyEpisode {
+  id?: string;
+  episodeId?: string;
+  number: number;
+  title?: string;
+  isFiller?: boolean;
+  image?: string;
+  description?: string;
+}
+
+export interface AnifyProvider {
+  providerId: string;
+  episodes:
+    | AnifyEpisode[]
+    | {
+        sub?: AnifyEpisode[];
+        dub?: AnifyEpisode[];
+      };
+}
+
 export async function CombineEpisodeMeta(
   episodeData: Provider[],
   imageData: ImageDataItem[]

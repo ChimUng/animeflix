@@ -6,6 +6,16 @@ interface TranslationRequest {
     title: string;
     description: string;
     }
+    interface TranslationResponseItem {
+  anilistId: number;
+  title_vi?: string;
+  description_vi?: string;
+  error?: string;
+}
+
+interface TranslationResponse {
+  translated: TranslationResponseItem[];
+}
 
     export const useTranslationCache = (
     anilistId: number,
@@ -57,9 +67,9 @@ interface TranslationRequest {
             return;
         }
 
-        const data = await res.json();
+        const data = await res.json() as TranslationResponse;
         if (Array.isArray(data.translated)) {
-            data.translated.forEach(({ anilistId, title_vi, description_vi, error }: any) => {
+            data.translated.forEach(({ anilistId, title_vi, description_vi, error }) => {
             if (error) {
                 console.error(`Translation failed for Anime ID ${anilistId}: ${error}`);
                 return;
@@ -72,9 +82,9 @@ interface TranslationRequest {
             // console.log(`✅ [CLIENT CACHE HIT] Anime ID: ${anilistId}`);
             });
         }
-        } catch (error: any) {
+        } catch (error: unknown) {
         console.error("❌ Translation fetch failed:", error);
-        setError(error.message);
+        setError((error as Error).message);
         } finally {
         setLoading(false);
         }

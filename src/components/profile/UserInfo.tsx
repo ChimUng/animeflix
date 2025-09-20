@@ -2,26 +2,31 @@
 import React, { useState, MouseEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import MediaCard from "./MediaCard";
-import {AnimeItem} from '@/lib/types'
+import { MediaListEntry } from "@/lib/AnilistUser";
 
-export interface AnimeEntry {
-  id: number;                
-  mediaId: number;           
-  updatedAt: number;         
-  progress?: number;
-  media: AnimeItem;          // AnimeItem chứa thông tin anime
-}
+
+// export interface AnimeEntry {
+//   id: number;                
+//   mediaId: number;           
+//   updatedAt: number;         
+//   progress?: number;
+//   media: AnimeItem;          // AnimeItem chứa thông tin anime
+// }
 
 // Kiểu dữ liệu AniList tab
 interface ListTab {
   name: string;
-  entries: AnimeEntry[]; 
+  entries: MediaListEntry[];
 }
 
 // Props cho component
 interface UserInfoProps {
   lists: ListTab[];
-  session: any; // 👈 bạn có thể thay bằng kiểu `Session` từ next-auth nếu muốn strict
+  session: {
+    user: {
+    token: string;
+    };
+  };
 }
 
 function UserInfo({ lists, session }: UserInfoProps) {

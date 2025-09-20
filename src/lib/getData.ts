@@ -17,6 +17,7 @@ interface RecentEpisode {
   currentEpisode?: number;
   totalEpisodes?: number;
   latestEpisode?: string;
+  description?: string; 
 }
 
 export interface Episode {
@@ -150,9 +151,9 @@ export const getSources = async (
      // ✅ LOGIC PROXY TOÀN DIỆN
     if (data?.sources?.length > 0) {
       const referer = data?.headers?.Referer || "";
-      const hasEmbedSourceFromApi = data.sources.some((source: any) => !source.url.includes(".m3u8"));
+      const hasEmbedSourceFromApi = data.sources.some((source: { url: string }) => !source.url.includes(".m3u8"));
 
-      data.sources = data.sources.map((source: any) => {
+      data.sources = data.sources.map((source: { url: string; quality: string; isM3U8: boolean }) => {
         const originalUrl = source.url;
         if (originalUrl.includes(".m3u8")) {
           return {

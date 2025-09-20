@@ -1,10 +1,44 @@
-  import { NextRequest, NextResponse } from "next/server";
+  import { NextResponse } from "next/server";
   import axios from "axios";
   import { redis } from "@/lib/rediscache";
 
   interface Anime {
-    day: string;
-    [key: string]: any;
+  id: number;
+  title: {
+    romaji?: string;
+    english?: string;
+    native?: string;
+  };
+  episode: number;
+  airingAt: number;
+  airingTime: string;
+  coverImage: string;
+  siteUrl: string;
+  format: string;
+  status: string;
+  episodes?: number | null;
+  bannerImage?: string | null;
+  day: string;
+}
+
+  interface ScheduleItem {
+    episode: number;
+    airingAt: number;
+    timeUntilAiring: number;
+    media: {
+      id: number;
+      title: {
+        romaji?: string;
+        english?: string;
+        native?: string;
+      };
+      coverImage: { large: string };
+      bannerImage?: string | null;
+      format: string;
+      status: string;
+      episodes?: number | null;
+      siteUrl: string;
+    };
   }
 
   const daysMap: Record<string, string> = {
@@ -63,7 +97,7 @@
     }
   `;
 
-  export async function GET(req: NextRequest) {
+  export async function GET() {
     const cacheKey = "schedule:week";
 
     try {
@@ -76,7 +110,7 @@
       // 2️⃣ Fetch AniList data với phân trang
       const { start, end } = getWeekTimestampRange();
       let page = 1;
-      let allSchedules: any[] = [];
+      let allSchedules: ScheduleItem[] = [];
 
       while (true) {
         const res = await axios.post(
@@ -98,7 +132,7 @@
       }
 
       // 3️⃣ Map sang dữ liệu Anime
-      const animes = allSchedules.map((item: any) => {
+      const animes = allSchedules.map((item: ScheduleItem) => {
         const title = item.media.title;
         return {
           id: item.media.id,

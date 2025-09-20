@@ -1,24 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import styles from '../../styles/Animecard.module.css';
+import type { AnimeItem } from "@/lib/types";
 
-type AnimeTitle = {
-  romaji: string;
-  english?: string;
-  native?: string;
-};
-
-type Anime = {
-  id: string | number;
-  title: AnimeTitle;
-  coverImage: string;
-  episode: number;
-  airingTime: string;
-  description?: string;
-  siteUrl?: string;
-};
-
-export default function AnimeCardList({ data }: { data: Anime[] }) {
+export default function AnimeCardList({ data }: { data: AnimeItem[] }) {
   const renderSkeleton = () => (
       <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
         {Array.from({ length: 6 }).map((_, idx) => (
@@ -56,15 +41,15 @@ export default function AnimeCardList({ data }: { data: Anime[] }) {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
-        {data.map((anime) => (
+        {data.map((anime, idx) => (
           <Link
-            key={anime.id}
+            key={`${anime.id}-${idx}`}
             href={`/anime/info/${anime.id}`}
             className="group relative bg-card-background backdrop-blur-sm rounded-lg lg:rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02] flex h-full"
           >
             <div className="relative w-[60px] min-h-[75px] sm:w-[125px] sm:h-[180px] md:w-[140px] md:h-[200px] flex-shrink-0 rounded-lg lg:rounded-2xl">
               <Image
-                src={anime.coverImage}
+              src={typeof anime.coverImage === "string" ? anime.coverImage : anime.coverImage?.medium || "/default.png"}
                 alt={anime.title.english ?? anime.title.romaji ?? anime.title.native ?? "Anime"}
                 width={140}
                 height={200}

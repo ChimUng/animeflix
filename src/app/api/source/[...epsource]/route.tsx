@@ -1,7 +1,8 @@
 import axios from 'axios';
-// import { redis } from '@/lib/rediscache'; // Bỏ comment nếu bạn dùng redis
+// import { redis } from '@/lib/rediscache'; 
 import { NextResponse, NextRequest } from "next/server";
 import AnimePahe from '@/components/providers/animepahe';
+import { RawEpisode, Episode, AnifyProvider } from '@/utils/EpisodeFunctions';
 
 // Định nghĩa kiểu dữ liệu cho phần body của request
 interface RequestBody {
@@ -13,14 +14,14 @@ interface RequestBody {
 }
 
 // Định nghĩa kiểu dữ liệu cho params của route
-interface RouteParams {
-  params: {
-    epsource: string[];
-  };
-}
+// interface RouteParams {
+//   params: {
+//     epsource: string[];
+//   };
+// }
 
 // Hàm lấy dữ liệu từ Consumet API
-async function consumetEpisode(id: string): Promise<any | null> {
+async function consumetEpisode(id: string): Promise<RawEpisode[] | null> {
     try {
         const { data } = await axios.get(
             `${process.env.CONSUMET_URI}/meta/anilist/watch/${id}`
@@ -39,8 +40,8 @@ async function fetchAniZipMalId(anilistId: string): Promise<string | null> {
   try {
     const { data } = await axios.get(`https://api.ani.zip/mappings?anilist_id=${anilistId}`);
     return data?.mappings?.mal_id?.toString() || null;
-  } catch (error: any) {
-    console.error('fetchAniZipMalId error:', error?.message ?? error);
+  } catch (error: unknown) {
+    console.error('fetchAniZipMalId error:', (error as Error)?.message ?? error);
     return null;
   }
 }
@@ -68,8 +69,8 @@ async function malSyncGetZoroSlug(id: string): Promise<string | null> {
     // chuyển 'https://hianime.to/steinsgate-0-92' => 'steinsgate-0-92'
     const slug = rawUrl.replace(/^https?:\/\/(www\.)?hianime\.to\//i, '').replace(/^\/|\/$/g, '');
     return slug || null;
-  } catch (error: any) {
-    console.error('malSyncGetZoroSlug error:', error?.message ?? error);
+  } catch (error: unknown) {
+    console.error('malSyncGetZoroSlug error:', (error as Error)?.message ?? error);
     return null;
   }
 }
@@ -107,7 +108,7 @@ async function zoroEpisode(
   epnum: number | string,
   id: string, // đây là id từ URL (ví dụ 21) — mình coi là Anilist ID
   subtype: string
-): Promise<any | null> {
+): Promise<Episode[] | null> {
   try {
     // --- build đúng animeEpisodeId theo doc Zoro ---
     const animeEpisodeId = await buildZoroAnimeEpisodeId(id, episodeid);
@@ -157,7 +158,7 @@ async function AnifyEpisode(
     epnum: number | string, 
     id: string, 
     subtype: string
-): Promise<any | null> {
+): Promise<AnifyProvider | null> {
     try {
         const { data } = await axios.get(
             `https://api.anify.tv/sources?providerId=${provider}&watchId=${encodeURIComponent(
@@ -171,7 +172,7 @@ async function AnifyEpisode(
     }
 }
 
-async function animepaheEpisode(malId: number, episodeId: string): Promise<any | null> {
+async function animepaheEpisode(malId: number, episodeId: string): Promise<{ url: string; length: number } | null> {
 	try {
 		const provider = new AnimePahe(malId);
 		const { url, length } = await provider.getSourceInfo(episodeId);

@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getAuthSession } from "@/app/api/auth/[...nextauth]/route";
 import { getWatchHistory } from "@/lib/EpHistoryfunctions"; 
-import { fetchRecentFromAnilist } from "../recent/route";
+import { fetchRecentFromAnilist, RecentEpisode } from "../recent/route";
 
 // Hàm fetch metadata từ AniList GraphQL
 async function fetchAnimeMeta(animeId: string) {
@@ -30,7 +30,7 @@ async function fetchAnimeMeta(animeId: string) {
   return json.data?.Media || null;
 }
 
-export const GET = async (req: NextRequest) => {
+export const GET = async () => {
   try {
     // 1. Xác thực user
     const session = await getAuthSession();
@@ -59,7 +59,7 @@ export const GET = async (req: NextRequest) => {
     const recentAnime = await fetchRecentFromAnilist();
 
     // 5. Tính điểm dựa trên số lần trùng genres
-    const scored = recentAnime.map((anime: any) => {
+    const scored: (RecentEpisode & { score: number })[] = recentAnime.map((anime) => {
       let score = 0;
       if (anime.genres) {
         anime.genres.forEach((g: string) => {
@@ -71,8 +71,8 @@ export const GET = async (req: NextRequest) => {
 
     // 6. Lọc & sort top recommendations
     const recommendations = scored
-      .filter((a: any) => a.score > 0) // bỏ anime không liên quan
-      .sort((a: any, b: any) => b.score - a.score)
+      .filter((a) => a.score > 0) // bỏ anime không liên quan
+      .sort((a, b) => b.score - a.score)
       .slice(0, 10);
 
     return NextResponse.json({ recommendations });

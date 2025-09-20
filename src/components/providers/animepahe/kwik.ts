@@ -22,7 +22,7 @@ export const extractSource = async (kwikUrl) => {
 		y = y.slice(y.length - 5, -1);
 		y.unshift(l);
 
-		const [p, a, c, k, e, d] = y.map((x) => x.split('.sp')[0]);
+		const [p, a, c, k, e] = y.map((x) => x.split('.sp')[0]);
 
 		const formated = format(p, a, c, k, e, {});
 

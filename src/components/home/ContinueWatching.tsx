@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import Skeleton from "react-loading-skeleton";
 import {deleteEpisodes, getWatchHistory} from "@/lib/EpHistoryfunctions";
 import { IWatch } from "@/mongodb/models/watch"; // import type nếu bạn có
+import { Session } from "next-auth"; // import type nếu bạn có
 
 interface DeleteParams {
   epId?: string;
@@ -17,7 +18,7 @@ interface DeleteParams {
 
 // Nếu chưa có type Session thì tạm dùng any
 interface ContinueWatchingProps {
-    session: any;
+    session: Session | null;
 }
 
 function ContinueWatching({ session }: ContinueWatchingProps) {
@@ -119,7 +120,7 @@ function ContinueWatching({ session }: ContinueWatchingProps) {
         });
         setStoredData((prevData) => prevData.filter((item) => item.aniId !== id));
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to remove anime from history");
     }
   }

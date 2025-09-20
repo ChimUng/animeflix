@@ -2,22 +2,24 @@ import React, { JSX } from 'react';
 
 // CSS Modules imports
 import captionStyles from '../../styles/captions.module.css';
-import chapterTitleStyles from '../../styles/chapter-title.module.css';
+// import chapterTitleStyles from '../../styles/chapter-title.module.css';
 import styles from '../../styles/video-layout.module.css';
 
 // Vidstack React components
-import { Captions, ChapterTitle, Controls, Gesture, Spinner } from '@vidstack/react';
+import { Captions, Controls, Gesture, Spinner } from '@vidstack/react';
 import * as Buttons from '../buttons';
 import * as Menus from '../menus';
 import * as Sliders from '../sliders';
 import { TimeGroup } from '../time-group';
 import { Titleb } from '../title';
+import { GroupedEpisodes } from '@/lib/types';
+import { TextTrackInit } from "@vidstack/react";
 
 // Interface for component props
 export interface VideoLayoutProps {
-  groupedEp?: any; // For a stricter type, you could define an Episode interface and use it here, e.g., Episode[].
+  groupedEp?: GroupedEpisodes | null; 
   thumbnails?: string;
-  subtitles?: any[]; // Changed from 'any' to 'any[]' since you're checking its length.
+  subtitles?: TextTrackInit[];
 }
 
 // The component is now typed as a React Functional Component (React.FC)

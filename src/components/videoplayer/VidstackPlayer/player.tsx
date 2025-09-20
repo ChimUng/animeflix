@@ -13,7 +13,7 @@ import {
   MediaPlayerInstance, // Correct type for the ref
   TextTrackInit,
   MediaLoadingStrategy, // Import type for subtitles
-  MediaErrorEvent,
+  // MediaErrorEvent,
 } from "@vidstack/react";
 import { DefaultKeyboardDisplay } from '@vidstack/react/player/layouts/default';
 // import { FastForwardIcon, FastBackwardIcon } from '@vidstack/react/icons';
@@ -27,7 +27,7 @@ import { VideoLayout } from "./components/layouts/video-layout";
 import { updateEp } from "@/lib/EpHistoryfunctions";
 import { saveProgress } from "@/lib/AnilistUser";
 import { useSettings, useTitle, useNowPlaying } from '@/lib/store';
-import { AnimeItem, GroupedEpisodes, EpisodeInfo } from '@/lib/types';
+import { AnimeItem, GroupedEpisodes } from '@/lib/types';
 
 
 
@@ -89,7 +89,7 @@ const Player: React.FC<PlayerProps> = ({
 
   // Strongly type the ref with the element type from Vidstack
   const playerRef = useRef<MediaPlayerInstance>(null);
-  const { duration, fullscreen } = useMediaStore(playerRef);
+  const { duration } = useMediaStore(playerRef);
   const remote = useMediaRemote(playerRef);
 
   const [opbutton, setopbutton] = useState<boolean>(false);
@@ -102,7 +102,7 @@ const Player: React.FC<PlayerProps> = ({
 
   useEffect(() => {
     // The parameters (currentTime, duration) are automatically typed by Vidstack's subscribe method
-    const unsubscribe = playerRef.current?.subscribe(({ currentTime, duration }: { currentTime: number; duration: number }) => {
+    const unsubscribe = playerRef.current?.subscribe(({ currentTime }: { currentTime: number; duration: number }) => {
       if (skiptimes && skiptimes.length > 0) {
         const op = skiptimes.find(s => s.text === "Opening");
         const ed = skiptimes.find(s => s.text === "Ending");

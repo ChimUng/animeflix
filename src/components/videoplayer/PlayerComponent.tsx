@@ -21,14 +21,14 @@ interface SkipTime {
 }
 
 // Định nghĩa interface cho episode trong nowPlaying
-interface Episode {
-  download: string | null;
-  skiptimes: SkipTime[];
-  epId: string | null;
-  provider: string | null;
-  epNum: string | number | null;
-  subtype: string | null;
-}
+// interface Episode {
+//   download: string | null;
+//   skiptimes: SkipTime[];
+//   epId: string | null;
+//   provider: string | null;
+//   epNum: string | number | null;
+//   subtype: string | null;
+// }
 
 // Định nghĩa interface cho groupedEp
 interface GroupedEp {
@@ -78,6 +78,21 @@ interface PlayerComponentProps {
   savedep: SavedEpisode[];
 }
 
+interface AniSkipInterval {
+  startTime: number;
+  endTime: number;
+}
+
+interface AniSkipResult {
+  skipType: "op" | "ed";
+  interval: AniSkipInterval;
+}
+
+interface AniSkipResponse {
+  found: boolean;
+  results: AniSkipResult[];
+}
+
 const PlayerComponent: FC<PlayerComponentProps> = ({
   id,
   epId,
@@ -123,9 +138,9 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
             throw new Error("Không tìm thấy danh sách tập phim.");
         }
         setAllProvidersData(providersResponse);
-      } catch (err: any) {
-        console.error("Lỗi khi fetch Episodes:", err);
-        const errorMessage = err.message || "Lỗi tải danh sách tập phim.";
+      } catch (error: unknown) {
+        console.error("Lỗi khi fetch Episodes:", error);
+        const errorMessage = (error as Error).message || "Lỗi tải danh sách tập phim.";
         toast.error(errorMessage);
         setError(errorMessage);
         setIsEpisodeListLoading(false);
@@ -155,10 +170,10 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
             `https://api.aniskip.com/v2/skip-times/${data.idMal}/${parseInt(epNum)}?types[]=op&types[]=ed&episodeLength=${episodeLength}`
           );
           if (skipResponse.ok) {
-            const skipData = await skipResponse.json();
+            const skipData: AniSkipResponse = await skipResponse.json();
             if (skipData?.found && skipData?.results?.length > 0) {
-              const op = skipData.results.find((item: any) => item.skipType === "op");
-              const ed = skipData.results.find((item: any) => item.skipType === "ed");
+              const op = skipData.results.find((item) => item.skipType === "op");
+              const ed = skipData.results.find((item) => item.skipType === "ed");
               const newSkipTimes: SkipTime[] = [];
               if (op?.interval) newSkipTimes.push({ startTime: op.interval.startTime, endTime: op.interval.endTime, text: "Opening" });
               if (ed?.interval) newSkipTimes.push({ startTime: ed.interval.startTime, endTime: ed.interval.endTime, text: "Ending" });
@@ -185,9 +200,9 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
       }
       useNowPlaying.setState({ nowPlaying: { epId, provider, epNum, subtype: subdub } });
 
-    } catch (err: any) {
-      console.error("Lỗi khi fetch Sources:", err);
-      const errorMessage = err.message || "Lỗi tải nguồn video.";
+    } catch (error: unknown) {
+      console.error("Lỗi khi fetch Sources:", error);
+      const errorMessage = (error as Error).message || "Lỗi tải nguồn video.";
       toast.error(errorMessage);
       setError(errorMessage);
     } finally {
@@ -294,7 +309,7 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
         user: session.user
           ? {
               name: session.user.name ?? undefined,
-              token: (session.user as any).token ?? undefined,
+              token: (session.user).token ?? undefined,
             }
           : undefined,
       }

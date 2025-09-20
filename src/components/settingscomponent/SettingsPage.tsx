@@ -38,6 +38,10 @@ const SettingsPage: React.FC = () => {
     const settings = useStore(useSettings, (state) => state.settings);
     const [loading, setLoading] = useState(false);
 
+    useEffect(() => {
+        setLoading(false);
+    }, []);
+
     return (
         <div>
             <div className='relative h-[240px] md:h-[340px]'>

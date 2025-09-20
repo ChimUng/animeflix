@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import styles from '../../styles/PlayerEpisodeList.module.css';
-import { getEpisodes } from "@/lib/getData";
+// import { getEpisodes } from "@/lib/getData";
 import { ProvidersMap } from "@/utils/EpisodeFunctions";
 import { useRouter } from 'next-nprogress-bar';
 import EpImgContent from "../Episodelists/EpImgContent";
@@ -10,7 +10,7 @@ import { Select, SelectItem, Tooltip } from "@nextui-org/react";
 import Skeleton from "react-loading-skeleton";
 import { useSubtype } from '@/lib/store';
 import { useStore } from 'zustand';
-import { Provider } from "@/lib/getData";
+import { Provider} from "@/lib/getData";
 import { AnimeItem, EpisodeInfo } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -38,7 +38,7 @@ function PlayerEpisodeList({ isLoading, id, data, onprovider, epnum, allProvider
   const [filteredEp, setFilteredEp] = useState<EpisodeInfo[]>([]);
   const itemsPerPage: number = 35;
   const [subOptions, setSubOptions] = useState<string[] | null>(null);
-  const [progress, setProgress] = useState<number>(0);
+  const [progress] = useState<number>(0);
   const [refreshLoading, setRefreshLoading] = useState<boolean>(false);
 
   // ✅ useEffect mới để xử lý dữ liệu từ props
@@ -203,8 +203,9 @@ function PlayerEpisodeList({ isLoading, id, data, onprovider, epnum, allProvider
                   DUB:
                 </span>
                 {allProvidersData?.map((item) => {
-                    const hasDub = item.consumet ? (item.episodes as any)?.dub?.length > 0 : subOptions.includes('dub');
-                    if (!hasDub) return null;
+                const hasDub = item.consumet && !Array.isArray(item.episodes) ? (item.episodes.dub ?? []).length > 0 : subOptions.includes("dub");
+                if (!hasDub) return null;
+
                     return (
                     <div
                         key={`${item.providerId}-dub`}

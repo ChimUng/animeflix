@@ -87,10 +87,10 @@ export async function GET(req: NextRequest) {
         "Cache-Control": "public, max-age=3600",
       },
     });
-  } catch (error: any) {
-    console.error("❌ Lỗi stream:", error.message);
+  } catch (error: unknown) {
+    console.error("❌ Lỗi stream:", (error as Error)?.message);
     return NextResponse.json(
-      { error: "Không lấy được stream", detail: error.message },
+      { error: "Không lấy được stream", detail: (error as Error)?.message },
       { status: 500 }
     );
   }

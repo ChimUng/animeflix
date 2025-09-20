@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { AnimeItem } from "@/lib/types";
 
 // 1. Settings Store
 interface Settings {
@@ -77,20 +78,27 @@ export const useSearchbar = create<SearchbarState>()((set) => ({
 }));
 
 // 5. NowPlaying Store
+interface NowPlaying {
+  epId: string;
+  provider: string;
+  epNum: string;
+  subtype: string; 
+}
+
 interface NowPlayingState {
-    nowPlaying: Record<string, any>; 
-    setNowPlaying: (nowPlaying: Record<string, any>) => void;
+  nowPlaying?: NowPlaying;
+  setNowPlaying: (nowPlaying: NowPlaying) => void;
 }
 
 export const useNowPlaying = create<NowPlayingState>()((set) => ({
-    nowPlaying: {},
+    nowPlaying: undefined,
     setNowPlaying: (nowPlaying) => set({ nowPlaying }),
 }));
 
 // 6. DataInfo Store
 interface DataInfoState {
-    dataInfo: Record<string, any>; 
-    setDataInfo: (dataInfo: Record<string, any>) => void;
+    dataInfo?: AnimeItem;
+    setDataInfo: (dataInfo: AnimeItem) => void;
 }
 // dùng để lưu thông tin anime, như title, coverImage, description, v.v.
 // sử dụng đề xuất anime cùng thể loại với anime đang xem
@@ -98,6 +106,6 @@ interface DataInfoState {
 //  Nút "Thêm vào danh sách yêu thích" ❤️
 // Nút "Chia sẻ lên mạng xã hội"
 export const useDataInfo = create<DataInfoState>()((set) => ({
-    dataInfo: {},
+    dataInfo: undefined,
     setDataInfo: (dataInfo) => set({ dataInfo }),
 }));

@@ -43,20 +43,20 @@ function page() {
               </li>
               <li>
                 Tuyên bố sau đây:{" "}
-                "Tôi hoàn toàn tin tưởng rằng việc sử dụng tài liệu có bản quyền
-                mà tôi đang khiếu nại là không được chủ sở hữu bản quyền, đại diện của chủ sở hữu bản quyền hoặc luật pháp cho phép (ví dụ: sử dụng hợp lý)";
+                {`"Tôi hoàn toàn tin tưởng rằng việc sử dụng tài liệu có bản quyền
+                mà tôi đang khiếu nại là không được chủ sở hữu bản quyền, đại diện của chủ sở hữu bản quyền hoặc luật pháp cho phép (ví dụ: sử dụng hợp lý)"`};
               </li>
               <li>
                 Tuyên bố sau đây:{" "}
-                "Thông tin trong thông báo này là chính xác và, dưới hình phạt
+                {`"Thông tin trong thông báo này là chính xác và, dưới hình phạt
                 của việc khai man, tôi là chủ sở hữu, hoặc được ủy quyền hành động thay mặt
                 cho chủ sở hữu, của bản quyền hoặc quyền độc quyền mà
-                bị cáo buộc vi phạm";
+                bị cáo buộc vi phạm"`};
               </li>
               <li>
                 Tuyên bố sau đây:{" "}
-                "Tôi hiểu rằng tôi có thể bị kiện nếu
-                gửi yêu cầu DMCA mà không có bằng chứng xác đáng.";
+                {`"Tôi hiểu rằng tôi có thể bị kiện nếu
+                gửi yêu cầu DMCA mà không có bằng chứng xác đáng."`};
               </li>
               <li>
                 Chữ ký điện tử hoặc chữ ký trực tiếp của chủ sở hữu bản quyền hoặc người được ủy quyền hành động thay mặt chủ sở hữu.

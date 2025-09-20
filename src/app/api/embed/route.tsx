@@ -17,8 +17,12 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.redirect(new URL(url));
 
-  } catch (error: any) {
-    console.error("❌ Lỗi Embed Proxy Redirect:", error.message);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Lỗi Embed Proxy Redirect:", error.message);
+    } else {
+      console.error("Lỗi Embed Proxy Redirect:", error);
+    }
     return new NextResponse("Failed to process embed request.", { status: 500 });
   }
 }

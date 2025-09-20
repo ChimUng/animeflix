@@ -4,7 +4,7 @@ import { Accordion, AccordionItem, Select, SelectItem, RadioGroup, Radio, Input 
 import { Combobox,ComboboxInput,ComboboxButton,ComboboxOptions,ComboboxOption,Transition,} from '@headlessui/react';
 import Searchcard from './Searchcard';
 import styles from '../../styles/Catalog.module.css';
-import { seasonOptions, genreOptions, tagsOptions, formatOptions, yearOptions, sortbyOptions, airingOptions } from './options';
+import { seasonOptions, genreOptions, tagsOptions, formatOptions, yearOptions, sortbyOptions } from './options';
 
 // Định nghĩa kiểu
 type SearchParams = {
@@ -244,7 +244,7 @@ function Catalog({ searchParams }: { searchParams: SearchParams }) {
                         filteredTags.length === 0 &&
                         query !== '' ? (
                             <div className="relative cursor-default select-none px-4 py-2 text-white">
-                            Không tìm thấy thể loại "{query}"
+                            {`Không tìm thấy thể loại "${query}"`}
                             </div>
                         ) : (
                             <>

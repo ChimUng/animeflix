@@ -2,7 +2,7 @@
 import axios from "axios";
 import { redis } from "@/lib/rediscache";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { AnimeItem } from "@/lib/types";
 
 axios.interceptors.request.use(config => {
   config.timeout = 9000;
@@ -35,7 +35,7 @@ interface EpisodeItem {
   };
 }
 
-interface RecentEpisode {
+export interface RecentEpisode {
   id: string;
   title: EpisodeItem['title'];
   status: string;
@@ -44,6 +44,7 @@ interface RecentEpisode {
   currentEpisode: number;
   coverImage: EpisodeItem['coverImage'];
   latestEpisode: string;
+  genres?: string[];
 }
 
 interface ConsumetEpisodeItem {
@@ -147,19 +148,19 @@ export async function fetchRecentFromAnilist(): Promise<RecentEpisode[]> {
 
   const json = await res.json();
 
-  return json.data.Page.media.map((item: any) => ({
+  return json.data.Page.media.map((item: AnimeItem) => ({
     id: item.id.toString(),
     title: item.title,
     coverImage: item.coverImage,
     status: item.status,
     format: item.format,
-    currentEpisode: item.nextAiringEpisode?.episode - 1 || "",
+    currentEpisode: item.nextAiringEpisode?.episode ? item.nextAiringEpisode.episode - 1 : null,
     totalEpisodes: item.episodes,
     latestEpisode: item.nextAiringEpisode?.episode?.toString() || "1",
   }));
 }
 
-export const GET = async (req: NextRequest) => {
+export const GET = async () => {
   let cached: string | null = null;
 
   if (redis) {
@@ -190,8 +191,8 @@ export const GET = async (req: NextRequest) => {
   try {
     data = await fetchRecentFromAnilist();
     console.log("Fetched recent from Anilist");
-  } catch (err) {
-    console.error("Anilist failed. Falling back to AniList...");
+  } catch (error) {
+    console.error("Anilist failed. Falling back to AniList...", error);
     data = await fetchRecentFromAnilist();
   }
 

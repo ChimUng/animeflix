@@ -3,46 +3,45 @@
 import React, { useState } from 'react'
 import styles from '../../../styles/AnimeDetailsBottom.module.css'
 import { Tooltip } from "@nextui-org/react"
-import { useTranslationCache } from '@/lib/useTranslationCache'; // <-- THÊM DÒNG NÀY
+import { useTranslationCache } from '@/lib/useTranslationCache'; 
+import { AnimeItem } from '@/lib/types';
 
 // Kiểu dữ liệu gợi ý dựa trên dữ liệu AniList
-interface AnimeItem {
-    id: number; // <-- THÊM DÒNG NÀY
-    title: { // <-- THÊM OBJECT NÀY
-        romaji: string;
-        english?: string;
-    }
-    status?: string
-    format?: string
-    episodes?: number
-    nextAiringEpisode?: {
-        episode: number
-        airingAt: number
-    }
-    genres: string[]
-    startDate?: {
-        year: number
-        month: number
-        day: number
-    }
-    endDate?: {
-        year: number
-        month: number
-        day: number
-    }
-    season?: string
-    seasonYear?: number
-    countryOfOrigin?: string
-    studios?: {
-        nodes: {
-        name: string
-        }[]
-    }
-    source?: string
-    duration?: number
-    popularity?: number
-    description?: string
-}
+// interface AnimeItem {
+//     id: number;
+//     title: {
+//         romaji: string | null;
+//         english?: string | null;
+//     };
+//     status?: string | null;
+//     format?: string | null;
+//     episodes?: number | null; // <-- Sửa từ number sang number | null
+//     nextAiringEpisode?: {
+//         episode: number;
+//         airingAt: number;
+//     } | null;
+//     genres: string[];
+//     startDate?: {
+//         year: number;
+//         month: number;
+//         day: number;
+//     } | null;
+//     endDate?: {
+//         year: number;
+//         month: number;
+//         day: number;
+//     } | null;
+//     season?: string | null;
+//     seasonYear?: number | null;
+//     countryOfOrigin?: string | null;
+//     studios?: {
+//         nodes: { name: string }[];
+//     } | null;
+//     source?: string | null;
+//     duration?: number | null;
+//     popularity?: number | null;
+//     description?: string | null;
+// }
 
 interface OverviewProps {
     data: AnimeItem
@@ -54,7 +53,7 @@ const Overview: React.FC<OverviewProps> = ({ data, id }) => {
     // GỌI HOOK Ở ĐÂY
     const { descriptionVI } = useTranslationCache(
         id,
-        data.title.romaji, // Cần title để làm context
+        data.title.romaji || "", // Cần title để làm context
         data.description || "Không có mô tả"
     );
 

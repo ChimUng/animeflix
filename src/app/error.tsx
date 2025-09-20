@@ -10,8 +10,7 @@ interface ErrorPageProps {
 }
 
 export default function ErrorPage({
-  error,
-  reset,
+    reset,
 }: ErrorPageProps) { // Áp dụng interface ErrorPageProps vào props
 
   // useEffect(() => {

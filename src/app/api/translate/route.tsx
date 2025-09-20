@@ -106,7 +106,7 @@ Mô tả: ${description}
 
       const translations = results.map((result, index) => {
         const response = result.response;
-        let text = response.text();
+        const text = response.text();
         let title_vi = "";
         let description_vi = "";
 
@@ -191,24 +191,28 @@ Mô tả: ${description}
         cached: false,
         translated: responseData,
       });
-    } catch (err: any) {
-      if (err.status === 429) {
-        const isQuotaError = err.errorDetails?.some((detail: any) =>
-          detail["@type"]?.includes("QuotaFailure")
-        );
+    } catch (err: unknown) {
+      const e = err as { status?: number; errorDetails?: { "@type"?: string }[]; message?: string };
+
+      if (e.status === 429) {
+        const isQuotaError = e.errorDetails?.some(d => d["@type"]?.includes("QuotaFailure"));
         if (isQuotaError) {
-          console.error("Gemini API quota exceeded:", err.errorDetails);
+          console.error("Gemini API quota exceeded:", e.errorDetails);
           return NextResponse.json({ error: "Gemini API quota exceeded" }, { status: 429 });
         }
+
         if (retryCount > 0) {
           console.warn(`⚠️ Rate limited (429), retrying after ${delay}ms...`);
-          await new Promise((resolve) => setTimeout(resolve, delay));
+          await new Promise(r => setTimeout(r, delay));
           return translateWithRetry(requests, retryCount - 1, delay * 2);
         }
       }
 
-      console.error("Gemini translation failed:", err);
-      return NextResponse.json({ error: "Translate failed", details: err.message }, { status: 500 });
+      console.error("Gemini translation failed:", e.message ?? err);
+      return NextResponse.json(
+        { error: "Translate failed", details: e.message ?? String(err) },
+        { status: 500 }
+      );
     }
   };
 

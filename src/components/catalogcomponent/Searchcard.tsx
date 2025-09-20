@@ -9,13 +9,20 @@ import styles from "../../styles/Catalog.module.css";
 import UseDebounce from "@/utils/UseDebounce";
 import { useTitle } from "@/lib/store";
 import { useStore } from "zustand";
+import { AnimeItem } from "@/lib/types";
+
+type Option = {
+    name: string;
+    value: string;
+    type: string;
+};
 
 interface SearchcardProps {
     searchvalue: string;
     selectedYear: number | null;
     seasonvalue: string | null;
     formatvalue: string | null;
-    genrevalue: any[];
+    genrevalue: Option[];
     sortbyvalue: string | null;
     airingvalue?: string | null;
     }
@@ -31,7 +38,7 @@ interface SearchcardProps {
     }) => {
     const animetitle = useStore(useTitle, (state) => state.animetitle);
     const [currentPage, setCurrentPage] = useState(1);
-    const [searchdata, setsearchdata] = useState<any[] | null>(null);
+    const [searchdata, setsearchdata] = useState<AnimeItem[] | null>(null);
     const [lastpage, setlastpage] = useState<number | undefined>();
     const [loading, setLoading] = useState(true);
     const debouncedSearch = UseDebounce(searchvalue, 500);
@@ -71,7 +78,7 @@ interface SearchcardProps {
       {!loading && searchdata && searchdata.length === 0 && (
         <div className="text-center w-[100%] h-[100%] text-semibold text-2xl">
           <p>whoops!</p>
-          Không tìm thấy kết quả <span className="text-3xl text-d234">"{searchvalue}"</span>
+          <p>Không tìm thấy kết quả <span className="text-3xl text-d234">&quot;{searchvalue}&quot;</span></p>
         </div>
       )}
 

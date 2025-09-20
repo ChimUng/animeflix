@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Characters from "./Characters";
 import Overview from "./tabs/Overview";
 import Image from "next/image";
+import { AnimeItem } from "@/lib/types";
 
 // Kiểu cho mỗi tab
 interface TabItem {
@@ -15,7 +16,7 @@ interface TabItem {
 
 // Kiểu cho props chính
 interface AnimeDetailsBottomProps {
-  data: any; // Gợi ý: bạn có thể thay `any` bằng kiểu từ Anilist schema nếu có
+  data: AnimeItem; // Gợi ý: bạn có thể thay `any` bằng kiểu từ Anilist schema nếu có
   id: number; // <-- THÊM DÒNG NÀ
 }
 
@@ -66,13 +67,13 @@ const AnimeDetailsBottom: React.FC<AnimeDetailsBottomProps> = ({ data, id }) => 
                 exit="exit"
                 transition={{ duration: 0.3 }}
             >
-                {activeTab.name === "Overview" && <Overview data={data} id={id} />}
+                {activeTab.name === "Overview" && <Overview data={{ ...data, id: Number(data.id) }} id={id} />}
 
                 {activeTab.name === "Relations" && (
                 <div className={styles.relations}>
                     <h3 className={styles.relationsheading}>Phim liên quan</h3>
                     <Animecards
-                    data={data?.relations?.edges}
+                    data={data.relations?.edges?.map(edge => edge.node) ?? null} 
                     cardid="Related Anime"
                     show={false}
                     />

@@ -20,7 +20,10 @@ type NavbarProps = {
 type User = {
     name?: string | null;
     email?: string | null;
-    image?: string | null;
+    image?: string | {   
+        large: string;
+        medium: string;
+        } | null;
     token?: string;
 };
 
@@ -363,9 +366,9 @@ function Navbarcomponent({ home = false }: NavbarProps) {
                         name={data?.user?.name || undefined}
                         size="sm"
                         src={
-                        typeof data?.user?.image === 'string'
+                            typeof data?.user?.image === "string"
                             ? data.user.image
-                            : (data?.user?.image as any)?.large || 'https://i.pravatar.cc'
+                            : data?.user?.image?.large || "https://i.pravatar.cc"
                         }
                     />
                     </DropdownTrigger>

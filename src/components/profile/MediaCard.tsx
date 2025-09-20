@@ -1,34 +1,40 @@
 "use client";
 import {useState, useEffect} from 'react';
 import Image from 'next/image';
-import {AnimeItem} from '@/lib/types'
+// import {AnimeItem} from '@/lib/types'
 import { useStore } from 'zustand';
 import { useTitle } from '@/lib/store';
 import Link from 'next/link';
 import { Modal, ModalContent, ModalBody } from "@nextui-org/react";
 import Addtolist from '../details/Addtolist';
+import { MediaListEntry } from '@/lib/AnilistUser';
 
-interface Anime {
-  id: number;
-  mediaId: number;
-  progress?: number;
-  updatedAt?: number;
-  media?: AnimeItem;
-}
+
+// interface Anime {
+//   id: number;
+//   mediaId: number;
+//   progress?: number;
+//   updatedAt?: number;
+//   media?: AnimeItem;
+// }
 
 interface MediaCardProps {
-  anime: Anime;
-  session: any; // 👉 bạn có thể thay bằng `Session` từ next-auth nếu muốn strict hơn
+  anime: MediaListEntry;
+  session: {
+        user: {
+        token: string;
+        };
+    }; 
 }
 
 function MediaCard({ anime, session }: MediaCardProps) {
     const animetitle = useStore(useTitle, (state) => state.animetitle);
     const [openlist, setOpenlist] = useState(false);
-    const [list, setList] = useState<Anime[]>([]);
+    const [list, setList] = useState<MediaListEntry | null>(null);
 
     useEffect(() => {
-        if (anime.media) {
-            setList([anime]);
+        if (anime) {
+            setList(anime);
         }
     }, [anime]);
 
@@ -40,12 +46,12 @@ function MediaCard({ anime, session }: MediaCardProps) {
     return (
         <div className='flex flex-col'>
             <div className='relative overflow-hidden rounded-lg shadow-lg group p-1 flex-shrink-0 cursor-pointer'>
-                <Link href={`/anime/info/${anime?.mediaId}`}>
+                <Link href={`/anime/info/${anime?.id}`}>
                     <div className="aspect-[1/1.45] overflow-hidden rounded-lg">
                         <Image
                         src={anime?.media?.coverImage?.extraLarge || "/placeholder.jpg"}
                         alt={
-                            anime?.media?.title?.[animetitle] ||
+                            anime?.media?.title?.[animetitle as "romaji" | "english" | "native"]  ||
                             anime?.media?.title?.romaji ||
                             "Anime cover"
                         }
@@ -69,7 +75,7 @@ function MediaCard({ anime, session }: MediaCardProps) {
                         body: "p-0",
                     }}>
                     <ModalContent>
-                        {(onClose) => (
+                        {() => (
                             <>
                                 <ModalBody className=''>
                                     <div className='relative'>
@@ -79,12 +85,12 @@ function MediaCard({ anime, session }: MediaCardProps) {
                                         ></div>
                                         <div className='absolute z-10 bottom-1 sm:bottom-0 sm:top-[65%] left-0 sm:left-3 md:left-10 flex flex-row items-center'>
                                             <Image src={anime?.media?.coverImage?.extraLarge || "/placeholder.jpg"} alt='Image' width={120} height={120} className="hidden sm:flex rounded-md" />
-                                            <div className='px-2 sm:px-4 mb-4 font-medium !text-xl text-white max-w-full line-clamp-2'>{anime?.media?.title?.[animetitle] || anime?.media?.title?.romaji}</div>
+                                            <div className='px-2 sm:px-4 mb-4 font-medium !text-xl text-white max-w-full line-clamp-2'>{anime?.media?.title?.[animetitle as "romaji" | "english" | "native"] || anime?.media?.title?.romaji}</div>
                                         </div>
                                     </div>
                                     <div className='mt-2 sm:mt-20 md:px-[5%] px-[2%] mb-2'>
                                         <Addtolist session={session} setList={setList} list={list}
-                                            id={anime?.mediaId} eplength={anime.media?.episodes ?? (anime.media?.nextAiringEpisode?.episode ? anime.media.nextAiringEpisode.episode - 1 : undefined) ?? 24} Handlelist={Handlelist} />
+                                            id={anime?.id} eplength={anime.media?.episodes ?? (anime.media?.nextAiringEpisode?.episode ? anime.media.nextAiringEpisode.episode - 1 : undefined) ?? 24} Handlelist={Handlelist} />
                                     </div>
                                 </ModalBody>
                             </>
@@ -92,11 +98,11 @@ function MediaCard({ anime, session }: MediaCardProps) {
                     </ModalContent>
                 </Modal>
             </div>
-            <Link href={`/anime/info/${anime?.mediaId}`}>
+            <Link href={`/anime/info/${anime?.id}`}>
                 <div className="overflow-hidden flex flex-row justify-center items-center text-center text-white font-medium px-2.5 my-0 sm:my-1 cursor-pointer text-[12px] sm:text-sm !line-clamp-2">
                     <span className={`aspect-square w-2 h-2 inline-block mr-1 sm:mr-2 rounded-full ${anime?.media?.status === "NOT_YET_RELEASED" ? 'bg-red-500' : anime?.media?.status === 'RELEASING' ? 'bg-green-500' : 'hidden'}`}>
                     </span>
-                    {anime?.media?.title?.[animetitle] || anime?.media?.title?.romaji}
+                    {anime?.media?.title?.[animetitle as "romaji" | "english" | "native"] || anime?.media?.title?.romaji}
                 </div>
             </Link>
         </div>

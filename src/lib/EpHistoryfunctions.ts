@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { Session } from "next-auth";
 // Import IWatch từ file model của bạn, đây là nguồn tin cậy duy nhất cho kiểu dữ liệu
 import Watch, { IWatch } from '@/mongodb/models/watch';
+import { DeleteResult as MongooseDeleteResult } from "mongodb";
 
 // --- Type Definitions ---
 
@@ -28,7 +29,7 @@ interface DeleteParams {
 type DeleteResult = {
   message: string;
   remainingData?: IWatch[];
-  deletedData?: any;
+  deletedData?: IWatch | MongooseDeleteResult | null;
 }
 
 // --- Server Actions ---

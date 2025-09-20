@@ -28,7 +28,7 @@ export class MalSync {
             if (!providerId) throw new Error(`Missing key for provider ${provider} in MalSync for ID: ${id}`);
             
             return providerId;
-        } catch (error) {
+        } catch {
             // Nếu lỗi, giả định id là Anilist ID và thực hiện fallback
             console.log(`MalSync failed for ID ${id}, attempting AniZip fallback...`);
             const malId = await fetchAniZipMalId(id);

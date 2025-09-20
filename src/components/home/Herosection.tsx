@@ -71,41 +71,41 @@ function Herosection({ data }: HerosectionProps) {
 
     // Hàm fetchTrailer được tách ra và sử dụng useCallback
     const fetchTrailer = useCallback(async (trailerId: string) => {
-        // setTrailer(null); // Reset trailer khi chuyển banner
-        // setVideoEnded(false); // Reset trạng thái video
-        // try {
-        //     const response = await fetch(`https://pipedapi.kavin.rocks/streams/${trailerId}`);
-        //     const res = await response.json();
+        setTrailer(null); // Reset trailer khi chuyển banner
+        setVideoEnded(false); // Reset trạng thái video
+        try {
+            const response = await fetch(`https://pipedapi.kavin.rocks/streams/${trailerId}`);
+            const res = await response.json();
 
-        //     // console.log("Piped API Full Response for trailerId", trailerId, ":", res);
+            // console.log("Piped API Full Response for trailerId", trailerId, ":", res);
 
-        //     if (!Array.isArray(res.videoStreams) || res.videoStreams.length === 0) {
-        //         // console.warn("No valid videoStreams found in API response for trailerId:", trailerId, res);
-        //         setVideoEnded(true);
-        //         return;
-        //     }
+            if (!Array.isArray(res.videoStreams) || res.videoStreams.length === 0) {
+                // console.warn("No valid videoStreams found in API response for trailerId:", trailerId, res);
+                setVideoEnded(true);
+                return;
+            }
 
-        //     let item = res.videoStreams.find(
-        //         (i: { quality: string; format: string; url: string }) =>
-        //             i.quality === '1080p' && i.format === 'WEBM'
-        //     );
-        //     // Thêm logic tìm kiếm định dạng khác nếu cần (như đã thảo luận trước)
-        //     if (!item) item = res.videoStreams.find((i: { quality: string; format: string; url: string }) => i.quality === '720p' && i.format === 'WEBM');
-        //     if (!item) item = res.videoStreams.find((i: { quality: string; format: string; url: string }) => i.quality === '1080p');
-        //     if (!item) item = res.videoStreams.find((i: { quality: string; format: string; url: string }) => i.quality === '720p');
-        //     if (!item && res.videoStreams.length > 0) item = res.videoStreams[0];
+            let item = res.videoStreams.find(
+                (i: { quality: string; format: string; url: string }) =>
+                    i.quality === '1080p' && i.format === 'WEBM'
+            );
+            // Thêm logic tìm kiếm định dạng khác nếu cần (như đã thảo luận trước)
+            if (!item) item = res.videoStreams.find((i: { quality: string; format: string; url: string }) => i.quality === '720p' && i.format === 'WEBM');
+            if (!item) item = res.videoStreams.find((i: { quality: string; format: string; url: string }) => i.quality === '1080p');
+            if (!item) item = res.videoStreams.find((i: { quality: string; format: string; url: string }) => i.quality === '720p');
+            if (!item && res.videoStreams.length > 0) item = res.videoStreams[0];
 
 
-        //     if (item && item.url) {
-        //         setTrailer(item.url);
-        //     } else {
-        //         console.warn("Found video stream item but no URL:", item);
-        //         setVideoEnded(true);
-        //     }
-        // } catch (error) {
-        //     // console.error('Error fetching trailer for ID', trailerId, ':', error);
-        //     setVideoEnded(true);
-        // }
+            if (item && item.url) {
+                setTrailer(item.url);
+            } else {
+                console.warn("Found video stream item but no URL:", item);
+                setVideoEnded(true);
+            }
+        } catch {
+            // console.error('Error fetching trailer for ID', trailerId, ':', error);
+            setVideoEnded(true);
+        }
     }, []); // Dependencies của useCallback: không có gì nếu fetchTrailer không dùng state/props bên ngoài
 
     // useEffect để fetch trailer cho banner hiện tại
@@ -139,9 +139,9 @@ function Herosection({ data }: HerosectionProps) {
         setCurrentIndex((prevIndex) => (prevIndex + 1) % allBanners.length);
     };
 
-    const goToPrev = () => {
-        setCurrentIndex((prevIndex) => (prevIndex - 1 + allBanners.length) % allBanners.length);
-    };
+    // const goToPrev = () => {
+    //     setCurrentIndex((prevIndex) => (prevIndex - 1 + allBanners.length) % allBanners.length);
+    // };
 
     // Tự động chuyển đổi sau một khoảng thời gian (Tùy chọn)
     useEffect(() => {

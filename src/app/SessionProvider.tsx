@@ -34,12 +34,12 @@ export function AuthProvider({ children, session }: AuthProviderProps) {
         <SkeletonTheme baseColor="#18181b" highlightColor="#1e1e24" borderRadius={"0.5rem"}>
             {children}
         </SkeletonTheme>
-        {/* <ProgressBar
+        <ProgressBar
             height="3px"
             color="#CA1313"
             options={{ showSpinner: true }}
             // shallowRouting
-        /> */}
+        />
         </SessionProvider>
     );
 }

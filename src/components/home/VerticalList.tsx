@@ -4,7 +4,6 @@ import styles from '../../styles/VerticalList.module.css';
 import Link from 'next/link';
 import { useTitle } from '@/lib/store';
 import { useStore } from 'zustand';
-import { useTranslationCache } from '@/lib/useTranslationCache';
 
 interface AnimeTitle {
     romaji: string;
@@ -103,15 +102,15 @@ const VerticalList: React.FC<VerticalListProps> = ({ data, id, mobiledata, fullW
         </div>
         {currentData?.map((anime, index) => {
             // Thêm một giá trị description mặc định nếu không có
-                const animeDescription = anime.description || "Không có mô tả";
+                // const animeDescription = anime.description || "Không có mô tả";
 
-                const { titleVI } = useTranslationCache(
-                    Number(anime.id),
-                    anime.title.romaji,
-                    animeDescription
-                );
+                // const { titleVI } = useTranslationCache(
+                //     Number(anime.id),
+                //     anime.title.romaji,
+                //     animeDescription
+                // );
 
-                const displayTitle = titleVI || anime.title[animetitle as keyof AnimeTitle] || anime.title.romaji;
+                const displayTitle = anime.title[animetitle as keyof AnimeTitle] || anime.title.romaji;
             return (
                 <div className={`${styles.vcarditem} group`} key={anime.id}>
                 <div

@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from 'react';
-import { Usernotifications } from '@/lib/AnilistUser';
+import { AniListNotification, Usernotifications } from '@/lib/AnilistUser';
 import Image from 'next/image';
 import Skeleton from "react-loading-skeleton";
 import { formatTimeStamp, NotificationTime } from '@/utils/TimeFunctions';
@@ -14,18 +14,18 @@ interface PageInfo {
     hasNextPage: boolean;
 }
 
-interface Notification {
-    id: string;
-    contexts?: string[];
-    media?: { title: { romaji: string; english?: string; native?: string } };
-    episode?: number;
-    createdAt: number;
-    // type?: string;
-};
+// interface Notification {
+//     id: string;
+//     contexts?: string[];
+//     media?: { title: { romaji: string; english?: string; native?: string } };
+//     episode?: number;
+//     createdAt: number;
+//     // type?: string;
+// };
 
 interface NotificationResponse {
     pageInfo?: PageInfo;
-    notifications?: Notification[];
+    notifications?: AniListNotification[];
 }
 
 type NotificationProps = {
@@ -33,7 +33,7 @@ type NotificationProps = {
 };
 
 function Notifications ( {session} :NotificationProps ) {
-    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [notifications, setNotifications] = useState<AniListNotification[]>([]);
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(false);
     const [hasNextPage, sethasNextPage] = useState(false);
@@ -85,7 +85,7 @@ function Notifications ( {session} :NotificationProps ) {
                             <>
                                 <h2 className='mt-3 mb-[2px] text-warning'>Custom Lists</h2>
                                 <div>
-                                    {session?.user?.list?.map((item: any, index: number) => (
+                                    {session?.user?.list?.map((item: string, index: number) => (
                                         <div key={index}>
                                             {/* <p className='text-[#DBDCDD] text-xs md:text-sm'>{index + 1} • </p> */}
                                             <p className="sm:top-2 sm:left-2 px-1.5 w-fit sm:w-fit sm:px-2 py-1 rounded-lg text-xs shadow-2xl font-semibold !backdrop-blur-2xl flex items-center gap-1 bg-green-700 text-green-50">
@@ -100,20 +100,20 @@ function Notifications ( {session} :NotificationProps ) {
                 </div>
                 <div className='flex flex-col flex-grow gap-3'>
                     {notifications?.length > 0 ? (
-                        notifications?.map((item: any, index: number) => (
+                        notifications?.map((item: AniListNotification, index: number) => (
                             <div key={index} className='group relative mb-2 flex flex-row w-full bg-[#151518] rounded-md items-center h-[80px] text-sm  md:text-base !leading-none overflow-hidden 
                             transition-transform duration-300 ease-in-out hover:-translate-y-[2px] hover:shadow-[0_4px_15px_rgba(209,72,54,0.4)]'> 
-                                <Image alt="Image" width="100" height="100" src={item?.media?.coverImage?.extraLarge} className='w-[60px] rounded-md h-full' />
+                                <Image alt="Image" width="100" height="100" src={item?.media?.coverImage?.extraLarge || "/default.png"} className='w-[60px] rounded-md h-full' />
                                 <div className='mx-4'>
-                                    {item?.context ? (
+                                    {"context" in item ? (
                                         <div className='mb-1'>
-                                            <Link href={`/anime/info/${item?.media?.id}`} className='font-semibold hover:text-danger'> {item?.media?.title?.[animetitle] || item?.media?.title?.romaji} </Link>
+                                            <Link href={`/anime/info/${item?.media?.id}`} className='font-semibold hover:text-danger'> {item?.media?.title?.[animetitle as "romaji" | "english" | "native"] || item?.media?.title?.romaji} </Link>
                                             {` ${item?.context}`}
                                         </div>
                                     ) : (
                                         <div className='mb-1'>
                                             {`${item?.contexts?.[0]} ${item?.episode} ${item?.contexts?.[1]} `}
-                                            <Link href={`/anime/info/${item?.media?.id}`} className='font-semibold hover:text-danger'>{item?.media?.title?.[animetitle] || item?.media?.title?.romaji}</Link>
+                                            <Link href={`/anime/info/${item?.media?.id}`} className='font-semibold hover:text-danger'>{item?.media?.title?.[animetitle as "romaji" | "english" | "native"] || item?.media?.title?.romaji}</Link>
                                             {` ${item?.contexts?.[item?.contexts?.length - 1]}`}
                                         </div>
                                     )}

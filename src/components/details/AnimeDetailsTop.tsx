@@ -8,12 +8,18 @@ import Addtolist from './Addtolist';
 import { signIn } from 'next-auth/react';
 import { useTitle } from '@/lib/store';
 import { useStore } from 'zustand';
+import {MediaListEntry} from '@/lib/AnilistUser';
+import { AnimeItem } from '@/lib/types';
 
 interface AnimeDetailsTopProps {
-    data: any; // Ideally should use a type like `Media`
-    list: any; // Ideally should use MediaListEntry type
-    session: any; // From next-auth
-    setList: (entry: any) => void;
+    data: AnimeItem; // Ideally should use a type like `Media`
+    list: MediaListEntry | null; // Ideally should use MediaListEntry type
+    session: {
+        user: {
+        token: string;
+        };
+    };
+    setList: (entry: MediaListEntry | null) => void;
     url?: string | null;
 }
 
@@ -34,7 +40,7 @@ const AnimeDetailsTop: React.FC<AnimeDetailsTopProps> = ({ data, list, session, 
         <div
             className={styles.detailsbgimage}
             style={{
-            backgroundImage: `url(${data?.bannerImage || data?.coverImage.extraLarge || ''})`,
+            backgroundImage: `url(${data?.bannerImage || (data.coverImage?.extraLarge ?? "/default.png") || ''})`,
             backgroundPosition: "center",
             backgroundSize: "cover",
             height: "100%",
@@ -47,7 +53,7 @@ const AnimeDetailsTop: React.FC<AnimeDetailsTopProps> = ({ data, list, session, 
             <Button className={styles.detailstrailer} onPress={onOpen}>Xem Trailer</Button>
             <Modal backdrop='blur' isOpen={isOpen} onOpenChange={onOpenChange} size="2xl" placement="center">
             <ModalContent>
-                {(onClose) => (
+                {() => (
                 <>
                     <ModalHeader className="flex flex-col gap-0">
                     {data.title?.[animetitle] || data?.title?.romaji}
@@ -72,7 +78,7 @@ const AnimeDetailsTop: React.FC<AnimeDetailsTopProps> = ({ data, list, session, 
         {/* Anime Info */}
         <div className={styles.detailsinfo}>
             <div className={styles.detailsimgcon}>
-            <Image src={data?.coverImage?.extraLarge} alt='Image' width={2} height={3} className={styles.detailsimage} />
+            <Image src={data?.coverImage?.extraLarge ?? "/default.png"} alt='Image' width={2} height={3} className={styles.detailsimage} />
             </div>
 
             <div className={styles.detailstitle}>
@@ -103,7 +109,7 @@ const AnimeDetailsTop: React.FC<AnimeDetailsTopProps> = ({ data, list, session, 
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 mr-1">
                     <path fillRule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clipRule="evenodd" />
                     </svg>
-                    {list?.status === 'COMPLETED' ? 'Rewatch' : list?.progress > 0 ? `Watch Ep ${list.progress + 1}` : 'Xem ngay'}
+                    {list?.status === 'COMPLETED' ? 'Rewatch' : (list?.progress ?? 0) > 0 ? `Watch Ep ${(list?.progress ?? 0) + 1}` : 'Xem ngay'}
                 </Link>
                 ) : (
                 <button className={`${styles.detailswatch} opacity-40 bg-black`} disabled>
@@ -127,14 +133,14 @@ const AnimeDetailsTop: React.FC<AnimeDetailsTopProps> = ({ data, list, session, 
                     classNames={{ body: "p-0" }}
                 >
                     <ModalContent>
-                    {(onClose) => (
+                    {() => (
                         <>
                         <ModalBody>
                             <div className='relative'>
                             <div
                                 className="w-full !h-40 brightness-50 rounded-t-md"
                                 style={{
-                                backgroundImage: `url(${data?.bannerImage || data?.coverImage.extraLarge || ''})`,
+                                backgroundImage: `url(${data?.bannerImage || (data.coverImage?.extraLarge ?? "/default.png") || ''})`,
                                 backgroundPosition: "center",
                                 backgroundSize: "cover",
                                 height: "100%",
@@ -142,7 +148,7 @@ const AnimeDetailsTop: React.FC<AnimeDetailsTopProps> = ({ data, list, session, 
                             ></div>
                             <div className='absolute z-10 bottom-1 sm:bottom-0 sm:top-[65%] left-0 sm:left-3 md:left-10 flex flex-row items-center'>
                                 <Image
-                                src={data?.coverImage?.extraLarge}
+                                src={data?.coverImage?.extraLarge || "/default.png"}
                                 alt='Image'
                                 width={120}
                                 height={120}
@@ -159,8 +165,8 @@ const AnimeDetailsTop: React.FC<AnimeDetailsTopProps> = ({ data, list, session, 
                                 session={session}
                                 setList={setList}
                                 list={list}
-                                id={data?.id}
-                                eplength={data?.episodes || data?.nextAiringEpisode?.episode - 1 || 24}
+                                id={Number(data.id)} 
+                                eplength={data?.episodes ?? (data?.nextAiringEpisode?.episode !== undefined ? data.nextAiringEpisode.episode - 1 : undefined) ?? 24}
                                 Handlelist={Handlelist}
                             />
                             </div>
@@ -181,7 +187,7 @@ const AnimeDetailsTop: React.FC<AnimeDetailsTopProps> = ({ data, list, session, 
                     classNames={{ body: "py-6 px-3" }}
                 >
                     <ModalContent>
-                    {(onClose) => (
+                    {() => (
                         <>
                         <ModalBody>
                             <div className="text-center flex flex-col justify-center items-center">

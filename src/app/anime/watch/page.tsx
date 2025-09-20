@@ -76,7 +76,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   };
 }
 
-async function Ephistory(session: any, aniId: string, epNum: number, data: AnimeItem, epId: string): Promise<void | IWatch[] | null> {
+async function Ephistory(session: Session | null, aniId: string, epNum: number, data: AnimeItem, epId: string): Promise<void | IWatch[] | null> {
   try {
     if (session && aniId && epNum) {
       // 1. Lưu lịch sử cơ bản

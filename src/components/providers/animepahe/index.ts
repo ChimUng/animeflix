@@ -1,5 +1,5 @@
 import Provider, { type ProviderName } from '../generic';
-import { redis } from '@/lib/rediscache';
+// import { redis } from '@/lib/rediscache';
 import { load } from 'cheerio';
 import { MalSync } from '@/lib/malsync';
 import { extractSource } from './kwik';

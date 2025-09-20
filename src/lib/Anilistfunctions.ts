@@ -1,5 +1,5 @@
 "use server"
-import { trending, animeinfo, advancedsearch, top100anime, seasonal, popular, popularthisseasonal, popularmovie, mostfavorite, popularnextseasonal } from "./anilistqueries";
+import { trending, animeinfo, advancedsearch, top100anime, seasonal, popular, popularthisseasonal, popularmovie, mostfavorite } from "./anilistqueries";
 
 export const TrendingAnilist = async () => {
     try {
@@ -16,7 +16,7 @@ export const TrendingAnilist = async () => {
         next: { revalidate: 3600 },
         });
 
-        const data: any = await res.json();
+        const data = await res.json();
         return data.data.Page.media;
     } catch (err) {
         console.error("Error fetching trending:", err);
@@ -63,7 +63,7 @@ export const Top100Anilist = async () => {
         next: { revalidate: 3600 },
         });
 
-        const data: any = await res.json();
+        const data = await res.json();
         return data.data.Page.media;
     } catch (err) {
         console.error("Error fetching top 100:", err);
@@ -162,7 +162,7 @@ export const PopularMovie = async () => {
         next: { revalidate: 3600 },
         });
 
-        const data: any = await res.json();
+        const data = await res.json();
         return data.data.Page.media;
     } catch (err) {
         console.error("Error fetching popular movies:", err);
@@ -184,7 +184,7 @@ export const SeasonalAnilist = async () => {
         next: { revalidate: 3600 },
         });
 
-        const data: any = await res.json();
+        const data = await res.json();
         return data.data.Page.media;
     } catch (err) {
         console.error("Error fetching seasonal:", err);
@@ -206,7 +206,7 @@ export const MostFavoriteAnilist = async () => {
         next: { revalidate: 3600 },
         });
 
-        const data: any = await res.json();
+        const data = await res.json();
         return data.data.Page.media;
     } catch (err) {
         console.error("Error fetching most favorite:", err);
@@ -228,7 +228,7 @@ export const AnimeInfoAnilist = async (animeid: number | string) => {
         next: { revalidate: 3600 },
         });
 
-        const data: any = await res.json();
+        const data = await res.json();
         return data.data.Media;
     } catch (err) {
         console.error("Error fetching anime info:", err);

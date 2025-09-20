@@ -25,7 +25,7 @@ export interface GogoEpisode {
 }
 
 export interface AnimeItem {
-    id: string | number;
+    id: number | string;
     idMal?: number | null;
     title: AnimeTitle;
     status?: 'RELEASING' | 'FINISHED' | 'NOT_YET_RELEASED' | 'CANCELLED' | 'HIATUS' | null;
@@ -33,18 +33,25 @@ export interface AnimeItem {
     coverImage?: CoverImage | null;
     bannerImage?: string | null;
     description?: string | null;
-    trailer?: any;
+    trailer?: {
+    id: string;
+    site?: string;
+    thumbnail?: string;
+    } | null;
     format?: string | null;
     episodes?: number | null;
     totalEpisodes?: number | null;
     currentEpisode?: number | null;
     chapters?: number | null;
     genres?: string[] | null;
-    nextAiringEpisode?: NextAiringEpisode | null;
+    nextAiringEpisode?: {
+        episode?: number;    
+        airingAt?: number;   
+    } | null;
     recommendations?: {
-        nodes: { mediaRecommendation: AnimeItem }[] | null; // Sửa từ node thành mediaRecommendation
-    };
-        relations?: {
+        nodes: { mediaRecommendation: AnimeItem }[] | null;
+    } | null;
+    relations?: {
         edges: { node: AnimeItem; relationType: string }[] | null;
     } | null;
     episodesData?: {
@@ -56,7 +63,8 @@ export interface AnimeItem {
     mediaRecommendation?: AnimeItem | null;
     node?: AnimeItem | null;
     relationType?: string | null;
-    [key: string]: any;
+    latestEpisode?: string;
+    extraFields?: Record<string, unknown>;
 }
 
 export interface EpisodeInfo {

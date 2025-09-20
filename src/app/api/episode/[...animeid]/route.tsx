@@ -3,8 +3,9 @@ import axios from 'axios';
 import { redis } from '@/lib/rediscache';
 import { Redis } from 'ioredis';
 import { NextRequest, NextResponse } from 'next/server';
-import { CombineEpisodeMeta, Episode, Provider, ImageDataItem } from '@/utils/EpisodeFunctions';
-import AnimePahe from '@/components/providers/animepahe';
+import { CombineEpisodeMeta, Episode, Provider, ImageDataItem, RawEpisode, AnifyProvider} from '@/utils/EpisodeFunctions';
+
+// import AnimePahe from '@/components/providers/animepahe';
 
 type MalSyncEntry = {
   providerId: string;
@@ -22,7 +23,7 @@ async function fetchConsumet(id: string): Promise<Provider[]> {
     async function fetchData(dub = false): Promise<Episode[]> {
       const { data } = await axios.get(`${process.env.CONSUMET_URI}/meta/anilist/episodes/${id}${dub ? '?dub=true' : ''}`);
       if (data?.message === 'Anime not found' || data?.length < 1) return [];
-      return data.map((ep: any) => ({
+      return (data as Episode[]).map((ep) => ({
         ...ep,
         number: ep.number ?? 0,
       }));
@@ -43,33 +44,40 @@ async function fetchConsumet(id: string): Promise<Provider[]> {
           },
         ]
       : [];
-  } catch (error: any) {
-    console.error('Error fetching consumet:', error.message);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Error fetching consumet:", error.message);
+    } else {
+      console.error("Unknown error in fetchConsumet:", error);
+    }
     return [];
   }
 }
 
 async function fetchAnify(id: string): Promise<Provider[]> {
   try {
-    const { data } = await axios.get(`https://api.anify.tv/info/${id}?fields=[episodes]`);
+    const { data } = await axios.get<{ episodes: { data: AnifyProvider[] } }>(`https://api.anify.tv/info/${id}?fields=[episodes]`);
     if (!data?.episodes?.data) return [];
 
-    const filtered = data.episodes.data.filter((ep: any) => ep.providerId !== '9anime');
-    return filtered.map((i: any) => ({
+    const filtered = data.episodes.data.filter((ep) => ep.providerId !== '9anime');
+    return filtered.map((i) => ({
       providerId: i.providerId === 'gogoanime' ? 'gogobackup' : i.providerId,
       id: i.providerId,
       episodes: Array.isArray(i.episodes)
-        ? i.episodes.map((ep: any) => ({
+        ? i.episodes.map((ep) => ({
             ...ep,
             number: ep.number ?? 0,
           }))
         : {
-            sub: i.episodes.sub?.map((ep: any) => ({ ...ep, number: ep.number ?? 0 })) || [],
-            dub: i.episodes.dub?.map((ep: any) => ({ ...ep, number: ep.number ?? 0 })) || [],
+            sub: i.episodes.sub?.map((ep) => ({ ...ep, number: ep.number ?? 0 })) || [],
+            dub: i.episodes.dub?.map((ep) => ({ ...ep, number: ep.number ?? 0 })) || [],
           },
     }));
-  } catch (error: any) {
-    console.error('Error fetching anify:', error.message);
+  } catch (error) {
+    console.error(
+      "Error fetching anify:",
+      error instanceof Error ? error.message : error
+    );
     return [];
   }
 }
@@ -79,8 +87,11 @@ async function fetchAniZipMalId(anilistId: string): Promise<string | null> {
     const { data } = await axios.get(`https://api.ani.zip/mappings?anilist_id=${anilistId}`);
     // console.log(`AniZip mappings for Anilist ID ${anilistId}:`, JSON.stringify(data, null, 2));
     return data?.mappings?.mal_id?.toString() || null;
-  } catch (error: any) {
-    console.error(`Error fetching AniZip mappings for Anilist ID ${anilistId}:`, error.message);
+  } catch (error) {
+    console.error(
+      `Error fetching AniZip mappings for Anilist ID ${anilistId}:`,
+      error instanceof Error ? error.message : error
+    );
     return null;
   }
 }
@@ -123,8 +134,8 @@ async function MalSync(id: string): Promise<MalSyncEntry[] | null> {
       return null;
     }
     return providers;
-  } catch (error: any) {
-    console.error(`Error fetching MalSync for ID ${id}:`, error.message);
+  } catch (error) {
+    console.error(`Error fetching MalSync for ID ${id}:`,  error instanceof Error ? error.message : error);
     // Fallback to AniZip for MAL ID
     const malId = await fetchAniZipMalId(id);
     if (malId && malId !== id) {
@@ -138,9 +149,9 @@ async function MalSync(id: string): Promise<MalSyncEntry[] | null> {
 async function fetchGogoanime(sub: string, dub: string): Promise<Provider[]> {
   try {
     const fetchData = async (id: string) => {
-      const { data } = await axios.get(`${process.env.CONSUMET_URI}/anime/gogoanime/info/${id}`);
+      const { data } = await axios.get<{ episodes: RawEpisode[] }>(`${process.env.CONSUMET_URI}/anime/gogoanime/info/${id}`);
       return (
-        data?.episodes?.map((ep: any) => ({
+        data?.episodes?.map((ep: RawEpisode) => ({
           ...ep,
           number: ep.number ?? 0,
         })) || []
@@ -166,8 +177,12 @@ async function fetchGogoanime(sub: string, dub: string): Promise<Provider[]> {
           },
         ]
       : [];
-  } catch (error: any) {
-    console.error('Error fetching gogoanime:', error.message);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error(`Error fetching Gogo for ID :`, error.message);
+    } else {
+      console.error(`Unknown error fetching Gogo `);
+    }
     return [];
   }
 }
@@ -185,58 +200,66 @@ async function fetchZoro(id: string): Promise<Provider[]> {
       {
         providerId: 'zoro',
         id: 'zoro',
-        episodes: data.data.episodes.map((ep: any) => ({
+        episodes: data.data.episodes.map((ep: RawEpisode): Episode => ({
           ...ep,
           number: ep.number ?? 0,
         })),
       },
     ];
-  } catch (error: any) {
-    console.error(`Error fetching Zoro for ID ${id}:`, error.message);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error(`Error fetching Zoro for ID ${id}:`, error.message);
+    } else {
+      console.error(`Unknown error fetching Zoro for ID ${id}`);
+    }
     return [];
   }
 }
 
 // ⬇️ THÊM HÀM MỚI ĐỂ FETCH TỪ ANIMEPAHE ⬇️
-async function fetchAnimePahe(malId: number): Promise<Provider[]> { // Sửa: Trả về một MẢNG Provider
-    try {
-        const pahe = new AnimePahe(malId);
-        const page1 = await pahe.getEpisodes(1);
-        const page2 = await pahe.getEpisodes(2);
-        const page3 = await pahe.getEpisodes(3);
-        const allEpisodes = [...page1, ...page2, ...page3];
+// async function fetchAnimePahe(malId: number): Promise<Provider[]> { // Sửa: Trả về một MẢNG Provider
+//     try {
+//         const pahe = new AnimePahe(malId);
+//         const page1 = await pahe.getEpisodes(1);
+//         const page2 = await pahe.getEpisodes(2);
+//         const page3 = await pahe.getEpisodes(3);
+//         const allEpisodes = [...page1, ...page2, ...page3];
 
-        if (allEpisodes.length > 0) {
-            // Sửa: Bọc đối tượng kết quả trong một mảng
-            return [{
-                providerId: 'animepahe',
-                id: 'animepahe',
-                episodes: allEpisodes,
-            }];
-        }
-        // Sửa: Trả về một mảng rỗng thay vì null
-        return [];
-    } catch (error) {
-        console.error('Lỗi khi fetch từ AnimePahe:', error);
-        // Sửa: Trả về một mảng rỗng thay vì null
-        return [];
-    }
-}
+//         if (allEpisodes.length > 0) {
+//             // Sửa: Bọc đối tượng kết quả trong một mảng
+//             return [{
+//                 providerId: 'animepahe',
+//                 id: 'animepahe',
+//                 episodes: allEpisodes,
+//             }];
+//         }
+//         // Sửa: Trả về một mảng rỗng thay vì null
+//         return [];
+//     } catch (error) {
+//         console.error('Lỗi khi fetch từ AnimePahe:', error);
+//         // Sửa: Trả về một mảng rỗng thay vì null
+//         return [];
+//     }
+// }
 
 async function fetchEpisodeMeta(id: string, skip = false): Promise<ImageDataItem[]> {
   try {
     if (skip) return [];
     const { data } = await axios.get(`https://api.ani.zip/mappings?anilist_id=${id}`);
     // console.log(`AniZip response for ID ${id}:`, JSON.stringify(data, null, 2));
-    const episodes = Object.values(data?.data?.episodes || {}) as any[];
+    const episodes = Object.values(data?.data?.episodes || {}) as ImageDataItem[];
     return episodes.map((ep) => ({
       number: ep.number ?? ep.episode ?? 0,
       img: ep.image ?? ep.img,
       title: ep.title,
       description: ep.description ?? ep.overview ?? ep.summary,
     }));
-  } catch (error: any) {
-    console.error(`Error fetching AniZip meta for ID ${id}:`, error.message);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Error fetchEpisodeMeta:", error.message);
+    } else {
+      console.error("Unknown error fetchEpisodeMeta:", error);
+    }
     return [];
   }
 }

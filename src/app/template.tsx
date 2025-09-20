@@ -9,7 +9,7 @@ interface TemplateProps {
 }
 
 export default function Template({ children }: TemplateProps) { // Áp dụng interface vào props
-    let pathname = usePathname();
+    const pathname = usePathname();
 
     return (
         <>

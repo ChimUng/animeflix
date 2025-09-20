@@ -30,12 +30,13 @@ import styles from '../styles/menu.module.css';
 import tooltipStyles from '../styles/tooltip.module.css';
 import { useSettings } from '@/lib/store';
 import { useStore } from 'zustand';
+import {TextTrackInit}  from "@vidstack/react";
 
 export interface SettingsProps {
   placement: MenuPlacement;
   tooltipPlacement: TooltipPlacement;
   offset?: number;
-  subtitles?: any;
+  subtitles?: TextTrackInit[];
 }
 
 export const menuClass =
@@ -62,7 +63,7 @@ export function Settings({ placement, tooltipPlacement, subtitles }: SettingsPro
         <AutoNext />
         <AutoSkip />
         <SpeedSubmenu />
-        {subtitles?.length > 0 && <CaptionSubmenu />}
+        {(subtitles?.length ?? 0) > 0 && <CaptionSubmenu />}
         <QualitySubmenu />
       </Menu.Content>
     </Menu.Root>
@@ -300,7 +301,7 @@ function QualitySubmenu() {
           className={styles.radioGroup}
           value={options.selectedValue}
         >
-          {options.map(({ label, value, bitrateText, select }) => (
+          {options.map(({ label, value, select }) => (
             <Radio value={value} onSelect={select} key={value}>
               {label}
             </Radio>
@@ -311,7 +312,7 @@ function QualitySubmenu() {
   );
 }
 
-export interface RadioProps extends Menu.RadioProps {}
+export type RadioProps = Menu.RadioProps;
 
 function Radio({ children, ...props }: RadioProps) {
   return (
@@ -330,7 +331,7 @@ function Radio({ children, ...props }: RadioProps) {
 
 export interface SubmenuButtonProps {
   label: string;
-  hint: any;
+  hint: string | number | ReactNode;
   disabled?: boolean;
   icon: IconType;
 }

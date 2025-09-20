@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Select, SelectItem, Input, Textarea, Button } from "@nextui-org/react";
 import { updatelist } from '@/lib/anilistqueries';
 import { toast } from 'sonner';
+import { MediaListEntry } from '@/lib/AnilistUser';
 
 interface Props {
-    list: any;
+    list: MediaListEntry | null;
     eplength: number;
     Handlelist: () => void;
     session: {
@@ -13,7 +14,7 @@ interface Props {
         };
     };
     id: number;
-    setList: (entry: any) => void;
+    setList: (entry: MediaListEntry | null) => void;
 }
 
 const statusOptions = [

@@ -29,10 +29,10 @@ import { AnimeItem, AnimeTitle } from '@/lib/types'; // Import AnimeTitle và An
     const [imageLoaded, setImageLoaded] = useState<boolean>(false);
 
     // Gán kiểu cho tham số `text`
-    function containsEngChar(text: string): boolean {
-        const englishRegex = /[a-zA-Z!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]/;
-        return englishRegex.test(text);
-    }
+    // function containsEngChar(text: string): boolean {
+    //     const englishRegex = /[a-zA-Z!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]/;
+    //     return englishRegex.test(text);
+    // }
 
     
 

@@ -12,8 +12,8 @@ import {
   Tooltip,
   useMediaState,
   type TooltipPlacement,
-  useMediaRemote,
-  useMediaStore,
+  // useMediaRemote,
+  // useMediaStore,
   SeekButton,
   GoogleCastButton,
   AirPlayButton,
@@ -27,19 +27,20 @@ import {
   FaClosedCaptioning,
   FaExpand,
   FaCompress,
-  FaImage,
-  FaForward,
-  FaBackward,
+  // FaImage,
+  // FaForward,
+  // FaBackward,
   FaChromecast,
 } from "react-icons/fa";
 import { IoAirplane, IoPlaySkipBack, IoPlaySkipForward } from "react-icons/io5"; // Nhập IoAirplay từ react-icons/io5
 import { RiReplay10Fill as ReplayIcon, RiPictureInPicture2Fill } from "react-icons/ri";
 import { GrBackTen, GrForwardTen } from "react-icons/gr";
+import { GroupedEpisodes } from '@/lib/types';
 
 export interface MediaButtonProps {
   tooltipPlacement: TooltipPlacement;
   offset?: number | undefined;
-  groupedEp?: any;
+  groupedEp?: GroupedEpisodes | null;
   host?: boolean;
 }
 
@@ -171,7 +172,7 @@ export function PreviousEpisode({ tooltipPlacement, offset, groupedEp }: MediaBu
   );
 }
 
-export function DesktopPlayButton({ tooltipPlacement }: MediaButtonProps) {
+export function DesktopPlayButton({}: MediaButtonProps) { //tooltipPlacement removed
   const isPaused = useMediaState("paused"),
     ended = useMediaState("ended"),
     Icon = ended ? ReplayIcon : isPaused ? FaPlay : FaPause;
@@ -184,7 +185,7 @@ export function DesktopPlayButton({ tooltipPlacement }: MediaButtonProps) {
   );
 }
 
-export function MobilePlayButton({ tooltipPlacement }: MediaButtonProps) {
+export function MobilePlayButton({ }: MediaButtonProps) { //tooltipPlacement removed
   const isPaused = useMediaState("paused"),
     ended = useMediaState("ended"),
     Icon = ended ? ReplayIcon : isPaused ? FaPlay : FaPause;
@@ -269,7 +270,7 @@ export function PIP({ tooltipPlacement, offset }: MediaButtonProps) {
   );
 }
 
-export function PlayNextButton({ tooltipPlacement, groupedEp }: MediaButtonProps) {
+export function PlayNextButton({ groupedEp }: MediaButtonProps) { //tooltipPlacement removed
   const router = useRouter();
   const nowPlaying = useStore(useNowPlaying, (state) => state.nowPlaying);
   const dataInfo = useStore(useDataInfo, (state) => state.dataInfo);

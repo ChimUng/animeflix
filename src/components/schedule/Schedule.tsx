@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ScheduleTabs from "@/components/schedule/ScheduleTabs";
 import AnimeCardList from "@/components/schedule/AnimeCardList";
+import type { AnimeItem } from "@/lib/types";
 
 const daysOfWeek = [
     "Chủ nhật",
@@ -23,7 +24,7 @@ const getTodayName = (): string => {
 export default function Schedule() {
     const [selectedDay, setSelectedDay] = useState<string>(getTodayName());
     const [episodeCounts, setEpisodeCounts] = useState<{ day: string; count: number }[]>([]);
-    const [allAnimes, setAllAnimes] = useState<any[]>([]);
+    const [allAnimes, setAllAnimes] = useState<AnimeItem[]>([]);
 
     // Fetch số tập của từng ngày (1 lần)
     useEffect(() => {

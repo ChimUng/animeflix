@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import Image from 'next/image';
-import styles from '../../styles/Epimglist.module.css';
+// import styles from '../../styles/Epimglist.module.css';
 import Link from 'next/link';
 import { AnimeItem, Episode } from '@/lib/types';
 
