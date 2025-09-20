@@ -1,7 +1,7 @@
 import axios from 'axios';
 // import { redis } from '@/lib/rediscache'; 
 import { NextResponse, NextRequest } from "next/server";
-import AnimePahe from '@/components/providers/animepahe';
+// import AnimePahe from '@/components/providers/animepahe';
 import { RawEpisode, Episode, AnifyProvider } from '@/utils/EpisodeFunctions';
 
 // Định nghĩa kiểu dữ liệu cho phần body của request
@@ -172,19 +172,19 @@ async function AnifyEpisode(
     }
 }
 
-async function animepaheEpisode(malId: number, episodeId: string): Promise<{ url: string; length: number } | null> {
-	try {
-		const provider = new AnimePahe(malId);
-		const { url, length } = await provider.getSourceInfo(episodeId);
-		return {
-			url,
-			length
-		};
-	} catch (error) {
-		console.error(error);
-		return null;
-	}
-}
+// async function animepaheEpisode(malId: number, episodeId: string): Promise<{ url: string; length: number } | null> {
+// 	try {
+// 		const provider = new AnimePahe(malId);
+// 		const { url, length } = await provider.getSourceInfo(episodeId);
+// 		return {
+// 			url,
+// 			length
+// 		};
+// 	} catch (error) {
+// 		console.error(error);
+// 		return null;
+// 	}
+// }
 
 
 // Xử lý request POST
@@ -236,10 +236,10 @@ export const POST = async (req: NextRequest, context: { params: Promise<{ epsour
         return NextResponse.json(data);
     }
 
-    if (source === "animepahe") {
-        const data = await animepaheEpisode(Number(id), episodeid);
-        return NextResponse.json(data);
-    }
+    // if (source === "animepahe") {
+    //     const data = await animepaheEpisode(Number(id), episodeid);
+    //     return NextResponse.json(data);
+    // }
 
     // Trả về lỗi nếu không có source nào khớp
     return NextResponse.json({ error: 'Invalid source specified' }, { status: 400 });
