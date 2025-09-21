@@ -25,9 +25,6 @@ RUN --mount=type=bind,source=package.json,target=package.json \
 # Create a stage for building the application.
 FROM deps AS  build
 
-ARG GEMINI_API_KEY
-ENV GEMINI_API_KEY=$GEMINI_API_KEY
-
 # Download additional development dependencies before building, as some projects require
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=package-lock.json,target=package-lock.json \
@@ -57,12 +54,6 @@ COPY package.json .
 # the built application from the build stage into the image.
 COPY --from=deps /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/.next ./.next
-
-# Define other files that are needed to run the application.
-RUN chown -R node:node /usr/src/app
-
-# Run the application as a non-root user.
-USER node
 
 # Expose the port that the application listens on.
 EXPOSE 3000
