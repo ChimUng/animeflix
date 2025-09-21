@@ -1,13 +1,13 @@
 export const checkEnvironment = (): string => {
-  let base_url: string | undefined =
-    process.env.NODE_ENV === "development"
-      ? process.env.NEXT_PUBLIC_DEV_URL
-      : process.env.NEXT_PUBLIC_PRODUCTION_URL;
-
-  if (!base_url && typeof window !== "undefined") {
-    base_url = window.location.origin;
+  if (typeof window !== "undefined") {
+    // ✅ Khi chạy trên browser, lấy domain thật
+    return window.location.origin;
   }
 
-  // Nếu vẫn không có, trả về fallback mặc định
-  return base_url || "http://localhost:3000";
+  // ✅ Chạy server-side thì lấy env
+  return (
+    (process.env.NODE_ENV === "development"
+      ? process.env.NEXT_PUBLIC_DEV_URL
+      : process.env.NEXT_PUBLIC_PRODUCTION_URL) || "http://localhost:3000"
+  );
 };
