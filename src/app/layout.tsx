@@ -20,7 +20,7 @@ const APP_DEFAULT_TITLE = "Animeflix - Watch Anime Online";
 const APP_DESCRIPTION = "";
 
 export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_PRODUCTION_URL || "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_PRODUCTION_URL || process.env.NEXT_PUBLIC_DEV_URL || "http://localhost:3000"),
   applicationName: APP_NAME,
   title: APP_DEFAULT_TITLE,
   description: APP_DESCRIPTION,
