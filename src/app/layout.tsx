@@ -20,7 +20,7 @@ const APP_DEFAULT_TITLE = "Animeflix - Watch Anime Online";
 const APP_DESCRIPTION = "";
 
 export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_PRODUCTION_URL || process.env.NEXT_PUBLIC_DEV_URL || "http://localhost:3000"),
+  metadataBase: new URL('https://animeflixnow.onrender.com'),
   applicationName: APP_NAME,
   title: APP_DEFAULT_TITLE,
   description: APP_DESCRIPTION,
@@ -103,8 +103,8 @@ export default async function RootLayout({ children }: RootLayoutProps) {
       </Script>
       <head>
         <meta name="google-site-verification" content="9Cj5Gd0-OuGDtGb4HpRqNfBXy3FuFCcFNWSvTPOlTzE" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/luffy_apple-touch.png" />
-        <link rel="icon" type="image/png" sizes="192x192" href="/luffy_android-chrome-192x192.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
         {/* <script src="https://kit.fontawesome.com/c189d5d7c5.js" crossOrigin="anonymous" async></script> */}
       </head>
       <body className={inter.className}>
