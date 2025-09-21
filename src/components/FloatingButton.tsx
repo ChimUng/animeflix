@@ -52,10 +52,10 @@ const FloatingButton: React.FC<FloatingButtonProps> = ({ session }) => {
         </DropdownTrigger>
         <DropdownMenu variant="flat" aria-label="Floating Menu">
             <DropdownItem key="catalog" startContent={<CatalogIcon className={iconClasses} />}>
-            <Link href="/anime/catalog" className="w-full h-full block">Catalog</Link>
+            <Link href="/anime/catalog" className="w-full h-full block">Danh mục</Link>
             </DropdownItem>
             <DropdownItem key="settings" startContent={<SettingsIcon className={iconClasses} />}>
-            <Link href="/settings" className="w-full h-full block">Settings</Link>
+            <Link href="/settings" className="w-full h-full block">Cài đặt</Link>
             </DropdownItem>
             {session ? (
             <DropdownItem
@@ -67,7 +67,7 @@ const FloatingButton: React.FC<FloatingButtonProps> = ({ session }) => {
                 className="font-semibold outline-none border-none w-full h-full block text-left"
                 onClick={() => signOut({ callbackUrl: "/" })}
                 >
-                Log Out
+                Đăng xuất
                 </button>
             </DropdownItem>
             ) : (
@@ -80,7 +80,7 @@ const FloatingButton: React.FC<FloatingButtonProps> = ({ session }) => {
                 className="font-semibold outline-none border-none w-full h-full block text-left"
                 onClick={() => signIn("AniListProvider")}
                 >
-                LogIn With AniList
+                Đăng nhập với AniList
                 </button>
             </DropdownItem>
             )}
