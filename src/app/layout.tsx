@@ -24,7 +24,7 @@ export const metadata = {
   applicationName: APP_NAME,
   title: APP_DEFAULT_TITLE,
   icons: {
-    icon: "/favicon.bmp",
+    icon: "/android-chrome-192x192.png",
     apple: "/apple-touch-icon.png",
   },
   description: APP_DESCRIPTION,
