@@ -17,7 +17,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 const APP_NAME = "Animeflix";
 const APP_DEFAULT_TITLE = "Animeflix - Watch Anime Online";
-const APP_DESCRIPTION = "";
+const APP_DESCRIPTION = "Xem phim anime vietsub online xem trên điện thoại di động và máy tính nhanh nhất.";
 
 export const metadata = {
   metadataBase: new URL('https://animeflixnow.onrender.com'),
