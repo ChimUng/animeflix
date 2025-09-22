@@ -23,6 +23,10 @@ export const metadata = {
   metadataBase: new URL('https://animeflixnow.onrender.com'),
   applicationName: APP_NAME,
   title: APP_DEFAULT_TITLE,
+  icons: {
+    icon: "/favicon.bmp",
+    apple: "/apple-touch-icon.png",
+  },
   description: APP_DESCRIPTION,
   keywords: [
     'anime',

@@ -21,7 +21,7 @@ function RecentEpisodes({ cardid }: RecentEpisodesProps) {
   useEffect(() => {
     const getRecent = async () => {
       const response = await getRecentEpisodes();
-      // console.log("Recent Episodes Data:", response);
+      console.log("Recent Episodes Data:", response);
       setData(
   (response ?? []).map((item) => ({
     ...(item as AnimeItem),
