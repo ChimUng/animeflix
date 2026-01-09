@@ -4,7 +4,7 @@ import styles from '../../styles/Animecard.module.css';
 import { useDraggable } from 'react-use-draggable-scroll';
 import Link from 'next/link';
 import ItemContent from './ItemContent';
-import { AnimeItem } from '@/lib/types'; // Import interface chung
+import { AnimeItem } from '@/lib/types'; 
 
 interface AnimecardsProps {
     data: AnimeItem[] | null;

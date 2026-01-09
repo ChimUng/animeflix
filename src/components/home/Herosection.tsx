@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState, useCallback } from 'react'; // Thêm useCallback
+import React, { useEffect, useState, useCallback } from 'react' // Thêm useCallback
 import styles from '../../styles/Herosection.module.css';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -57,12 +57,12 @@ function Herosection({ data }: HerosectionProps) {
                 (item: AnimeItem) =>
                     item.trailer &&
                     item.trailer.id &&
-                    item.id !== 21 && // Giữ nguyên điều kiện lọc của bạn
+                    item.id !== 21 && 
                     item.bannerImage !== null &&
                     item.status !== 'NOT_YET_RELEASED'
             );
             setAllBanners(filteredData);
-            setCurrentIndex(0); // Reset về banner đầu tiên khi dữ liệu thay đổi
+            setCurrentIndex(0); 
         }
     }, [data]);
 

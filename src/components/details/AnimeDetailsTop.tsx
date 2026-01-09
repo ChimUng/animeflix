@@ -12,8 +12,8 @@ import {MediaListEntry} from '@/lib/AnilistUser';
 import { AnimeItem } from '@/lib/types';
 
 interface AnimeDetailsTopProps {
-    data: AnimeItem; // Ideally should use a type like `Media`
-    list: MediaListEntry | null; // Ideally should use MediaListEntry type
+    data: AnimeItem; 
+    list: MediaListEntry | null; 
     session: {
         user: {
         token: string;

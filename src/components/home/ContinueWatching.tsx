@@ -8,9 +8,8 @@ import { useRouter } from "next-nprogress-bar";
 import { toast } from "sonner";
 import Skeleton from "react-loading-skeleton";
 import {deleteEpisodes, getWatchHistory} from "@/lib/EpHistoryfunctions";
-import { IWatch } from "@/mongodb/models/watch"; // import type nếu bạn có
-import { Session } from "next-auth"; // import type nếu bạn có
-
+import { IWatch } from "@/mongodb/models/watch"; 
+import { Session } from "next-auth"; 
 interface DeleteParams {
   epId?: string;
   aniId?: string;

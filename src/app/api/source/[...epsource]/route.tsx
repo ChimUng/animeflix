@@ -106,17 +106,28 @@ async function zoroEpisode(
   provider: string,
   episodeid: string,
   epnum: number | string,
-  id: string, // đây là id từ URL (ví dụ 21) — mình coi là Anilist ID
+  id: string,
   subtype: string
 ): Promise<Episode[] | null> {
   try {
-    // --- build đúng animeEpisodeId theo doc Zoro ---
-    const animeEpisodeId = await buildZoroAnimeEpisodeId(id, episodeid);
+    let animeEpisodeId: string | null = null;
 
-    // Nếu animeEpisodeId null thì fallback thử dùng episodeid thô (cái cũ của bạn)
+    // ✅ KIỂM TRA: Nếu episodeid đã chứa "?ep=" thì đã được build rồi
+    if (episodeid.includes('?ep=')) {
+      console.log('✅ episodeid đã ở dạng đầy đủ:', episodeid);
+      animeEpisodeId = episodeid;
+    } else {
+      // ✅ Nếu episodeid chỉ là số episode thuần túy, build animeEpisodeId
+      console.log('🔨 Building animeEpisodeId từ:', { id, episodeid });
+      animeEpisodeId = await buildZoroAnimeEpisodeId(id, episodeid);
+    }
+
+    // Fallback: nếu vẫn null thì dùng episodeid gốc
     const paramValue = animeEpisodeId ?? episodeid;
+    
+    console.log('🎯 Final animeEpisodeId:', paramValue);
 
-    // Gọi servers (lưu ý: axios sẽ tự encode param; nếu Zoro yêu cầu raw '?', bạn có thể thay đổi xuống phần commented)
+    // Bước 1: Gọi API lấy danh sách servers
     const serverRes = await axios.get(`${process.env.ZORO_URI}/episode/servers`, {
       params: {
         animeEpisodeId: paramValue,
@@ -124,12 +135,24 @@ async function zoroEpisode(
     });
 
     const serverData = serverRes.data?.data;
-    if (!serverData) return null;
+    if (!serverData) {
+      console.error('❌ Không có serverData');
+      return null;
+    }
 
     const serverList = serverData[subtype]; // subtype là 'sub' hoặc 'dub'
-    if (!serverList || serverList.length === 0) return null;
+    if (!serverList || serverList.length === 0) {
+      console.error('❌ Không có serverList cho subtype:', subtype);
+      return null;
+    }
 
-    const firstServer = serverList[0]; // ưu tiên lấy server đầu tiên
+    const firstServer = serverList[1]; // Ưu tiên lấy server đầu tiên
+    if (!firstServer) {
+      console.error('❌ Không có firstServer');
+      return null;
+    }
+
+    console.log('🎬 Sử dụng server:', firstServer.serverName);
 
     // Bước 2: Gọi API lấy stream từ server đầu tiên
     const sourceRes = await axios.get(`${process.env.ZORO_URI}/episode/sources`, {
@@ -141,15 +164,106 @@ async function zoroEpisode(
     });
 
     const videoData = sourceRes.data?.data;
-    if (!videoData) return null;
+    if (!videoData) {
+      console.error('❌ Không có videoData');
+      return null;
+    }
 
-    return videoData; // chứa các link stream, headers, subtitle,...
+    console.log('✅ Lấy videoData thành công');
+    return videoData;
   } catch (error) {
-    console.error('zoroEpisode error:', error);
+    console.error('❌ zoroEpisode error:', error);
     return null;
   }
 }
 
+// ✅ HÀM MỚI CHO 9ANIME
+async function nineAnimeEpisode(
+  provider: string,
+  episodeid: string,
+  epnum: number | string,
+  id: string,
+  subtype: string
+): Promise<Episode[] | null> {
+  try {
+    let animeEpisodeId: string | null = null;
+
+    // ✅ KIỂM TRA: Nếu episodeid đã chứa "?ep=" thì đã được build rồi
+    if (episodeid.includes('?ep=')) {
+      console.log('✅ [9anime] episodeid đã ở dạng đầy đủ:', episodeid);
+      animeEpisodeId = episodeid;
+    } else {
+      // ✅ Nếu episodeid chỉ là số episode thuần túy, build animeEpisodeId
+      console.log('🔨 [9anime] Building animeEpisodeId từ:', { id, episodeid });
+      animeEpisodeId = await buildZoroAnimeEpisodeId(id, episodeid);
+    }
+
+    // Fallback: nếu vẫn null thì dùng episodeid gốc
+    const paramValue = animeEpisodeId ?? episodeid;
+    
+    console.log('🎯 [9anime] Final animeEpisodeId:', paramValue);
+
+    // ✅ Gọi API 9anime với server HD-2 (ưu tiên) hoặc HD-3
+    const server = 'hd-2'; // Có thể thay bằng 'hd-3' nếu cần
+    
+    const streamRes = await axios.get(`${process.env.ZENIME_URL}/api/stream`, {
+      params: {
+        id: paramValue,
+        server: server,
+        type: subtype, // 'sub' hoặc 'dub'
+      },
+    });
+
+    const streamData = streamRes.data;
+    
+    if (!streamData?.success || !streamData?.results?.streamingLink) {
+      console.error('❌ [9anime] Không có streamingLink');
+      return null;
+    }
+
+    const streamingLink = streamData.results.streamingLink;
+    const link = streamingLink.link;
+    
+    if (!link?.file) {
+      console.error('❌ [9anime] Không có file URL');
+      return null;
+    }
+
+    // ✅ Map sang format Episode[] giống Zoro
+    const videoData: Episode[] = {
+      sources: [
+        {
+          url: link.file,
+          isM3U8: link.type === 'hls',
+          type: link.type,
+        }
+      ],
+      tracks: streamingLink.tracks?.map((track: { file: string; label: string; kind: string; default?: boolean }) => ({
+        url: track.file,
+        lang: track.label,
+        kind: track.kind,
+        default: track.default,
+      })) || [],
+      intro: streamingLink.intro ? {
+        start: streamingLink.intro.start,
+        end: streamingLink.intro.end,
+      } : undefined,
+      outro: streamingLink.outro ? {
+        start: streamingLink.outro.start,
+        end: streamingLink.outro.end,
+      } : undefined,
+      headers: {
+        Referer: 'https://rapid-cloud.co/',
+      },
+    } as any;
+
+    console.log('✅ [9anime] Lấy videoData thành công');
+    return videoData;
+  } catch (error) {
+    console.error('❌ [9anime] nineAnimeEpisode error:', error);
+    return null;
+  }
+}
 
 // Hàm lấy dữ liệu từ Anify API
 async function AnifyEpisode(
@@ -228,6 +342,11 @@ export const POST = async (req: NextRequest, context: { params: Promise<{ epsour
 
     if (provider === "zoro") {
         const data = await zoroEpisode(provider, episodeid, episodenum, id, subtype);
+        return NextResponse.json(data);
+    }
+
+     if (provider === "9anime") {
+        const data = await nineAnimeEpisode(provider, episodeid, episodenum, id, subtype);
         return NextResponse.json(data);
     }
 

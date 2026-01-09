@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useDraggable } from 'react-use-draggable-scroll';
 import Link from 'next/link';
-import styles from '../../styles/Genrecard.module.css'; // dùng riêng style này
+import styles from '../../styles/Genrecard.module.css'; 
 import { genreCovers, genreOptions } from '../catalogcomponent/options';
 
 function GenreCard() {

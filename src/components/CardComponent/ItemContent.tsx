@@ -2,14 +2,14 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import styles from '../../styles/Animecard.module.css';
-import { useTitle } from '@/lib/store'; // Giữ import này
-import { useStore } from 'zustand';   // Giữ import này
+import { useTitle } from '@/lib/store';
+import { useStore } from 'zustand';   
 import { useTranslationCache } from '@/lib/useTranslationCache';
-import { AnimeItem, AnimeTitle } from '@/lib/types'; // Import AnimeTitle và AnimeItem
+import { AnimeItem, AnimeTitle } from '@/lib/types'; 
 
     // Định nghĩa kiểu props cho component ItemContent
     interface ItemContentProps {
-    anime: AnimeItem; // Sử dụng kiểu AnimeItem đã định nghĩa ở trên
+    anime: AnimeItem; 
     cardid: string;
     }
 

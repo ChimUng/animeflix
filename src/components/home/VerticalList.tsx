@@ -9,7 +9,7 @@ interface AnimeTitle {
     romaji: string;
     english?: string;
     native?: string;
-    vi?: string; // Thêm trường vi để lưu trữ tiêu đề tiếng Việt
+    vi?: string; 
 }
 
 interface CoverImage {

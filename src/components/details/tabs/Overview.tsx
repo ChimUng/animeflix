@@ -6,46 +6,9 @@ import { Tooltip } from "@nextui-org/react"
 import { useTranslationCache } from '@/lib/useTranslationCache'; 
 import { AnimeItem } from '@/lib/types';
 
-// Kiểu dữ liệu gợi ý dựa trên dữ liệu AniList
-// interface AnimeItem {
-//     id: number;
-//     title: {
-//         romaji: string | null;
-//         english?: string | null;
-//     };
-//     status?: string | null;
-//     format?: string | null;
-//     episodes?: number | null; // <-- Sửa từ number sang number | null
-//     nextAiringEpisode?: {
-//         episode: number;
-//         airingAt: number;
-//     } | null;
-//     genres: string[];
-//     startDate?: {
-//         year: number;
-//         month: number;
-//         day: number;
-//     } | null;
-//     endDate?: {
-//         year: number;
-//         month: number;
-//         day: number;
-//     } | null;
-//     season?: string | null;
-//     seasonYear?: number | null;
-//     countryOfOrigin?: string | null;
-//     studios?: {
-//         nodes: { name: string }[];
-//     } | null;
-//     source?: string | null;
-//     duration?: number | null;
-//     popularity?: number | null;
-//     description?: string | null;
-// }
-
 interface OverviewProps {
     data: AnimeItem
-    id: number; // <-- THÊM DÒNG NÀY
+    id: number; 
 }
 
 const Overview: React.FC<OverviewProps> = ({ data, id }) => {
@@ -53,7 +16,7 @@ const Overview: React.FC<OverviewProps> = ({ data, id }) => {
     // GỌI HOOK Ở ĐÂY
     const { descriptionVI } = useTranslationCache(
         id,
-        data.title.romaji || "", // Cần title để làm context
+        data.title.romaji || "", 
         data.description || "Không có mô tả"
     );
 

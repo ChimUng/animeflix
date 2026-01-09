@@ -216,6 +216,43 @@ async function fetchZoro(id: string): Promise<Provider[]> {
   }
 }
 
+async function fetch9anime(id: string): Promise<Provider[]> {
+  if (!id) return [];
+
+  try {
+    const { data } = await axios.get<{ success: boolean; results: { totalEpisodes: number; episodes: Array<{ episode_no: number; id: string; title: string; japanese_title?: string; filler: boolean }> } }>(
+      `${process.env.ZENIME_URL}/api/episodes/${id}` 
+    );
+
+    if (!data.success || !data.results?.episodes || data.results.episodes.length === 0) {
+      console.warn(`No episodes from 9anime for ID ${id}`);
+      return [];
+    }
+
+    const episodes: Episode[] = data.results.episodes.map((ep) => ({
+      number: ep.episode_no,
+      id: ep.id, 
+      title: ep.title || ep.japanese_title || undefined,
+      isFiller: ep.filler,
+    }));
+
+    return [
+      {
+        providerId: '9anime',
+        id: '9anime',
+        episodes, 
+      },
+    ];
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error(`Error fetching 9anime for ID ${id}:`, error.message);
+    } else {
+      console.error(`Unknown error fetching 9anime for ID ${id}`);
+    }
+    return [];
+  }
+}
+
 // ⬇️ THÊM HÀM MỚI ĐỂ FETCH TỪ ANIMEPAHE ⬇️
 // async function fetchAnimePahe(malId: number): Promise<Provider[]> { // Sửa: Trả về một MẢNG Provider
 //     try {
@@ -279,6 +316,7 @@ async function fetchAndCacheData(
     const zorop = malsync.find((i) => i.providerId === 'zoro');
     promises.push(gogop ? fetchGogoanime(gogop.sub || '', gogop.dub || '') : Promise.resolve([]));
     promises.push(zorop ? fetchZoro(zorop.sub || '') : Promise.resolve([]));
+    promises.push(zorop ? fetch9anime(zorop.sub || '') : Promise.resolve([]));
   } else {
     console.warn(`MalSync returned null for ID ${id}. Falling back to default providers.`);
     promises.push(fetchConsumet(id));

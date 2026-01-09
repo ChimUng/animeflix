@@ -16,8 +16,8 @@ interface TabItem {
 
 // Kiểu cho props chính
 interface AnimeDetailsBottomProps {
-  data: AnimeItem; // Gợi ý: bạn có thể thay `any` bằng kiểu từ Anilist schema nếu có
-  id: number; // <-- THÊM DÒNG NÀ
+  data: AnimeItem; 
+  id: number; 
 }
 
 const AnimeDetailsBottom: React.FC<AnimeDetailsBottomProps> = ({ data, id }) => {
