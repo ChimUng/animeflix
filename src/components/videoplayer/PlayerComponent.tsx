@@ -12,6 +12,8 @@ import { AnimeItem, EpisodeInfo } from "@/lib/types";
 import { Provider, Source } from "@/lib/getData";
 import { checkEnvironment } from "@/lib/checkEnvironment"; // Import checkEnvironment
 import { Episode as EpisodeFromApi } from "@/lib/getData"; // ⬅️ THÊM IMPORT NÀY
+import { CustomIframePlayer } from "./VidstackPlayer/CustomIframePlayer";
+import router from "next/router";
 
 // Định nghĩa interface cho skiptimes
 interface SkipTime {
@@ -341,13 +343,21 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
           ) : (
             <div className="h-full w-full aspect-video overflow-hidden">
               {(isInitiallyEmbed || hlsError) && embedFallbackSource ? (
-                <iframe
+                <CustomIframePlayer
                   src={embedFallbackSource.url}
-                  width="100%"
-                  height="100%"
-                  className="w-full h-full"
-                  allowFullScreen
-                  allow="autoplay; encrypted-media; picture-in-picture"
+                  episodeId={epId}
+                  episodeNum={parseInt(epNum)}
+                  animeTitle={validData.title[animetitle] || validData.title.romaji || "Unknown"}
+                  autoNext={true}
+                  onAutoNext={() => {
+                    if (groupedEp?.nextep) {
+                      router.push(
+                        `/anime/watch?id=${id}&host=${provider}&epid=${
+                          groupedEp.nextep.id || groupedEp.nextep.episodeId
+                        }&ep=${groupedEp.nextep.number}&type=${subdub}`
+                      );
+                    }
+                  }}
                 />
             ) : (
               <Player

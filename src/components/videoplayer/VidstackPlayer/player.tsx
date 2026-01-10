@@ -28,6 +28,7 @@ import { updateEp } from "@/lib/EpHistoryfunctions";
 import { saveProgress } from "@/lib/AnilistUser";
 import { useSettings, useTitle, useNowPlaying } from '@/lib/store';
 import { AnimeItem, GroupedEpisodes } from '@/lib/types';
+import { CustomHeader } from "./CustomHeader";
 
 
 
@@ -317,6 +318,12 @@ const Player: React.FC<PlayerProps> = ({
           <Track {...track} key={track.src} />
         ))}
       </MediaProvider>
+      <CustomHeader
+        brandName="Animeflix"
+        episodeNum={Number(epNum)}
+        autoHide={true}
+        hideDelay={2000}
+      />
       {opbutton && <button onClick={handleop} className='absolute bottom-[70px] sm:bottom-[83px] right-4 z-[40] bg-white text-black py-2 px-3 rounded-[6px] font-medium text-[15px]'>Skip Opening</button>}
       {edbutton && <button onClick={handleed} className='absolute bottom-[70px] sm:bottom-[83px] right-4 z-[40] bg-white text-black py-2 px-3 rounded-[6px] font-medium text-[15px]'>Skip Ending</button>}
       <VideoLayout
