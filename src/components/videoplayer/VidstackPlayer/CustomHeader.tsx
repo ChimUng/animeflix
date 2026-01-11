@@ -1,5 +1,6 @@
 "use client"
 import React, { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 
 interface CustomHeaderProps {
   brandName?: string;
@@ -26,10 +27,8 @@ export const CustomHeader: React.FC<CustomHeaderProps> = ({
       timerRef.current = setTimeout(() => setShowHeader(false), hideDelay);
     };
 
-    // Initial hide
     resetTimer();
 
-    // Listen to interactions
     const handleInteraction = () => resetTimer();
     
     document.addEventListener('mousemove', handleInteraction);
@@ -44,27 +43,64 @@ export const CustomHeader: React.FC<CustomHeaderProps> = ({
 
   return (
     <div 
-      className={`absolute top-4 right-4 z-50 transition-all duration-500 pointer-events-none ${
-        showHeader ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      className={`absolute top-[5px] right-[5px] z-50 transition-opacity duration-500 ease-out ${
+        showHeader ? 'opacity-100' : 'opacity-0'
       }`}
+      style={{ pointerEvents: 'none' }}
     >
-      <div className="flex items-center gap-3 bg-black/80 backdrop-blur-xl px-4 py-2.5 rounded-xl shadow-2xl border border-white/10">
-        <div className="flex items-center gap-2">
-          {/* Logo */}
-          <div className="w-8 h-8 bg-gradient-to-br from-red-600 to-red-800 rounded-lg flex items-center justify-center shadow-lg">
-            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z"/>
-            </svg>
-          </div>
-          
-          {/* Info */}
-          <div>
-            <p className="text-white font-bold text-sm leading-tight">{brandName}</p>
-            {episodeNum && (
-              <p className="text-gray-400 text-xs leading-tight">Episode {episodeNum}</p>
-            )}
-          </div>
+      {/* ✅ GIỐNG JUSTANIME - INLINE STYLE */}
+      <div 
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '14px',
+          color: 'white',
+          textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+        }}
+      >
+        {/* ✅ LOGO ICON - DÙNG FILE ICON */}
+        <div style={{
+          width: '32px',
+          height: '32px',
+          background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 12px rgba(220, 38, 38, 0.3)'
+        }}>
+          <Image 
+            src="/icon-192x192.png" 
+            alt="Animeflix"
+            width={20}
+            height={20}
+            style={{ objectFit: 'contain' }}
+          />
         </div>
+        
+        {/* Text "Powered by" */}
+        <span style={{ fontWeight: '500', opacity: 0.9 }}>
+          Powered by
+        </span>
+        
+        {/* ✅ BRAND NAME VỚI GRADIENT */}
+        <span 
+          className="bg-gradient-to-r from-red-500 to-white bg-clip-text text-transparent font-custom"
+          style={{
+            fontWeight: '700',
+            letterSpacing: '0.5px'
+          }}
+        >
+          {brandName}
+        </span>
+
+        {/* Episode number
+        {episodeNum && (
+          <span style={{ opacity: 0.7, fontSize: '13px' }}>
+            • EP {episodeNum}
+          </span>
+        )} */}
       </div>
     </div>
   );
