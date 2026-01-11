@@ -10,10 +10,11 @@ import { useStore } from "zustand";
 import { Session as NextAuthSession } from "next-auth";
 import { AnimeItem, EpisodeInfo } from "@/lib/types";
 import { Provider, Source } from "@/lib/getData";
-import { checkEnvironment } from "@/lib/checkEnvironment"; // Import checkEnvironment
-import { Episode as EpisodeFromApi } from "@/lib/getData"; // ⬅️ THÊM IMPORT NÀY
+import { checkEnvironment } from "@/lib/checkEnvironment"; 
+import { Episode as EpisodeFromApi } from "@/lib/getData"; 
 import { CustomIframePlayer } from "./VidstackPlayer/CustomIframePlayer";
 import router from "next/router";
+import { CircleLoader } from "./VidstackPlayer/CircleLoader";
 
 // Định nghĩa interface cho skiptimes
 interface SkipTime {
@@ -21,16 +22,6 @@ interface SkipTime {
   endTime: number;
   text: string;
 }
-
-// Định nghĩa interface cho episode trong nowPlaying
-// interface Episode {
-//   download: string | null;
-//   skiptimes: SkipTime[];
-//   epId: string | null;
-//   provider: string | null;
-//   epNum: string | number | null;
-//   subtype: string | null;
-// }
 
 // Định nghĩa interface cho groupedEp
 interface GroupedEp {
@@ -272,7 +263,7 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
 
   const embedFallbackSource = sourceData?.sources?.find(s => s.isEmbed);
 
-  const isInitiallyEmbed = !primarySource; // Nếu không có nguồn HLS nào, mặc định là embed
+  const isInitiallyEmbed =hlsError || !primarySource; // Nếu không có nguồn HLS nào, mặc định là embed
   const src = primarySource?.url || "";
   // ✅ HÀM XỬ LÝ KHI VIDSTACK GẶP LỖI
   const handleHlsError = () => {
@@ -330,10 +321,7 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
         <div className="mb-2">
           {isPlayerLoading ? (
             <div className="h-full w-full rounded-[8px] flex items-center justify-center aspect-video border border-solid border-white border-opacity-10">
-              <Spinner.Root className="text-white animate-spin opacity-100" size={84}>
-                <Spinner.Track className="opacity-25" width={8} />
-                <Spinner.TrackFill className="opacity-75" width={8} />
-              </Spinner.Root>
+              <CircleLoader size={80} />
             </div>
           ) : error ? (
             <div className="h-full w-full aspect-video rounded-[8px] flex items-center justify-center flex-col text-center border border-solid border-white border-opacity-10">

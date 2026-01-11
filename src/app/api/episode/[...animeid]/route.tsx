@@ -5,8 +5,6 @@ import { Redis } from 'ioredis';
 import { NextRequest, NextResponse } from 'next/server';
 import { CombineEpisodeMeta, Episode, Provider, ImageDataItem, RawEpisode, AnifyProvider} from '@/utils/EpisodeFunctions';
 
-// import AnimePahe from '@/components/providers/animepahe';
-
 type MalSyncEntry = {
   providerId: string;
   sub?: string;
@@ -253,31 +251,210 @@ async function fetch9anime(id: string): Promise<Provider[]> {
   }
 }
 
-// ⬇️ THÊM HÀM MỚI ĐỂ FETCH TỪ ANIMEPAHE ⬇️
-// async function fetchAnimePahe(malId: number): Promise<Provider[]> { // Sửa: Trả về một MẢNG Provider
-//     try {
-//         const pahe = new AnimePahe(malId);
-//         const page1 = await pahe.getEpisodes(1);
-//         const page2 = await pahe.getEpisodes(2);
-//         const page3 = await pahe.getEpisodes(3);
-//         const allEpisodes = [...page1, ...page2, ...page3];
+// ✅ HÀM 1: Tính độ tương đồng giữa 2 chuỗi (Levenshtein Distance)
+function calculateSimilarity(str1: string, str2: string): number {
+  const s1 = str1.toLowerCase().trim();
+  const s2 = str2.toLowerCase().trim();
+  
+  // Exact match → 100%
+  if (s1 === s2) return 1.0;
+  
+  // Normalize: Xóa ký tự đặc biệt, dấu, khoảng trắng thừa
+  const normalize = (str: string) => 
+    str.replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').toLowerCase();
+  
+  const n1 = normalize(s1);
+  const n2 = normalize(s2);
+  
+  if (n1 === n2) return 0.95;
+  
+  // Check contains
+  if (n1.includes(n2) || n2.includes(n1)) return 0.85;
+  
+  // Levenshtein distance
+  const matrix: number[][] = [];
+  const len1 = n1.length;
+  const len2 = n2.length;
+  
+  for (let i = 0; i <= len1; i++) matrix[i] = [i];
+  for (let j = 0; j <= len2; j++) matrix[0][j] = j;
+  
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      const cost = n1[i - 1] === n2[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+  
+  const maxLen = Math.max(len1, len2);
+  return 1 - matrix[len1][len2] / maxLen;
+}
 
-//         if (allEpisodes.length > 0) {
-//             // Sửa: Bọc đối tượng kết quả trong một mảng
-//             return [{
-//                 providerId: 'animepahe',
-//                 id: 'animepahe',
-//                 episodes: allEpisodes,
-//             }];
-//         }
-//         // Sửa: Trả về một mảng rỗng thay vì null
-//         return [];
-//     } catch (error) {
-//         console.error('Lỗi khi fetch từ AnimePahe:', error);
-//         // Sửa: Trả về một mảng rỗng thay vì null
-//         return [];
-//     }
-// }
+// ✅ HÀM 2: Tìm anime phù hợp nhất từ kết quả search
+interface AnimePaheSearchResult {
+  id: string;
+  title: string;
+  type: string;
+  releaseDate: number;
+  rating?: number;
+}
+
+function findBestMatch(
+  results: AnimePaheSearchResult[],
+  targetTitle: string,
+  targetYear?: number,
+  targetType?: string
+): AnimePaheSearchResult | null {
+  if (!results || results.length === 0) return null;
+  
+  // Score cho mỗi kết quả
+  const scored = results.map((result) => {
+    let score = 0;
+    
+    // 1. Title similarity (weight: 70%)
+    const titleScore = calculateSimilarity(result.title, targetTitle);
+    score += titleScore * 0.7;
+    
+    // 2. Type match (weight: 15%)
+    if (targetType && result.type?.toLowerCase() === targetType.toLowerCase()) {
+      score += 0.15;
+    }
+    
+    // 3. Year proximity (weight: 10%)
+    if (targetYear && result.releaseDate) {
+      const yearDiff = Math.abs(result.releaseDate - targetYear);
+      const yearScore = Math.max(0, 1 - yearDiff / 10); // Max 10 năm chênh lệch
+      score += yearScore * 0.1;
+    }
+    
+    // 4. Priority cho "TV" type (weight: 5%)
+    if (result.type?.toLowerCase() === 'tv') {
+      score += 0.05;
+    }
+    
+    return { result, score, titleScore };
+  });
+  
+  // Sắp xếp theo score giảm dần
+  scored.sort((a, b) => b.score - a.score);
+  
+  // Log top 3 matches
+  console.log('🔍 AnimePahe search matches:');
+  scored.slice(0, 3).forEach((item, idx) => {
+    console.log(`  ${idx + 1}. "${item.result.title}" (${item.result.type}) - Score: ${(item.score * 100).toFixed(1)}%`);
+  });
+  
+  // Chỉ chấp nhận nếu score > 60%
+  if (scored[0].score > 0.6) {
+    console.log(`✅ Best match: "${scored[0].result.title}" (${(scored[0].score * 100).toFixed(1)}%)`);
+    return scored[0].result;
+  }
+  
+  console.warn(`⚠️ No good match found (best: ${(scored[0].score * 100).toFixed(1)}%)`);
+  return null;
+}
+
+// ✅ HÀM 3: Search AnimePahe by title
+async function searchAnimePahe(
+  title: string,
+  year?: number,
+  type?: string
+): Promise<string | null> {
+  try {
+    const encodedTitle = encodeURIComponent(title);
+    const { data } = await axios.get<{ results: AnimePaheSearchResult[] }>(
+      `${process.env.CONSUMET_URI}/anime/animepahe/${encodedTitle}`,
+      {
+        timeout: 10000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        },
+      }
+    );
+    
+    if (!data?.results || data.results.length === 0) {
+      console.warn(`⚠️ AnimePahe: No results for "${title}"`);
+      return null;
+    }
+    
+    // Tìm match tốt nhất
+    const bestMatch = findBestMatch(data.results, title, year, type);
+    return bestMatch?.id || null;
+  } catch (error) {
+    console.error(`Error searching AnimePahe for "${title}":`, error);
+    return null;
+  }
+}
+
+// ✅ HÀM 4: Fetch AnimePahe episodes
+
+async function fetchAnimePahe(
+  anilistId: string,
+  title: string,
+  year?: number,
+  type?: string
+): Promise<Provider[]> {
+  try {
+    console.log(`🔍 Searching AnimePahe for: "${title}" (${year || 'unknown year'})`);
+    
+    // Bước 1: Search để lấy UUID
+    const uuid = await searchAnimePahe(title, year, type);
+    
+    if (!uuid) {
+      console.warn(`❌ Could not find AnimePahe ID for "${title}"`);
+      return [];
+    }
+    
+    console.log(`✅ AnimePahe UUID: ${uuid}`);
+    
+    // Bước 2: Fetch info để lấy DANH SÁCH EPISODES
+    const { data } = await axios.get(
+      `${process.env.CONSUMET_URI}/anime/animepahe/info/${uuid}`,
+      { timeout: 15000 }
+    );
+    
+    // ✅ KIỂM TRA: API có trả episodes array không?
+    if (!data?.episodes || !Array.isArray(data.episodes)) {
+      console.warn(`⚠️ No episodes array for AnimePahe ID: ${uuid}`);
+      
+      // ❌ FALLBACK CŨ (SAI) - CHỈ GẮN UUID
+      // const episodes: Episode[] = [];
+      // for (let i = 1; i <= data.totalEpisodes; i++) {
+      //   episodes.push({
+      //     id: `${uuid}-${i}`,  // ← THIẾU EPISODE HASH
+      //     number: i,
+      //   });
+      // }
+      
+      // ✅ NẾU API KHÔNG TRẢ EPISODES, KHÔNG THỂ XEM ĐƯỢC
+      return [];
+    }
+    
+    console.log(`✅ AnimePahe: Found ${data.episodes.length} episodes`);
+    
+    // ✅ Bước 3: MAP EPISODES VỚI ID ĐẦY ĐỦ
+    const episodes: Episode[] = data.episodes.map((ep: any) => ({
+      id: ep.id,  // ← "d58fc9f8.../f3316203..." (ĐẦY ĐỦ ANIME UUID + EPISODE HASH)
+      number: ep.number,
+      title: ep.title || `Episode ${ep.number}`,
+    }));
+    
+    return [
+      {
+        providerId: 'animepahe',
+        id: 'animepahe',
+        episodes,
+      },
+    ];
+  } catch (error) {
+    console.error(`Error fetching AnimePahe:`, error);
+    return [];
+  }
+}
 
 async function fetchEpisodeMeta(id: string, skip = false): Promise<ImageDataItem[]> {
   try {
@@ -311,6 +488,43 @@ async function fetchAndCacheData(
   const malsync = await MalSync(id);
   const promises: Promise<Provider[]>[] = [];
 
+  let animeInfo: { title: string; year?: number; type?: string } | null = null;
+  
+  try {
+    const anilistQuery = `
+      query ($id: Int) {
+        Media(id: $id) {
+          title {
+            romaji
+            english
+            native
+          }
+          startDate {
+            year
+          }
+          format
+        }
+      }
+    `;
+    
+    const { data } = await axios.post('https://graphql.anilist.co', {
+      query: anilistQuery,
+      variables: { id: parseInt(id) },
+    });
+    
+    if (data?.data?.Media) {
+      const media = data.data.Media;
+      animeInfo = {
+        title: media.title.english || media.title.romaji,
+        year: media.startDate?.year,
+        type: media.format, // TV, MOVIE, OVA, etc.
+      };
+      console.log(`📺 AniList info: "${animeInfo.title}" (${animeInfo.year}, ${animeInfo.type})`);
+    }
+  } catch (error) {
+    console.error('Error fetching AniList info:', error);
+  }
+
   if (malsync) {
     const gogop = malsync.find((i) => i.providerId === 'gogoanime');
     const zorop = malsync.find((i) => i.providerId === 'zoro');
@@ -330,8 +544,11 @@ async function fetchAndCacheData(
     }
   }
 
-   // ⬇️ THÊM PAHE VÀO PROMISES BẤT KỂ KẾT QUẢ MALSINC ⬇️
-    // promises.push(fetchAnimePahe(Number(id)));
+  if (animeInfo?.title) {
+    promises.push(
+      fetchAnimePahe(id, animeInfo.title, animeInfo.year, animeInfo.type)
+    );
+  }
     
   // Correctly assign results from promises
   const results = await Promise.all(promises);

@@ -11,6 +11,7 @@ interface RequestBody {
   episodeid: string;
   episodenum: number | string;
   subtype: string;
+  zoroEpisodeId?: string; 
 }
 
 // Định nghĩa kiểu dữ liệu cho params của route
@@ -286,20 +287,37 @@ async function AnifyEpisode(
     }
 }
 
-// async function animepaheEpisode(malId: number, episodeId: string): Promise<{ url: string; length: number } | null> {
-// 	try {
-// 		const provider = new AnimePahe(malId);
-// 		const { url, length } = await provider.getSourceInfo(episodeId);
-// 		return {
-// 			url,
-// 			length
-// 		};
-// 	} catch (error) {
-// 		console.error(error);
-// 		return null;
-// 	}
-// }
+// ✅ HÀM AnimePahe - SIMPLE VERSION
+async function animePaheEpisode(episodeid: string): Promise<Episode[] | null> {
+  try {
+    console.log('🔍 [AnimePahe] episodeId:', episodeid);
 
+    const { data } = await axios.get(
+      `${process.env.CONSUMET_URI}/anime/animepahe/watch`,
+      {
+        params: { episodeId: episodeid },
+        timeout: 15000,
+      }
+    );
+
+    if (!data?.sources || data.sources.length === 0) {
+      console.error('❌ [AnimePahe] No sources');
+      return null;
+    }
+
+    // ✅ API đã trả đúng format, chỉ cần thêm headers
+    data.headers = {
+      Referer: 'https://kwik.cx/',
+      Origin: 'https://animepahe.si',
+    };
+
+    console.log('✅ [AnimePahe] Success');
+    return data;
+  } catch (error) {
+    console.error('❌ [AnimePahe]:', error);
+    return null;
+  }
+}
 
 // Xử lý request POST
 export const POST = async (req: NextRequest, context: { params: Promise<{ epsource: string[] }> }): Promise<NextResponse> => {
@@ -307,7 +325,7 @@ export const POST = async (req: NextRequest, context: { params: Promise<{ epsour
     const resolvedParams = await params; // ✅ phải await
     const id = resolvedParams.epsource[0];
 
-    const { source, provider, episodeid, episodenum, subtype }: RequestBody = await req.json();
+    const { source, provider, episodeid, episodenum, subtype, zoroEpisodeId }: RequestBody = await req.json();
 
     /*
     // Đoạn mã cache với Redis (đã được type-safe)
@@ -350,11 +368,17 @@ export const POST = async (req: NextRequest, context: { params: Promise<{ epsour
         return NextResponse.json(data);
     }
 
+     if (provider === "animepahe") {
+      const data = await animePaheEpisode(episodeid);
+      return NextResponse.json(data);
+    }
+
     if (source === "anify") {
         const data = await AnifyEpisode(provider, episodeid, episodenum, id, subtype);
         return NextResponse.json(data);
     }
 
+    
     // if (source === "animepahe") {
     //     const data = await animepaheEpisode(Number(id), episodeid);
     //     return NextResponse.json(data);
