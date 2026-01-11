@@ -28,17 +28,28 @@ export const POST = async (request: NextRequest) => {
     try {
         const { title, description, type, severity } = await request.json();
 
+        // Validate required fields
+        if (!title || !description) {
+            return NextResponse.json(
+                { message: "Title and description are required" },
+                { status: 400 }
+            );
+        }
+
         await connectMongo();
 
         const newReport = await Feedback.create({
             title,
             description,
-            type,
-            severity,
+            type: type || 'Suggestion',
+            severity: severity || 'Low',
         });
 
         return NextResponse.json(
-            { message: "Feedback report saved successfully", data: newReport },
+            { 
+                message: "Feedback report saved successfully", 
+                data: newReport 
+            },
             { status: 201 }
         );
     } catch (error) {
@@ -53,7 +64,8 @@ export const POST = async (request: NextRequest) => {
 // DELETE - Xóa feedback report theo ID hoặc xóa tất cả
 export const DELETE = async (req: NextRequest) => {
     try {
-        const { id } = await req.json();
+        const body = await req.json();
+        const { id } = body;
 
         await connectMongo();
 
@@ -70,6 +82,7 @@ export const DELETE = async (req: NextRequest) => {
             
             return NextResponse.json({
                 message: `Feedback report with ID ${id} deleted successfully`,
+                data: deletedReport
             });
         } else {
             // Xóa tất cả feedback reports
@@ -77,11 +90,11 @@ export const DELETE = async (req: NextRequest) => {
             
             return NextResponse.json({
                 message: `Deleted ${deletedCount.deletedCount} feedback reports`,
+                count: deletedCount.deletedCount
             });
         }
     } catch (error) {
-        const { id } = await req.json().catch(() => ({ id: null }));
-        console.error(`Error deleting feedback report${id ? ` with ID ${id}` : 's'}:`, error);
+        console.error('Error deleting feedback report(s):', error);
         
         return NextResponse.json(
             { message: "Failed to delete feedback report(s). Please try again later." },
