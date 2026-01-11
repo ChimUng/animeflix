@@ -11,6 +11,7 @@ import { Toaster } from 'sonner'
 import FloatingButton from '@/components/FloatingButton';
 import { AuthProvider } from './SessionProvider';
 import GoToTop from '@/components/GoToTop';
+import Changelogs from '@/components/Changelogs';
 
 const inter = Inter({ subsets: ['latin'] })
 // const myfont = localFont({ src: "../static-fonts/28 Days Later.ttf" })
@@ -120,6 +121,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
         <NextTopLoader color="#CA1313" />
         <Toaster richColors={true} closeButton={true} theme="dark" />
         <Search />
+        <Changelogs />
         <FloatingButton session={session} />
         <GoToTop />
         <Footer />
