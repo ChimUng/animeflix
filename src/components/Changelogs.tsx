@@ -130,7 +130,7 @@ export default function Changelogs(): JSX.Element {
               </ModalBody>
               <ModalFooter>
                 <Button className="bg-d234 rounded-lg" onPress={onClose}>
-                  Dismiss
+                  Ẩn
                 </Button>
               </ModalFooter>
             </>
