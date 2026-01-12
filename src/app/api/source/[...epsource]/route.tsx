@@ -2,7 +2,7 @@ import axios from 'axios';
 // import { redis } from '@/lib/rediscache'; 
 import { NextResponse, NextRequest } from "next/server";
 // import AnimePahe from '@/components/providers/animepahe';
-import { RawEpisode, Episode, AnifyProvider } from '@/utils/EpisodeFunctions';
+import { RawEpisode, Episode, AnifyProvider, VideoData } from '@/utils/EpisodeFunctions';
 
 // Định nghĩa kiểu dữ liệu cho phần body của request
 interface RequestBody {
@@ -108,7 +108,7 @@ async function zoroEpisode(
   epnum: number | string,
   id: string,
   subtype: string
-): Promise<Episode[] | null> {
+): Promise<VideoData | null> {
   try {
     let animeEpisodeId: string | null = null;
 
@@ -184,7 +184,7 @@ async function nineAnimeEpisode(
   epnum: number | string,
   id: string,
   subtype: string
-): Promise<Episode[] | null> {
+): Promise<VideoData | null> {
   try {
     let animeEpisodeId: string | null = null;
 
@@ -230,7 +230,7 @@ async function nineAnimeEpisode(
     }
 
     // ✅ Map sang format Episode[] giống Zoro
-    const videoData: Episode[] = {
+    const videoData: VideoData = {
       sources: [
         {
           url: link.file,
@@ -255,7 +255,7 @@ async function nineAnimeEpisode(
       headers: {
         Referer: 'https://rapid-cloud.co/',
       },
-    } as any;
+    } ;
 
     console.log('✅ [9anime] Lấy videoData thành công');
     return videoData;
@@ -287,7 +287,7 @@ async function AnifyEpisode(
 }
 
 // ✅ HÀM AnimePahe - SIMPLE VERSION
-async function animePaheEpisode(episodeid: string): Promise<Episode[] | null> {
+async function animePaheEpisode(episodeid: string): Promise<VideoData | null> {
   try {
     console.log('🔍 [AnimePahe] episodeId:', episodeid);
 

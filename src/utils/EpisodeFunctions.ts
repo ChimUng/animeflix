@@ -58,6 +58,39 @@ export interface AnifyProvider {
       };
 }
 
+export interface AnimePaheEpisodeData {
+  id: string;
+  number: number;
+  title?: string;
+}
+
+export interface VideoSource {
+  url: string;
+  quality?: string;
+  isM3U8?: boolean;
+  type?: string;
+}
+
+export interface VideoTrack {
+  url: string;
+  lang: string;
+  kind: string;
+  default?: boolean;
+}
+
+export interface VideoTimeRange {
+  start: number;
+  end: number;
+}
+
+export interface VideoData {
+  sources: VideoSource[];
+  tracks?: VideoTrack[];
+  intro?: VideoTimeRange;
+  outro?: VideoTimeRange;
+  headers?: Record<string, string>;
+}
+
 export async function CombineEpisodeMeta(
   episodeData: Provider[],
   imageData: ImageDataItem[]

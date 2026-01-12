@@ -3,7 +3,7 @@ import axios from 'axios';
 import { redis } from '@/lib/rediscache';
 import { Redis } from 'ioredis';
 import { NextRequest, NextResponse } from 'next/server';
-import { CombineEpisodeMeta, Episode, Provider, ImageDataItem, RawEpisode, AnifyProvider} from '@/utils/EpisodeFunctions';
+import { CombineEpisodeMeta, Episode, Provider, ImageDataItem, RawEpisode, AnifyProvider, AnimePaheEpisodeData} from '@/utils/EpisodeFunctions';
 
 type MalSyncEntry = {
   providerId: string;
@@ -437,7 +437,7 @@ async function fetchAnimePahe(
     console.log(`✅ AnimePahe: Found ${data.episodes.length} episodes`);
     
     // ✅ Bước 3: MAP EPISODES VỚI ID ĐẦY ĐỦ
-    const episodes: Episode[] = data.episodes.map((ep: any) => ({
+    const episodes: Episode[] = data.episodes.map((ep: AnimePaheEpisodeData) => ({
       id: ep.id,  // ← "d58fc9f8.../f3316203..." (ĐẦY ĐỦ ANIME UUID + EPISODE HASH)
       number: ep.number,
       title: ep.title || `Episode ${ep.number}`,
