@@ -32,7 +32,7 @@ export const CustomHeader: React.FC<CustomHeaderProps> = ({
 
   return (
     <div 
-      className={`absolute top-[5px] right-[5px] sm:left-[5px] sm:right-auto z-50 transition-opacity duration-500 ease-out ${
+      className={`absolute top-[5px] left-[5px] sm:left-auto sm:right-[5px] z-50 transition-opacity duration-500 ease-out ${
         showHeader ? 'opacity-100' : 'opacity-0'
       }`}
       style={{ pointerEvents: 'none' }}
