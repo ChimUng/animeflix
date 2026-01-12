@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Accordion, AccordionItem, Select, SelectItem, RadioGroup, Radio, Input } from "@nextui-org/react";
 import { Combobox,ComboboxInput,ComboboxButton,ComboboxOptions,ComboboxOption,Transition,} from '@headlessui/react';
 import Searchcard from './Searchcard';
@@ -32,6 +32,18 @@ function Catalog({ searchParams }: { searchParams: SearchParams }) {
     const [sortbyvalue, setSortbyvalue] = useState<string | null>(null);
     const [searchvalue, setSearchvalue] = useState<string>('');
     const [showTopBottom, setShowTopBottom] = useState<boolean>(true);
+
+    const [isMobile, setIsMobile] = useState<boolean>(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 768);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
   // Đồng bộ state với searchParams
     useEffect(() => {
@@ -125,6 +137,12 @@ function Catalog({ searchParams }: { searchParams: SearchParams }) {
         !sortbyvalue &&
         !searchvalue;
 
+    const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+        if (isMobile) {
+            e.target.blur(); 
+        }
+    };
+
     return (
         <div className={styles.catalog}>
         <div className={styles.catalogtop}>
@@ -207,13 +225,17 @@ function Catalog({ searchParams }: { searchParams: SearchParams }) {
                     <Combobox value={genrevalue} onChange={setGenrevalue} multiple>
                     <div className="relative w-full cursor-default overflow-hidden rounded-[0.6rem] text-left shadow-md focus:outline-none sm:text-sm">
                         <ComboboxInput
+                        ref={inputRef}
                         className="w-full border-none py-[9px] pl-3 pr-10 text-sm leading-5 bg-[#27272a] text-[#b2b2b2] focus:ring-0 outline-none"
                         displayValue={(items: Option[]) =>
                             items.map((item) => item.name).join(', ')
                         }
                         placeholder="Chọn thể loại"
                         onChange={(event) => setQuery(event.target.value)}
+                        onFocus={handleInputFocus}
                         autoComplete="off"
+                        readOnly={isMobile}
+                        inputMode={isMobile ? "none" : "text"}
                         />
                         <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">
                         <svg
