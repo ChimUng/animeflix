@@ -21,7 +21,7 @@ const APP_DEFAULT_TITLE = "Animeflix - Watch Anime Online";
 const APP_DESCRIPTION = "Xem phim anime vietsub online xem trên điện thoại di động và máy tính nhanh nhất.";
 
 export const metadata = {
-  metadataBase: new URL('https://animeflix.vercel.app'),
+  metadataBase: new URL('https://animeflixnow.vercel.app'),
   applicationName: APP_NAME,
   title: APP_DEFAULT_TITLE,
   icons: {
