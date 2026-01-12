@@ -14,34 +14,25 @@ export const CustomHeader: React.FC<CustomHeaderProps> = ({
   hideDelay = 2000,
 }) => {
   const [showHeader, setShowHeader] = useState(true);
-  const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const hasShownRef = useRef(false);
 
   useEffect(() => {
-    if (!autoHide) return;
-
-    const resetTimer = () => {
-      setShowHeader(true);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => setShowHeader(false), hideDelay);
-    };
-
-    resetTimer();
-
-    const handleInteraction = () => resetTimer();
+    if (hasShownRef.current) return;
     
-    document.addEventListener('mousemove', handleInteraction);
-    document.addEventListener('touchstart', handleInteraction);
+    hasShownRef.current = true;
+    
+    const timer = setTimeout(() => {
+      setShowHeader(false);
+    }, hideDelay);
 
     return () => {
-      document.removeEventListener('mousemove', handleInteraction);
-      document.removeEventListener('touchstart', handleInteraction);
-      if (timerRef.current) clearTimeout(timerRef.current);
+      clearTimeout(timer);
     };
-  }, [autoHide, hideDelay]);
+  }, [hideDelay]);
 
   return (
     <div 
-      className={`absolute top-[5px] right-[5px] z-50 transition-opacity duration-500 ease-out ${
+      className={`absolute top-[5px] right-[5px] sm:left-[5px] sm:right-auto z-50 transition-opacity duration-500 ease-out ${
         showHeader ? 'opacity-100' : 'opacity-0'
       }`}
       style={{ pointerEvents: 'none' }}
