@@ -178,9 +178,9 @@ export function DesktopPlayButton({}: MediaButtonProps) { //tooltipPlacement rem
     Icon = ended ? ReplayIcon : isPaused ? FaPlay : FaPause;
   return (
     <PlayButton
-      className={`group ring-media-focus relative inline-flex h-20 w-20 media-paused:cursor-pointer cursor-default items-center justify-center rounded-full outline-none border-2 border-white/70`}
+      className={`group ring-media-focus relative inline-flex media-paused:cursor-pointer cursor-default outline-none`}
     >
-      <Icon className="w-12 h-12 text-[#d14836] relative left-[3px]" />
+      <Icon className="w-12 h-12 text-[#d14836] drop-shadow-2xl" />
     </PlayButton>
   );
 }
@@ -191,9 +191,9 @@ export function MobilePlayButton({ }: MediaButtonProps) { //tooltipPlacement rem
     Icon = ended ? ReplayIcon : isPaused ? FaPlay : FaPause;
   return (
     <PlayButton
-      className={`group ring-media-focus relative inline-flex h-12 w-12 cursor-pointer items-center justify-center rounded-full outline-none border-1 border-white/70`}
+      className={`group ring-media-focus relative inline-flex cursor-pointer outline-none`}
     >
-      <Icon className="w-8 h-8 text-[#d14836] relative left-[2px]" />
+      <Icon className="w-8 h-8 text-[#d14836] drop-shadow-2xl" />
     </PlayButton>
   );
 }

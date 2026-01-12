@@ -53,16 +53,14 @@ export const VideoLayout: React.FC<VideoLayoutProps> = ({ groupedEp, thumbnails,
         <Controls.Group
           className={`duration-200 ease-out flex sm:hidden gap-5 items-center absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20`}
         >
-          <div className="sm:hidden backdrop-blur-lg shadow bg-black/65 rounded-full">
-            <Buttons.MobilePlayButton
-              tooltipPlacement="top center"
-            />
-          </div>
+          <Buttons.MobilePlayButton
+            tooltipPlacement="top center"
+          />
         </Controls.Group>
 
         {/* Desktop Playbtn */}
         <Controls.Group
-          className={`hidden media-paused:opacity-100 media-paused:scale-100 backdrop-blur-lg scale-[150%] opacity-0 duration-200 ease-out sm:flex shadow bg-black/50 rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2`}
+          className={`hidden media-paused:opacity-100 media-paused:scale-100 scale-[150%] opacity-0 duration-200 ease-out sm:flex absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2`}
         >
           <Buttons.DesktopPlayButton tooltipPlacement="top center" />
         </Controls.Group>
