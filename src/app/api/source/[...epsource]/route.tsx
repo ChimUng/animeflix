@@ -2,7 +2,7 @@ import axios from 'axios';
 // import { redis } from '@/lib/rediscache'; 
 import { NextResponse, NextRequest } from "next/server";
 // import AnimePahe from '@/components/providers/animepahe';
-import { RawEpisode, Episode, AnifyProvider, VideoData } from '@/utils/EpisodeFunctions';
+import { RawEpisode, AnifyProvider, VideoData } from '@/utils/EpisodeFunctions';
 
 // Định nghĩa kiểu dữ liệu cho phần body của request
 interface RequestBody {
