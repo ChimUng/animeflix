@@ -3,7 +3,7 @@ import React, { useEffect, useState, FC } from "react";
 import { getEpisodes, getSources } from '@/lib/getData';
 import PlayerEpisodeList from "./PlayerEpisodeList";
 import Player from "./VidstackPlayer/player";
-import { Spinner, TextTrackInit } from "@vidstack/react";
+import {  TextTrackInit } from "@vidstack/react";
 import { toast } from "sonner";
 import { useTitle, useNowPlaying, useDataInfo } from "../../lib/store";
 import { useStore } from "zustand";

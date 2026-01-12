@@ -11,7 +11,6 @@ interface RequestBody {
   episodeid: string;
   episodenum: number | string;
   subtype: string;
-  zoroEpisodeId?: string; 
 }
 
 // Định nghĩa kiểu dữ liệu cho params của route
@@ -325,7 +324,7 @@ export const POST = async (req: NextRequest, context: { params: Promise<{ epsour
     const resolvedParams = await params; // ✅ phải await
     const id = resolvedParams.epsource[0];
 
-    const { source, provider, episodeid, episodenum, subtype, zoroEpisodeId }: RequestBody = await req.json();
+    const { source, provider, episodeid, episodenum, subtype}: RequestBody = await req.json();
 
     /*
     // Đoạn mã cache với Redis (đã được type-safe)

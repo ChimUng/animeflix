@@ -3,7 +3,7 @@ import { connectMongo } from "@/mongodb/db";
 import Feedback from "@/mongodb/models/feedback";
 
 // GET - Lấy tất cả feedback reports
-export const GET = async (req: NextRequest) => {
+export const GET = async () => {
     try {
         await connectMongo();
 

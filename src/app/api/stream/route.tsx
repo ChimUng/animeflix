@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 
-// ✅ Whitelist origins
 const ALLOWED_ORIGINS = [
   'megacloud.blog',
   'netmagcdn.com',
@@ -20,7 +19,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Thiếu URL" }, { status: 400 });
     }
 
-    // ✅ Check whitelist
     try {
       const hostname = new URL(url).hostname;
       const isAllowed = ALLOWED_ORIGINS.some(origin => hostname.includes(origin));
@@ -28,7 +26,7 @@ export async function GET(req: NextRequest) {
         console.warn(`🚫 Origin not allowed: ${hostname}`);
         return NextResponse.json({ error: "Origin not allowed" }, { status: 403 });
       }
-    } catch (e) {
+    } catch {
       return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
     }
 
@@ -76,7 +74,6 @@ export async function GET(req: NextRequest) {
       let playlist = response.data.toString("utf8");
       const baseUrl = url.substring(0, url.lastIndexOf("/") + 1);
 
-      // ✅ LOGIC MỚI: Phát hiện Master Playlist vs Media Playlist
       const isMasterPlaylist = 
         playlist.includes("#EXT-X-STREAM-INF") || 
         playlist.includes("#EXT-X-I-FRAME-STREAM-INF");
@@ -84,11 +81,8 @@ export async function GET(req: NextRequest) {
       if (isMasterPlaylist) {
         console.log("📋 Master playlist detected, rewriting variant URLs...");
         
-        // ✅ Rewrite variant playlist URLs (relative & absolute)
         playlist = playlist.split('\n').map((line: string) => {
-          // Bỏ qua comment lines
           if (line.startsWith('#')) {
-            // ✅ Handle I-FRAME with URI parameter
             if (line.includes('URI=')) {
               return line.replace(/URI="([^"]+)"/g, (_match: string, variantUrl: string) => {
                 let fullUrl: string;
@@ -104,7 +98,6 @@ export async function GET(req: NextRequest) {
             return line;
           }
           
-          // ✅ Rewrite variant URLs (không phải comment)
           if (line.trim() && !line.startsWith('#')) {
             let variantUrl: string;
             if (line.startsWith('http')) {
@@ -121,9 +114,8 @@ export async function GET(req: NextRequest) {
       } else {
         console.log("📄 Media playlist detected, rewriting segment URLs...");
         
-        // ✅ Rewrite segment URLs (existing logic)
         playlist = playlist.replace(/^(?!#)(.*)$/gm, (match: string) => {
-          if (!match.trim()) return match; // Bỏ qua dòng trống
+          if (!match.trim()) return match;
           
           let segmentUrl: string;
           if (match.startsWith("http")) {
@@ -145,7 +137,6 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // ✅ Handle TS segments, encryption keys, etc.
     return new NextResponse(response.data, {
       status: 200,
       headers: {

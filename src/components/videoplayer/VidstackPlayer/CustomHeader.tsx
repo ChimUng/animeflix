@@ -4,19 +4,17 @@ import Image from 'next/image';
 
 interface CustomHeaderProps {
   brandName?: string;
-  episodeNum?: number;
   autoHide?: boolean;
   hideDelay?: number;
 }
 
 export const CustomHeader: React.FC<CustomHeaderProps> = ({
   brandName = "Animeflix",
-  episodeNum,
   autoHide = true,
   hideDelay = 2000,
 }) => {
   const [showHeader, setShowHeader] = useState(true);
-  const timerRef = useRef<NodeJS.Timeout>();
+  const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
     if (!autoHide) return;
@@ -48,7 +46,6 @@ export const CustomHeader: React.FC<CustomHeaderProps> = ({
       }`}
       style={{ pointerEvents: 'none' }}
     >
-      {/* ✅ GIỐNG JUSTANIME - INLINE STYLE */}
       <div 
         style={{
           display: 'flex',
@@ -59,7 +56,6 @@ export const CustomHeader: React.FC<CustomHeaderProps> = ({
           textShadow: '0 2px 4px rgba(0,0,0,0.5)'
         }}
       >
-        {/* ✅ LOGO ICON - DÙNG FILE ICON */}
         <div style={{
           width: '32px',
           height: '32px',
@@ -79,12 +75,10 @@ export const CustomHeader: React.FC<CustomHeaderProps> = ({
           />
         </div>
         
-        {/* Text "Powered by" */}
         <span style={{ fontWeight: '500', opacity: 0.9 }}>
           Powered by
         </span>
         
-        {/* ✅ BRAND NAME VỚI GRADIENT */}
         <span 
           className="bg-gradient-to-r from-red-500 to-white bg-clip-text text-transparent font-custom"
           style={{
@@ -94,13 +88,6 @@ export const CustomHeader: React.FC<CustomHeaderProps> = ({
         >
           {brandName}
         </span>
-
-        {/* Episode number
-        {episodeNum && (
-          <span style={{ opacity: 0.7, fontSize: '13px' }}>
-            • EP {episodeNum}
-          </span>
-        )} */}
       </div>
     </div>
   );
