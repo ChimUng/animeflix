@@ -1,36 +1,138 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<p align="center">
+  <div align="center">
+    <a href="https://animeflixnow.vercel.app/">
+      <img alt="Animeflix" src="https://animeflixnow.vercel.app/icon-192x192.png" width="220"/>
+    </a>
+  </div>
+  <h3 align="center">Animeflix - Clean anime streaming platform</h3>
+  <p align="center">
+    <a href="https://github.com/ChimUng/Animeflix">
+      <img src="https://img.shields.io/github/stars/ChimUng/Animeflix" alt="Github Stars">
+    </a>
+    <img src="https://img.shields.io/github/issues/ChimUng/Animeflix" alt="Github Issues">
+    <a href="https://github.com/ChimUng/Animeflix">
+      <img src="https://img.shields.io/github/forks/ChimUng/Animeflix" alt="Github Forks" />
+    </a>
+  </p>
+</p>
 
-## Getting Started
+<p align="center">
+  <a href="https://animeflixnow.vercel.app/">Animeflix</a> is an open-source anime streaming service built with <strong>Next.js (TypeScript)</strong> and <strong>Tailwind CSS</strong>, powered by Consumet API, HiAnime. It lets you easily find any anime with an intuitive search & suggestion feature and stream without any ads.
+</p>
 
-First, run the development server:
+<p align="center">
+  <a href="https://www.facebook.com/nguyenhongduy1907">
+    <img src="https://img.shields.io/badge/Follow%20on%20Facebook-1877F2?logo=facebook&logoColor=white" alt="Follow on Facebook">
+  </a>
+  <a href="https://www.linkedin.com/in/hong-duy-chimung-8a2a6b368">
+    <img src="https://img.shields.io/badge/Connect%20on%20LinkedIn-0A66C2?logo=linkedin&logoColor=white" alt="Connect on LinkedIn">
+  </a>
+  <a href="https://www.instagram.com/dong_huy_197/">
+    <img src="https://img.shields.io/badge/Follow%20on%20Instagram-E4405F?logo=instagram&logoColor=white" alt="Follow on Instagram">
+  </a>
+</p>
+
+<details>
+<summary>View Features</summary>
+
+### General
+
+- Sub Anime support
+- Dub Anime support
+- Intuitive search & suggestion feature
+- User-friendly interface
+- Mobile responsive
+- Fast page load
+- Character & Voice Actors
+
+### Watch Page
+
+- Related Animes
+- Recommended Animes
+- Available seasons
+- Estimated schedule of upcoming episodes
+- **Player**
+  - Autoplay
+  - Autoskip intro/outro
+  - Autonext
+
+</details>
+
+## Previews
+
+<img src="YOUR_HOME_SCREENSHOT_URL" alt="Home Page" style="max-width: 80%;">
+
+<details>
+<summary style="margin-top:10px">View more screenshots</summary>
+<br/>
+
+AnimeInfo Page
+<img src="YOUR_INFO_SCREENSHOT_URL" style="margin-top:10px" alt="AnimeInfo Page" style="max-width: 80%;">
+<br/>
+
+Character & Voice Actors
+<img src="YOUR_CHAR_SCREENSHOT_URL" style="margin-top:10px" alt="Character & Voice Actors" style="max-width: 80%;">
+<br/>
+
+Watch Page
+<img src="YOUR_WATCH_SCREENSHOT_URL" style="margin-top:10px" alt="Watch Page" style="max-width: 80%;">
+<br/>
+
+</details>
+
+## Installation and Local Development
+
+### 1. Make sure you have Node.js installed on your device
+
+### 2. Clone the repository and install all required dependencies
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/ChimUng/Animeflix.git
+cd Animeflix
+npm install # or yarn
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Refer to the [.env.example](https://github.com/ChimUng/Animeflix/blob/main/.env.example) to set up your `.env` file
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Start the server
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev   # development server
+npm run build # production build
+npm start     # production server
+```
 
-## Learn More
+## Live Deployment
 
-To learn more about Next.js, take a look at the following resources:
+### Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Host your own instance of Animeflix on Vercel:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/ChimUng/Animeflix)
 
-## Deploy on Vercel
+### Render
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Host your own instance of Animeflix on Render:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ChimUng/Animeflix)
+
+## Pull Requests
+
+- Pull requests are welcomed that address bug fixes, improvements, or new features.
+- Fork the repository and create a new branch for your changes.
+- Ensure your code follows our coding standards.
+- Include tests if applicable.
+- Describe your changes clearly in the pull request, explaining the problem and solution.
+
+### Reporting Issues
+
+If you discover any issues or have suggestions for improvement, please open an issue. Provide a clear and concise description of the problem, steps to reproduce it, and any relevant information about your environment.
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+<h2 align="center">
+  <b>Enjoy streaming anime the way it should be! 🍿 </b>
+  <b>And don't forget leave me a star! ⭐ </b>
+</h2>
