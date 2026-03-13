@@ -102,7 +102,7 @@ function Footer() {
                             </svg>
                             <span className="sr-only">GitHub account</span>
                         </Link>
-                        <Link href="https://www.linkedin.com/in/hong-duy-chimung-8a2a6b368/" target="_blank" className="hover:text-gray-900 dark:hover:text-white ms-5">
+                        <Link href="https://www.linkedin.com/in/hong-duy-8a2a6b368/" target="_blank" className="hover:text-gray-900 dark:hover:text-white ms-5">
                             <svg
                                 className="w-[22px] h-[22px]"
                                 xmlns="http://www.w3.org/2000/svg"
