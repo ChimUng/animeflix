@@ -60,22 +60,22 @@
 
 ## Previews
 
-<img src="YOUR_HOME_SCREENSHOT_URL" alt="Home Page" style="max-width: 80%;">
+<img src="https://animeflixnow.vercel.app/homepage.png" alt="Home Page" style="max-width: 80%;">
 
 <details>
 <summary style="margin-top:10px">View more screenshots</summary>
 <br/>
 
 AnimeInfo Page
-<img src="YOUR_INFO_SCREENSHOT_URL" style="margin-top:10px" alt="AnimeInfo Page" style="max-width: 80%;">
+<img src="https://animeflixnow.vercel.app/infopage.png" style="margin-top:10px" alt="AnimeInfo Page" style="max-width: 80%;">
 <br/>
 
 Character & Voice Actors
-<img src="YOUR_CHAR_SCREENSHOT_URL" style="margin-top:10px" alt="Character & Voice Actors" style="max-width: 80%;">
+<img src="https://animeflixnow.vercel.app/characterpage.png" style="margin-top:10px" alt="Character & Voice Actors" style="max-width: 80%;">
 <br/>
 
 Watch Page
-<img src="YOUR_WATCH_SCREENSHOT_URL" style="margin-top:10px" alt="Watch Page" style="max-width: 80%;">
+<img src="https://animeflixnow.vercel.app/streampage.png" style="margin-top:10px" alt="Watch Page" style="max-width: 80%;">
 <br/>
 
 </details>
