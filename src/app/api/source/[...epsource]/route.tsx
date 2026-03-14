@@ -199,7 +199,7 @@ async function nineAnimeEpisode(
     const paramValue = animeEpisodeId ?? episodeid;
     console.log('🎯 [9anime] Final animeEpisodeId:', paramValue);
 
-    const server = 'hd-2';
+    const server = 'hd-1';
 
     const streamRes = await axios.get(`${process.env.ZENIME_URL}/api/stream`, {
       params: {
