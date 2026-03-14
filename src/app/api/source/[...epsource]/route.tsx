@@ -188,74 +188,77 @@ async function nineAnimeEpisode(
   try {
     let animeEpisodeId: string | null = null;
 
-    // ✅ KIỂM TRA: Nếu episodeid đã chứa "?ep=" thì đã được build rồi
     if (episodeid.includes('?ep=')) {
       console.log('✅ [9anime] episodeid đã ở dạng đầy đủ:', episodeid);
       animeEpisodeId = episodeid;
     } else {
-      // ✅ Nếu episodeid chỉ là số episode thuần túy, build animeEpisodeId
       console.log('🔨 [9anime] Building animeEpisodeId từ:', { id, episodeid });
       animeEpisodeId = await buildZoroAnimeEpisodeId(id, episodeid);
     }
 
-    // Fallback: nếu vẫn null thì dùng episodeid gốc
     const paramValue = animeEpisodeId ?? episodeid;
-    
     console.log('🎯 [9anime] Final animeEpisodeId:', paramValue);
 
-    // ✅ Gọi API 9anime với server HD-2 (ưu tiên) hoặc HD-3
-    const server = 'hd-2'; // Có thể thay bằng 'hd-3' nếu cần
-    
+    const server = 'hd-2';
+
     const streamRes = await axios.get(`${process.env.ZENIME_URL}/api/stream`, {
       params: {
         id: paramValue,
         server: server,
-        type: subtype, // 'sub' hoặc 'dub'
+        type: subtype,
       },
     });
 
     const streamData = streamRes.data;
-    
+
     if (!streamData?.success || !streamData?.results?.streamingLink) {
       console.error('❌ [9anime] Không có streamingLink');
       return null;
     }
 
     const streamingLink = streamData.results.streamingLink;
-    const link = streamingLink.link;
-    
-    if (!link?.file) {
+
+    // Fix: streamingLink là array, lấy phần tử đầu tiên
+    const firstStream = Array.isArray(streamingLink) ? streamingLink[0] : streamingLink;
+
+    if (!firstStream) {
+      console.error('❌ [9anime] Không có firstStream');
+      return null;
+    }
+
+    // Fix: link là string trực tiếp, không phải object có .file
+    const fileUrl = typeof firstStream.link === 'string'
+      ? firstStream.link
+      : firstStream.link?.file;
+
+    if (!fileUrl) {
       console.error('❌ [9anime] Không có file URL');
       return null;
     }
 
-    // ✅ Map sang format Episode[] giống Zoro
+    // tracks nằm ở results.tracks, không phải streamingLink.tracks
+    const tracks = streamData.results.tracks ?? firstStream.tracks ?? [];
+
     const videoData: VideoData = {
       sources: [
         {
-          url: link.file,
-          isM3U8: link.type === 'hls',
-          type: link.type,
+          url: fileUrl,
+          isM3U8: firstStream.type === 'hls',
+          type: firstStream.type,
         }
       ],
-      tracks: streamingLink.tracks?.map((track: { file: string; label: string; kind: string; default?: boolean }) => ({
+      tracks: tracks.map((track: { file: string; label: string; kind: string; default?: boolean }) => ({
         url: track.file,
         lang: track.label,
         kind: track.kind,
         default: track.default,
-      })) || [],
-      intro: streamingLink.intro ? {
-        start: streamingLink.intro.start,
-        end: streamingLink.intro.end,
-      } : undefined,
-      outro: streamingLink.outro ? {
-        start: streamingLink.outro.start,
-        end: streamingLink.outro.end,
-      } : undefined,
+      })),
+      intro: streamData.results.intro ?? firstStream.intro,
+      outro: streamData.results.outro ?? firstStream.outro,
       headers: {
         Referer: 'https://rapid-cloud.co/',
       },
-    } ;
+    };
 
     console.log('✅ [9anime] Lấy videoData thành công');
     return videoData;
