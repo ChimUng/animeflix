@@ -290,31 +290,58 @@ async function AnifyEpisode(
 }
 
 // ✅ HÀM AnimePahe - SIMPLE VERSION
-async function animePaheEpisode(episodeid: string): Promise<VideoData | null> {
+async function animePaheEpisode(episodeid: string, animeId: string, epNum: number | string): Promise<VideoData | null> {
   try {
     console.log('🔍 [AnimePahe] episodeId:', episodeid);
 
-    const { data } = await axios.get(
-      `${process.env.CONSUMET_URI}/anime/animepahe/watch`,
-      {
-        params: { episodeId: episodeid },
-        timeout: 15000,
+    // Primary: Consumet
+    try {
+      const { data } = await axios.get(
+        `${process.env.CONSUMET_URI}/anime/animepahe/watch`,
+        { params: { episodeId: episodeid }, timeout: 15000 }
+      );
+
+      if (data?.sources?.length > 0) {
+        data.headers = {
+          Referer: 'https://kwik.cx/',
+          Origin: 'https://animepahe.si',
+        };
+        console.log('✅ [AnimePahe] Consumet success');
+        return data;
       }
+    } catch {
+      console.warn('⚠️ [AnimePahe] Consumet failed, trying fallback...');
+    }
+
+    // Fallback: core.justanime.to
+    console.log('🔄 [AnimePahe] Fallback to justanime...');
+    const { data: fallback } = await axios.get(
+      `https://core.justanime.to/api/watch/${animeId}/episode/${epNum}/animepahe`,
+      { timeout: 15000 }
     );
 
-    if (!data?.sources || data.sources.length === 0) {
-      console.error('❌ [AnimePahe] No sources');
+    const sources = fallback?.sub?.sources || fallback?.dub?.sources;
+    if (!sources?.length) {
+      console.error('❌ [AnimePahe] Fallback no sources');
       return null;
     }
 
-    // ✅ API đã trả đúng format, chỉ cần thêm headers
-    data.headers = {
-      Referer: 'https://kwik.cx/',
-      Origin: 'https://animepahe.si',
+    const videoData: VideoData = {
+      sources: sources.map((s: { url: string; quality: string; isM3U8: boolean }) => ({
+        url: s.url,
+        quality: s.quality,
+        isM3U8: s.isM3U8,
+      })),
+      tracks: [],
+      headers: {
+        Referer: 'https://kwik.cx/',
+        Origin: 'https://animepahe.si',
+      },
     };
 
-    console.log('✅ [AnimePahe] Success');
-    return data;
+    console.log('✅ [AnimePahe] Fallback success');
+    return videoData;
+
   } catch (error) {
     console.error('❌ [AnimePahe]:', error);
     return null;
@@ -371,9 +398,9 @@ export const POST = async (req: NextRequest, context: { params: Promise<{ epsour
     }
 
      if (provider === "animepahe") {
-      const data = await animePaheEpisode(episodeid);
-      return NextResponse.json(data);
-    }
+    const data = await animePaheEpisode(episodeid, id, episodenum);
+    return NextResponse.json(data);
+  }
 
     if (source === "anify") {
         const data = await AnifyEpisode(provider, episodeid, episodenum, id, subtype);
