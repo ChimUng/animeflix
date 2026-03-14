@@ -24,7 +24,7 @@
   <a href="https://www.facebook.com/nguyenhongduy1907">
     <img src="https://img.shields.io/badge/Follow%20on%20Facebook-1877F2?logo=facebook&logoColor=white" alt="Follow on Facebook">
   </a>
-  <a href="https://www.linkedin.com/in/hong-duy-chimung-8a2a6b368">
+  <a href="https://www.linkedin.com/in/hong-duy-8a2a6b368">
     <img src="https://img.shields.io/badge/Connect%20on%20LinkedIn-0A66C2?logo=linkedin&logoColor=white" alt="Connect on LinkedIn">
   </a>
   <a href="https://www.instagram.com/dong_huy_197/">
