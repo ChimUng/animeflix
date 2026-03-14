@@ -7,6 +7,10 @@ const ALLOWED_ORIGINS = [
   'netmagcdn.com',
   'mgstatics.xyz',
   'rapid-cloud.co',
+  'uwucdn.top',
+  'vault-04.uwucdn.top',
+  'vault-05.uwucdn.top', 
+  'vault-11.uwucdn.top',
 ];
 
 export async function GET(req: NextRequest) {

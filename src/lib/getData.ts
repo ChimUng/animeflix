@@ -169,18 +169,15 @@ export const getSources = async (
         };
       });
 
-      if (!hasEmbedSourceFromApi && referer) {
-        console.log("🛠️ API chỉ có HLS, đang tạo nguồn embed dự phòng...");
-        
-        // ✅ SỬA LỖI Ở ĐÂY: Tạo URL embed đúng cấu trúc
-        const fallbackEmbedUrl = `https://megaplay.buzz/stream/s-2/${epid.split('/')[0]}/${subdub}`;
-        
-        data.sources.push({
-          url: `${checkEnvironment()}/api/embed?url=${encodeURIComponent(fallbackEmbedUrl)}`,
-          quality: 'auto-fallback',
-          isEmbed: true,
-        });
-      }
+      if (!hasEmbedSourceFromApi && referer && provider !== "animepahe") {
+      console.log("🛠️ API chỉ có HLS, đang tạo nguồn embed dự phòng...");
+      const fallbackEmbedUrl = `https://megaplay.buzz/stream/s-2/${epid.split('/')[0]}/${subdub}`;
+      data.sources.push({
+        url: `${checkEnvironment()}/api/embed?url=${encodeURIComponent(fallbackEmbedUrl)}`,
+        quality: 'auto-fallback',
+        isEmbed: true,
+      });
+    }
     }
 
     console.log(`🎬 Phản hồi API Nguồn cho ID ${id}, Tập ${epnum}:`, JSON.stringify(data, null, 2));

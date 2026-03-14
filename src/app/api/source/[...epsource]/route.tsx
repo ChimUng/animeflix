@@ -325,10 +325,10 @@ async function animePaheEpisode(episodeid: string, animeId: string, epNum: numbe
       console.error('❌ [AnimePahe] Fallback no sources');
       return null;
     }
-
     const videoData: VideoData = {
       sources: sources.map((s: { url: string; quality: string; isM3U8: boolean }) => ({
-        url: s.url,
+        // ✅ Wrap qua Animepahe Proxy
+        url: `${process.env.ANIMEPAHE_PROXY}/m3u8-proxy?url=${encodeURIComponent(s.url)}`,
         quality: s.quality,
         isM3U8: s.isM3U8,
       })),
