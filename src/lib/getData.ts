@@ -154,20 +154,31 @@ export const getSources = async (
       const hasEmbedSourceFromApi = data.sources.some((source: { url: string }) => !source.url.includes(".m3u8"));
 
       data.sources = data.sources.map((source: { url: string; quality: string; isM3U8: boolean }) => {
-        const originalUrl = source.url;
-        if (originalUrl.includes(".m3u8")) {
+      const originalUrl = source.url;
+      const isAnimepahe = data?.headers?.['x-provider'] === 'animepahe';
+
+      if (originalUrl.includes(".m3u8")) {
+        if (isAnimepahe) {
+          // ✅ Dùng AnimePahe proxy trực tiếp, không qua /api/stream
           return {
             ...source,
-            url: `${checkEnvironment()}/api/stream?url=${encodeURIComponent(originalUrl)}&referer=${encodeURIComponent(referer)}`,
+            url: `${process.env.NEXT_PUBLIC_ANIMEPAHE_PROXY}/m3u8-proxy?url=${encodeURIComponent(originalUrl)}`,
             isEmbed: false,
           };
         }
+        // Các provider khác dùng /api/stream như cũ
         return {
           ...source,
-          url: `${checkEnvironment()}/api/embed?url=${encodeURIComponent(originalUrl)}`,
-          isEmbed: true,
+          url: `${checkEnvironment()}/api/stream?url=${encodeURIComponent(originalUrl)}&referer=${encodeURIComponent(referer)}`,
+          isEmbed: false,
         };
-      });
+      }
+      return {
+        ...source,
+        url: `${checkEnvironment()}/api/embed?url=${encodeURIComponent(originalUrl)}`,
+        isEmbed: true,
+      };
+    });
 
       if (!hasEmbedSourceFromApi && referer && provider !== "animepahe") {
       console.log("🛠️ API chỉ có HLS, đang tạo nguồn embed dự phòng...");

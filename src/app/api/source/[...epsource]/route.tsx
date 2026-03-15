@@ -327,8 +327,7 @@ async function animePaheEpisode(episodeid: string, animeId: string, epNum: numbe
     }
     const videoData: VideoData = {
       sources: sources.map((s: { url: string; quality: string; isM3U8: boolean }) => ({
-        // ✅ Wrap qua Animepahe Proxy
-        url: `${process.env.ANIMEPAHE_PROXY}/m3u8-proxy?url=${encodeURIComponent(s.url)}`,
+        url: s.url, // ✅ URL gốc, không wrap
         quality: s.quality,
         isM3U8: s.isM3U8,
       })),
@@ -336,6 +335,7 @@ async function animePaheEpisode(episodeid: string, animeId: string, epNum: numbe
       headers: {
         Referer: 'https://kwik.cx/',
         Origin: 'https://animepahe.si',
+        'x-provider': 'animepahe', // ✅ Flag để client nhận biết
       },
     };
 
