@@ -15,6 +15,7 @@ import { Episode as EpisodeFromApi } from "@/lib/getData";
 import { CustomIframePlayer } from "./VidstackPlayer/CustomIframePlayer";
 import router from "next/router";
 import { CircleLoader } from "./VidstackPlayer/CircleLoader";
+import { VideoJsPlayer } from "./VidstackPlayer/VideoJsPlayer";
 
 // Định nghĩa interface cho skiptimes
 interface SkipTime {
@@ -346,6 +347,11 @@ const PlayerComponent: FC<PlayerComponentProps> = ({
                       );
                     }
                   }}
+                />
+                ) : provider === 'animepahe' ? (
+                <VideoJsPlayer
+                  src={src}
+                  onError={handleHlsError}
                 />
             ) : (
               <Player

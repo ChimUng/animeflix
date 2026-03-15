@@ -33,7 +33,7 @@ export interface Episode {
 
 export interface Provider {
     providerId: string;
-    id: string; // Thêm id vào Provider
+    id: string;
     consumet?: boolean;
     episodes: Episode[] | { sub?: Episode[]; dub?: Episode[] };
 }
@@ -58,14 +58,10 @@ export interface Source {
     isM3U8: boolean;
     isEmbed?: boolean;
   }[];
-  // subtitles?: {
-  //   lang: string;
-  //   url: string;
-  // }[];
-   tracks?: {
+  tracks?: {
     url: string;
     lang: string;
-    kind?: string; // Thêm 'kind' để có thể chứa cả thumbnails
+    kind?: string;
   }[];
   headers?: Record<string, string>;
   download?: string;
@@ -86,8 +82,6 @@ export const getRecentEpisodes = async (): Promise<RecentEpisode[] | undefined> 
     });
     if (!response.ok) throw new Error("Failed to fetch recent episodes");
     const data = await response.json();
-     // ✅ Console log dữ liệu từ API
-    // console.log("🎬 Recent Episodes from API:", data);
     return data as RecentEpisode[];
   } catch (error) {
     console.error("Error fetching Anify Recent Episodes:", error);
@@ -97,7 +91,7 @@ export const getRecentEpisodes = async (): Promise<RecentEpisode[] | undefined> 
 
 export const getEpisodes = async (
   id: string,
-  status: string | null | undefined, // Nhận vào chuỗi status
+  status: string | null | undefined,
   refresh = false
 ): Promise<Provider[] | undefined> => {
   try {
@@ -111,7 +105,6 @@ export const getEpisodes = async (
     );
     if (!response.ok) throw new Error("Failed to fetch episodes");
     const data = await response.json();
-    // console.log(`🎬 Phản hồi API Tập Phim cho ID ${id}:`, JSON.stringify(data, null, 2));
     return data as Provider[];
   } catch (error) {
     console.error("Error fetching Consumet Episodes:", error);
@@ -148,47 +141,52 @@ export const getSources = async (
 
     const data = await response.json();
     
-     // ✅ LOGIC PROXY TOÀN DIỆN
     if (data?.sources?.length > 0) {
       const referer = data?.headers?.Referer || "";
       const hasEmbedSourceFromApi = data.sources.some((source: { url: string }) => !source.url.includes(".m3u8"));
 
-      data.sources = data.sources.map((source: { url: string; quality: string; isM3U8: boolean }) => {
-      const originalUrl = source.url;
-      const isAnimepahe = data?.headers?.['x-provider'] === 'animepahe';
+      // ✅ Khai báo isAnimepahe NGOÀI .map()
+     const isAnimepahe = data?.headers?.['x-provider'] === 'animepahe';
 
-      if (originalUrl.includes(".m3u8")) {
-        if (isAnimepahe) {
-          // ✅ Dùng AnimePahe proxy trực tiếp, không qua /api/stream
+      data.sources = data.sources.map((source: { url: string; quality: string; isM3U8: boolean }) => {
+        const originalUrl = source.url;
+
+        if (originalUrl.includes(".m3u8")) {
+          if (isAnimepahe) {
+            return {
+              ...source,
+              url: `${process.env.NEXT_PUBLIC_ANIMEPAHE_PROXY}/m3u8-proxy?url=${encodeURIComponent(originalUrl)}`,
+              isEmbed: false,
+            };
+          }
           return {
             ...source,
-            url: `${process.env.NEXT_PUBLIC_ANIMEPAHE_PROXY}/m3u8-proxy?url=${encodeURIComponent(originalUrl)}`,
+            url: `${checkEnvironment()}/api/stream?url=${encodeURIComponent(originalUrl)}&referer=${encodeURIComponent(referer)}`,
             isEmbed: false,
           };
         }
-        // Các provider khác dùng /api/stream như cũ
         return {
           ...source,
-          url: `${checkEnvironment()}/api/stream?url=${encodeURIComponent(originalUrl)}&referer=${encodeURIComponent(referer)}`,
-          isEmbed: false,
+          url: `${checkEnvironment()}/api/embed?url=${encodeURIComponent(originalUrl)}`,
+          isEmbed: true,
         };
-      }
-      return {
-        ...source,
-        url: `${checkEnvironment()}/api/embed?url=${encodeURIComponent(originalUrl)}`,
-        isEmbed: true,
-      };
-    });
-
-      if (!hasEmbedSourceFromApi && referer && provider !== "animepahe") {
-      console.log("🛠️ API chỉ có HLS, đang tạo nguồn embed dự phòng...");
-      const fallbackEmbedUrl = `https://megaplay.buzz/stream/s-2/${epid.split('/')[0]}/${subdub}`;
-      data.sources.push({
-        url: `${checkEnvironment()}/api/embed?url=${encodeURIComponent(fallbackEmbedUrl)}`,
-        quality: 'auto-fallback',
-        isEmbed: true,
       });
-    }
+      if (isAnimepahe) {
+        data.sources.sort((a: { quality: string }, b: { quality: string }) => {
+          const q: Record<string, number> = { '1080': 3, '720': 2, '480': 1, '360': 0 };
+          return (q[b.quality] ?? 0) - (q[a.quality] ?? 0);
+        });
+      }
+      
+      if (!hasEmbedSourceFromApi && referer && provider !== "animepahe") {
+        console.log("🛠️ API chỉ có HLS, đang tạo nguồn embed dự phòng...");
+        const fallbackEmbedUrl = `https://megaplay.buzz/stream/s-2/${epid.split('/')[0]}/${subdub}`;
+        data.sources.push({
+          url: `${checkEnvironment()}/api/embed?url=${encodeURIComponent(fallbackEmbedUrl)}`,
+          quality: 'auto-fallback',
+          isEmbed: true,
+        });
+      }
     }
 
     console.log(`🎬 Phản hồi API Nguồn cho ID ${id}, Tập ${epnum}:`, JSON.stringify(data, null, 2));
@@ -197,4 +195,3 @@ export const getSources = async (
     console.error("Error fetching Episode sources:", error);
   }
 };
-
