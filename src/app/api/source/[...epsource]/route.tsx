@@ -317,7 +317,14 @@ async function animePaheEpisode(episodeid: string, animeId: string, epNum: numbe
     console.log('🔄 [AnimePahe] Fallback to justanime...');
     const { data: fallback } = await axios.get(
       `https://core.justanime.to/api/watch/${animeId}/episode/${epNum}/animepahe`,
-      { timeout: 15000 }
+      { timeout: 15000,
+        headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://justanime.to/',
+        'Origin': 'https://justanime.to',
+    }
+      }
+      
     );
 
     const sources = fallback?.sub?.sources || fallback?.dub?.sources;
