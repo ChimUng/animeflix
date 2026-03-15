@@ -293,12 +293,19 @@ async function AnifyEpisode(
 async function animePaheEpisode(episodeid: string, animeId: string, epNum: number | string): Promise<VideoData | null> {
   try {
     console.log('🔍 [AnimePahe] episodeId:', episodeid);
+    const browserHeaders = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Referer': 'https://animepahe.ru/',
+      'Origin': 'https://animepahe.ru',
+      'Accept': 'application/json, text/plain, */*',
+      'Accept-Language': 'en-US,en;q=0.9',
+    };
 
     // Primary: Consumet
     try {
       const { data } = await axios.get(
         `${process.env.CONSUMET_URI}/anime/animepahe/watch`,
-        { params: { episodeId: episodeid }, timeout: 15000 }
+        { params: { episodeId: episodeid }, timeout: 15000, headers: browserHeaders }
       );
 
       if (data?.sources?.length > 0) {
@@ -317,13 +324,7 @@ async function animePaheEpisode(episodeid: string, animeId: string, epNum: numbe
     console.log('🔄 [AnimePahe] Fallback to justanime...');
     const { data: fallback } = await axios.get(
       `https://core.justanime.to/api/watch/${animeId}/episode/${epNum}/animepahe`,
-      { timeout: 15000,
-        headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': 'https://justanime.to/',
-        'Origin': 'https://justanime.to',
-    }
-      }
+      { timeout: 15000, headers: browserHeaders }
       
     );
 
