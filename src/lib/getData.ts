@@ -154,8 +154,7 @@ export const getSources = async (
         if (originalUrl.includes(".m3u8")) {
           if (isAnimepahe) {
             return {
-              ...source,
-              url: `${process.env.NEXT_PUBLIC_ANIMEPAHE_PROXY}/m3u8-proxy?url=${encodeURIComponent(originalUrl)}`,
+              ...source, 
               isEmbed: false,
             };
           }

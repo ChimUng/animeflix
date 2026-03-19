@@ -292,66 +292,49 @@ async function AnifyEpisode(
 // ✅ HÀM AnimePahe - SIMPLE VERSION
 async function animePaheEpisode(episodeid: string, animeId: string, epNum: number | string): Promise<VideoData | null> {
   try {
-    console.log('🔍 [AnimePahe] episodeId:', episodeid);
-    const browserHeaders = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Referer': 'https://animepahe.ru/',
-      'Origin': 'https://animepahe.ru',
-      'Accept': 'application/json, text/plain, */*',
-      'Accept-Language': 'en-US,en;q=0.9',
-    };
-
-    // Primary: Consumet
-    try {
-      const { data } = await axios.get(
-        `${process.env.CONSUMET_URI}/anime/animepahe/watch`,
-        { params: { episodeId: episodeid }, timeout: 15000, headers: browserHeaders }
-      );
-
-      if (data?.sources?.length > 0) {
-        data.headers = {
-          Referer: 'https://kwik.cx/',
-          Origin: 'https://animepahe.si',
-        };
-        console.log('✅ [AnimePahe] Consumet success');
-        return data;
-      }
-    } catch {
-      console.warn('⚠️ [AnimePahe] Consumet failed, trying fallback...');
-    }
-
-    // Fallback: core.justanime.to
-    console.log('🔄 [AnimePahe] Fallback to justanime...');
-    const { data: fallback } = await axios.get(
-      `https://core.justanime.to/api/watch/${animeId}/episode/${epNum}/animepahe`,
-      { timeout: 15000, headers: browserHeaders }
-      
-    );
-
-    const sources = fallback?.sub?.sources || fallback?.dub?.sources;
-    if (!sources?.length) {
-      console.error('❌ [AnimePahe] Fallback no sources');
+    console.log('🔍 [AnimePahe] episodeId:', episodeid, 'animeId:', animeId, 'epNum:', epNum);
+    // ANIMEPAHE_PROXY = CF Worker URL, ví dụ: https://pahe.pahe-proxy.workers.dev
+    const proxyBase = process.env.NEXT_PUBLIC_ANIMEPAHE_PROXY || process.env.ANIMEPAHE_PROXY;
+    if (!proxyBase) {
+      console.error('❌ [AnimePahe] ANIMEPAHE_PROXY env not set');
       return null;
     }
-    const videoData: VideoData = {
-      sources: sources.map((s: { url: string; quality: string; isM3U8: boolean }) => ({
-        url: s.url, // ✅ URL gốc, không wrap
-        quality: s.quality,
-        isM3U8: s.isM3U8,
-      })),
-      tracks: [],
-      headers: {
-        Referer: 'https://kwik.cx/',
-        Origin: 'https://animepahe.si',
-        'x-provider': 'animepahe', // ✅ Flag để client nhận biết
-      },
-    };
 
-    console.log('✅ [AnimePahe] Fallback success');
-    return videoData;
-
+    // Gọi CF Worker endpoint /animepahe-source
+    // Worker sẽ tự fetch justanime.to (không bị block) rồi proxy M3U8 URLs
+    const workerUrl = new URL(`${proxyBase}/animepahe-source`);
+    workerUrl.searchParams.set('episodeid', episodeid);
+    workerUrl.searchParams.set('animeId', animeId);
+    workerUrl.searchParams.set('epNum', String(epNum));
+    workerUrl.searchParams.set('subtype', 'sub');
+ 
+    console.log('🌐 [AnimePahe] Calling CF Worker:', workerUrl.toString());
+ 
+    const res = await fetch(workerUrl.toString(), { 
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      // @ts-ignore - Next.js fetch
+      cache: 'no-store',
+    });
+ 
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`❌ [AnimePahe] Worker returned ${res.status}:`, errText);
+      return null;
+    }
+ 
+    const data = await res.json() as VideoData;
+ 
+    if (!data?.sources?.length) {
+      console.error('❌ [AnimePahe] No sources in worker response');
+      return null;
+    }
+ 
+    console.log('✅ [AnimePahe] Got sources from CF Worker:', data.sources.length);
+    return data;
+ 
   } catch (error) {
-    console.error('❌ [AnimePahe]:', error);
+    console.error('❌ [AnimePahe] animePaheEpisode error:', error);
     return null;
   }
 }
