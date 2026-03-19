@@ -293,50 +293,46 @@ async function AnifyEpisode(
 async function animePaheEpisode(episodeid: string, animeId: string, epNum: number | string): Promise<VideoData | null> {
   try {
     console.log('🔍 [AnimePahe] episodeId:', episodeid, 'animeId:', animeId, 'epNum:', epNum);
-    // THÊM DÒNG NÀY ĐỂ DEBUG
-    console.log('🔑 ANIMEPAHE_PROXY value:', process.env.ANIMEPAHE_PROXY);
-    console.log('🔑 NEXT_PUBLIC_ANIMEPAHE_PROXY value:', process.env.NEXT_PUBLIC_ANIMEPAHE_PROXY);
-    // ANIMEPAHE_PROXY = CF Worker URL, ví dụ: https://pahe.pahe-proxy.workers.dev
-    const proxyBase = process.env.NEXT_PUBLIC_ANIMEPAHE_PROXY || process.env.ANIMEPAHE_PROXY;
-      console.log('🔑 proxyBase:', proxyBase);
+
+    const proxyBase = process.env.ANIMEPAHE_PROXY || process.env.NEXT_PUBLIC_ANIMEPAHE_PROXY;
+    
+    console.log('🔑 proxyBase:', proxyBase); // debug
+    
     if (!proxyBase) {
       console.error('❌ [AnimePahe] ANIMEPAHE_PROXY env not set');
       return null;
     }
 
-    // Gọi CF Worker endpoint /animepahe-source
-    // Worker sẽ tự fetch justanime.to (không bị block) rồi proxy M3U8 URLs
     const workerUrl = new URL(`${proxyBase}/animepahe-source`);
     workerUrl.searchParams.set('episodeid', episodeid);
     workerUrl.searchParams.set('animeId', animeId);
     workerUrl.searchParams.set('epNum', String(epNum));
     workerUrl.searchParams.set('subtype', 'sub');
- 
+
     console.log('🌐 [AnimePahe] Calling CF Worker:', workerUrl.toString());
- 
-    const res = await fetch(workerUrl.toString(), { 
+
+    const res = await fetch(workerUrl.toString(), {
       method: 'GET',
       headers: { 'Accept': 'application/json' },
-      // @ts-ignore - Next.js fetch
-      cache: 'no-store',
+      cache: 'no-store' as RequestCache,
     });
- 
+
     if (!res.ok) {
       const errText = await res.text();
       console.error(`❌ [AnimePahe] Worker returned ${res.status}:`, errText);
       return null;
     }
- 
+
     const data = await res.json() as VideoData;
- 
+
     if (!data?.sources?.length) {
       console.error('❌ [AnimePahe] No sources in worker response');
       return null;
     }
- 
+
     console.log('✅ [AnimePahe] Got sources from CF Worker:', data.sources.length);
     return data;
- 
+
   } catch (error) {
     console.error('❌ [AnimePahe] animePaheEpisode error:', error);
     return null;
