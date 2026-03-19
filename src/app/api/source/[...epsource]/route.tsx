@@ -293,8 +293,12 @@ async function AnifyEpisode(
 async function animePaheEpisode(episodeid: string, animeId: string, epNum: number | string): Promise<VideoData | null> {
   try {
     console.log('🔍 [AnimePahe] episodeId:', episodeid, 'animeId:', animeId, 'epNum:', epNum);
+    // THÊM DÒNG NÀY ĐỂ DEBUG
+    console.log('🔑 ANIMEPAHE_PROXY value:', process.env.ANIMEPAHE_PROXY);
+    console.log('🔑 NEXT_PUBLIC_ANIMEPAHE_PROXY value:', process.env.NEXT_PUBLIC_ANIMEPAHE_PROXY);
     // ANIMEPAHE_PROXY = CF Worker URL, ví dụ: https://pahe.pahe-proxy.workers.dev
     const proxyBase = process.env.NEXT_PUBLIC_ANIMEPAHE_PROXY || process.env.ANIMEPAHE_PROXY;
+      console.log('🔑 proxyBase:', proxyBase);
     if (!proxyBase) {
       console.error('❌ [AnimePahe] ANIMEPAHE_PROXY env not set');
       return null;
