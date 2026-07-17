@@ -126,6 +126,8 @@ export const getSources = async (
         source:
           provider === "gogoanime" || provider === "gogobackup"
             ? "consumet"
+            : provider === "anineko"
+            ? "anineko"
             : "anify",
         provider: provider === "gogobackup" ? "gogoanime" : provider,
         episodeid: epid,
@@ -145,14 +147,17 @@ export const getSources = async (
       const referer = data?.headers?.Referer || "";
       const hasEmbedSourceFromApi = data.sources.some((source: { url: string }) => !source.url.includes(".m3u8"));
 
-      // ✅ Khai báo isAnimepahe NGOÀI .map()
-     const isAnimepahe = data?.headers?.['x-provider'] === 'animepahe';
+      // ✅ Khai báo isAnimepahe / isAnineko NGOÀI .map()
+      const isAnimepahe = data?.headers?.['x-provider'] === 'animepahe';
+      const isAnineko = provider === 'anineko';
 
       data.sources = data.sources.map((source: { url: string; quality: string; isM3U8: boolean }) => {
         const originalUrl = source.url;
 
         if (originalUrl.includes(".m3u8")) {
-          if (isAnimepahe) {
+          if (isAnimepahe || isAnineko) {
+            // ✅ Anineko (proxy_url) và AnimePahe tự lo CORS/Referer riêng,
+            // không wrap thêm qua /api/stream để tránh double-proxy.
             return {
               ...source, 
               isEmbed: false,
@@ -177,7 +182,7 @@ export const getSources = async (
         });
       }
       
-      if (!hasEmbedSourceFromApi && referer && provider !== "animepahe") {
+      if (!hasEmbedSourceFromApi && referer && provider !== "animepahe" && provider !== "anineko") {
         console.log("🛠️ API chỉ có HLS, đang tạo nguồn embed dự phòng...");
         const fallbackEmbedUrl = `https://megaplay.buzz/stream/s-2/${epid.split('/')[0]}/${subdub}`;
         data.sources.push({
