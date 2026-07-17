@@ -339,6 +339,133 @@ async function animePaheEpisode(episodeid: string, animeId: string, epNum: numbe
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// ANINEKO PROVIDER
+// ─────────────────────────────────────────────────────────────
+const ANINEKO_API_URL = process.env.ANINEKO_API_URL || '';
+
+interface AninekoServer {
+  server: string;
+  type: string; // 'hsub' | 'sub' | 'dub'
+  iframeUrl: string;
+  domain: string;
+  supported: boolean;
+}
+
+interface AninekoSourceResult {
+  m3u8: string;
+  referer: string;
+  origin: string;
+  subtitle: string | null;
+  subtitleLabel: string | null;
+  proxy_url: string;
+}
+
+// Ưu tiên server ổn định trước (theo mức độ tin cậy quan sát được)
+const ANINEKO_SERVER_PRIORITY = ['HD-1', 'StreamHG', 'Earnvids'];
+
+async function aninekoEpisode(episodeid: string, subtype: string): Promise<VideoData | null> {
+  try {
+    if (!ANINEKO_API_URL) {
+      console.error('❌ [Anineko] ANINEKO_API_URL env not set');
+      return null;
+    }
+
+    const [animeSlug, episodeSlug] = episodeid.split('::');
+    if (!animeSlug || !episodeSlug) {
+      console.error('❌ [Anineko] Invalid episodeid format:', episodeid);
+      return null;
+    }
+
+    console.log('🔍 [Anineko] Fetching servers:', { animeSlug, episodeSlug });
+
+    const { data: servers } = await axios.get<AninekoServer[]>(`${ANINEKO_API_URL}/servers`, {
+      params: { anime_slug: animeSlug, episode_slug: episodeSlug },
+      timeout: 15000,
+    });
+
+    if (!Array.isArray(servers) || servers.length === 0) {
+      console.error('❌ [Anineko] No servers returned');
+      return null;
+    }
+
+    const supported = servers.filter((s) => s.supported);
+
+    // sub → ưu tiên type "sub" (có phụ đề rời), fallback "hsub" (hardsub, vẫn xem được)
+    // dub → chỉ type "dub"
+    const wantedTypes = subtype === 'dub' ? ['dub'] : ['sub', 'hsub'];
+
+    const candidates = wantedTypes
+      .flatMap((t) => supported.filter((s) => s.type === t))
+      .sort((a, b) => {
+        const ai = ANINEKO_SERVER_PRIORITY.indexOf(a.server);
+        const bi = ANINEKO_SERVER_PRIORITY.indexOf(b.server);
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      });
+
+    if (candidates.length === 0) {
+      console.error(`❌ [Anineko] No supported "${subtype}" server found`);
+      return null;
+    }
+
+    let result: AninekoSourceResult | null = null;
+    let usedServer: AninekoServer | null = null;
+
+    // Thử lần lượt từng server cho tới khi resolve thành công (fallback tự động)
+    for (const candidate of candidates) {
+      try {
+        console.log(`🎬 [Anineko] Trying server: ${candidate.server} (${candidate.type})`);
+        const { data } = await axios.get<AninekoSourceResult>(`${ANINEKO_API_URL}/source`, {
+          params: { url: candidate.iframeUrl },
+          timeout: 15000,
+        });
+        if (data?.m3u8 && data?.proxy_url) {
+          result = data;
+          usedServer = candidate;
+          break;
+        }
+      } catch (err) {
+        console.warn(`⚠️ [Anineko] Server ${candidate.server} failed:`, err instanceof Error ? err.message : err);
+      }
+    }
+
+    if (!result || !usedServer) {
+      console.error('❌ [Anineko] All servers failed to resolve');
+      return null;
+    }
+
+    console.log(`✅ [Anineko] Resolved via ${usedServer.server} (${usedServer.type})`);
+
+    const videoData: VideoData = {
+      sources: [
+        {
+          url: result.proxy_url, // ✅ đã trỏ qua anineko-proxy, tự CORS + rewrite segment
+          isM3U8: true,
+          type: 'hls',
+        },
+      ],
+      tracks: result.subtitle
+        ? [
+            {
+              url: result.subtitle,
+              lang: result.subtitleLabel || 'English',
+              kind: 'subtitles',
+              default: true,
+            },
+          ]
+        : [],
+      headers: {
+        Referer: result.referer,
+      },
+    };
+
+    return videoData;
+  } catch (error) {
+    console.error('❌ [Anineko] aninekoEpisode error:', error);
+    return null;
+  }
+}
+
 // Xử lý request POST
 export const POST = async (req: NextRequest, context: { params: Promise<{ epsource: string[] }> }): Promise<NextResponse> => {
     const { params } = context;
@@ -390,6 +517,11 @@ export const POST = async (req: NextRequest, context: { params: Promise<{ epsour
 
      if (provider === "animepahe") {
     const data = await animePaheEpisode(episodeid, id, episodenum);
+    return NextResponse.json(data);
+  }
+
+    if (provider === "anineko") {          
+    const data = await aninekoEpisode(episodeid, subtype);
     return NextResponse.json(data);
   }
 

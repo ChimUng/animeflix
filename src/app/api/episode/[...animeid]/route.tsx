@@ -456,6 +456,121 @@ async function fetchAnimePahe(
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// ANINEKO PROVIDER
+// ─────────────────────────────────────────────────────────────
+const ANINEKO_API_URL = process.env.ANINEKO_API_URL || '';
+
+interface AninekoSearchResult {
+  title: string;
+  slug: string;
+  url: string;
+  poster?: string | null;
+  type?: string | null;
+  genres?: string[];
+}
+
+interface AninekoEpisodeItem {
+  number: number | null;
+  title: string;
+  slug: string;
+  url: string;
+  badges: string[];
+}
+
+function findBestMatchAnineko(
+  results: AninekoSearchResult[],
+  targetTitle: string,
+  targetType?: string
+): AninekoSearchResult | null {
+  if (!results || results.length === 0) return null;
+
+  const scored = results.map((result) => {
+    let score = calculateSimilarity(result.title, targetTitle) * 0.85;
+    if (targetType && result.type && result.type.toLowerCase() === targetType.toLowerCase()) {
+      score += 0.15;
+    }
+    return { result, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+
+  console.log('🔍 Anineko search matches:');
+  scored.slice(0, 3).forEach((item, idx) => {
+    console.log(`  ${idx + 1}. "${item.result.title}" (${item.result.type}) - Score: ${(item.score * 100).toFixed(1)}%`);
+  });
+
+  if (scored[0].score > 0.6) {
+    console.log(`✅ Anineko best match: "${scored[0].result.title}" (${(scored[0].score * 100).toFixed(1)}%)`);
+    return scored[0].result;
+  }
+
+  console.warn(`⚠️ Anineko: No good match found (best: ${(scored[0].score * 100).toFixed(1)}%)`);
+  return null;
+}
+
+async function searchAnineko(title: string): Promise<AninekoSearchResult[]> {
+  try {
+    if (!ANINEKO_API_URL) return [];
+    const { data } = await axios.get<{ results: AninekoSearchResult[] }>(
+      `${ANINEKO_API_URL}/search`,
+      { params: { q: title }, timeout: 10000 }
+    );
+    return data?.results || [];
+  } catch (error) {
+    console.error(`Error searching Anineko for "${title}":`, error instanceof Error ? error.message : error);
+    return [];
+  }
+}
+
+async function fetchAnineko(title: string, type?: string): Promise<Provider[]> {
+  try {
+    if (!ANINEKO_API_URL) return [];
+    console.log(`🔍 Searching Anineko for: "${title}"`);
+
+    const results = await searchAnineko(title);
+    if (results.length === 0) {
+      console.warn(`❌ Anineko: No search results for "${title}"`);
+      return [];
+    }
+
+    const bestMatch = findBestMatchAnineko(results, title, type);
+    if (!bestMatch) return [];
+
+    const { data: episodesData } = await axios.get<AninekoEpisodeItem[]>(
+      `${ANINEKO_API_URL}/episodes`,
+      { params: { slug: bestMatch.slug }, timeout: 15000 }
+    );
+
+    if (!Array.isArray(episodesData) || episodesData.length === 0) {
+      console.warn(`⚠️ Anineko: No episodes for slug "${bestMatch.slug}"`);
+      return [];
+    }
+
+    // id gộp animeSlug + episodeSlug, tách ra ở bước /source sau này
+    const episodes: Episode[] = episodesData
+      .filter((ep) => ep.slug && ep.number != null)
+      .map((ep) => ({
+        id: `${bestMatch.slug}::${ep.slug}`,
+        number: ep.number ?? 0,
+        title: ep.title,
+      }));
+
+    console.log(`✅ Anineko: Found ${episodes.length} episodes for "${bestMatch.title}"`);
+
+    return [
+      {
+        providerId: 'anineko',
+        id: 'anineko',
+        episodes,
+      },
+    ];
+  } catch (error) {
+    console.error(`Error fetching Anineko:`, error instanceof Error ? error.message : error);
+    return [];
+  }
+}
+
 async function fetchEpisodeMeta(id: string, skip = false): Promise<ImageDataItem[]> {
   try {
     if (skip) return [];
@@ -548,6 +663,7 @@ async function fetchAndCacheData(
     promises.push(
       fetchAnimePahe(id, animeInfo.title, animeInfo.year, animeInfo.type)
     );
+     promises.push(fetchAnineko(animeInfo.title, animeInfo.type));
   }
     
   // Correctly assign results from promises

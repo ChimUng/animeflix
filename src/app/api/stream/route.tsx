@@ -11,6 +11,7 @@ const ALLOWED_ORIGINS = [
   'vault-04.uwucdn.top',
   'vault-05.uwucdn.top', 
   'vault-11.uwucdn.top',
+  'anizara.store',
 ];
 
 export async function GET(req: NextRequest) {
