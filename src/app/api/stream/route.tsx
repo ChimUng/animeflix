@@ -12,7 +12,8 @@ const ALLOWED_ORIGINS = [
   'vault-05.uwucdn.top', 
   'vault-11.uwucdn.top',
   'anizara.store',
-  'ani-neko-proxy.vercel.app'
+  'ani-neko-proxy.vercel.app',
+  'animehay-api.vercel.app'
 ];
 
 export async function GET(req: NextRequest) {

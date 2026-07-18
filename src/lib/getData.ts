@@ -150,12 +150,13 @@ export const getSources = async (
       // ✅ Khai báo isAnimepahe / isAnineko NGOÀI .map()
       const isAnimepahe = data?.headers?.['x-provider'] === 'animepahe';
       const isAnineko = provider === 'anineko';
+      const isAnimehay = provider === 'vietsub';
 
       data.sources = data.sources.map((source: { url: string; quality: string; isM3U8: boolean }) => {
         const originalUrl = source.url;
 
         if (originalUrl.includes(".m3u8")) {
-          if (isAnimepahe || isAnineko) {
+          if (isAnimepahe || isAnineko || isAnimehay) {
             // ✅ Anineko (proxy_url) và AnimePahe tự lo CORS/Referer riêng,
             // không wrap thêm qua /api/stream để tránh double-proxy.
             return {
@@ -182,7 +183,7 @@ export const getSources = async (
         });
       }
       
-      if (!hasEmbedSourceFromApi && referer && provider !== "animepahe" && provider !== "anineko") {
+      if (!hasEmbedSourceFromApi && referer && provider !== "animepahe" && provider !== "anineko" && provider !== "vietsub") {
         console.log("🛠️ API chỉ có HLS, đang tạo nguồn embed dự phòng...");
         const fallbackEmbedUrl = `https://megaplay.buzz/stream/s-2/${epid.split('/')[0]}/${subdub}`;
         data.sources.push({

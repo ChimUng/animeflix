@@ -14,6 +14,7 @@ const releaseLogs: ReleaseLog[] = [
   {
     version: "Bốc lửa",
     changes: [
+      "7/18/2026 add vietsub provider",
       "7/17/2026 add anineko provider",
       "Fixed hls videostream.",
       "Fixed translate animes.",

@@ -593,6 +593,255 @@ async function fetchEpisodeMeta(id: string, skip = false): Promise<ImageDataItem
   }
 }
 
+const ANIMEHAY_API_URL = process.env.ANIMEHAY_API_URL || '';
+ 
+// ─── Types (thêm vào interface section đầu file) ─────────────────────────────
+ 
+interface AnimeHaySearchResult {
+  title:      string;
+  animeSlug:  string;
+  animeId:    string;
+  detailUrl:  string;
+  poster:     string | null;
+  type:       string | null;   // 'TV' | 'Movie' (phân loại thô từ DOM)
+  epBadge:    string | null;   // "1169/??" | "8/8" | "51 phút"
+  score:      number | null;   // điểm rating từ animehay (0–10)
+}
+ 
+interface AnimeHayEpisodeItem {
+  number:    number | null;
+  title:     string;
+  episodeId: string;           // "76166" — ID dùng gọi /servers
+  url:       string;
+  isNew:     boolean;
+}
+
+function anilistFormatToAnimeHayType(format?: string): string {
+  if (!format) return 'TV';
+  const f = format.toUpperCase();
+  if (f === 'MOVIE') return 'Movie';
+  // OVA/ONA/SPECIAL đôi khi được tag Movie trên animehay nếu 1 tập
+  // Nhưng không có cách chắc chắn → return TV để tránh false negative
+  return 'TV';
+}
+
+function scoreAnimeHayResult(
+  result: AnimeHaySearchResult,
+  targetTitle: string,
+  targetType: string,
+  calculateSimilarity: (a: string, b: string) => number
+): number {
+  let score = 0;
+ 
+  // 1. Title similarity (weight 75%)
+  const titleScore = calculateSimilarity(result.title, targetTitle);
+  score += titleScore * 0.75;
+ 
+  // 2. Type match (weight 20%)
+  // animehay chỉ có 'TV' và 'Movie' → check đơn giản
+  if (result.type && result.type.toLowerCase() === targetType.toLowerCase()) {
+    score += 0.20;
+  }
+ 
+  // 3. Score bonus (weight 5%)
+  // Anime nổi tiếng (score cao) thường là đúng khi title gần khớp
+  // Normalize 0–10 → 0–0.05
+  if (result.score !== null && result.score > 0) {
+    score += (result.score / 10) * 0.05;
+  }
+ 
+  return score;
+}
+
+async function fetchAnimeHay(
+  anilistId: string,
+  title: string,
+  format?: string,
+  titleRomaji?: string
+): Promise<Provider[]> {
+  try {
+    if (!ANIMEHAY_API_URL) {
+      console.warn('⚠️ [AnimeHay] ANIMEHAY_API_URL env not set — skipping');
+      return [];
+    }
+ 
+    const targetType = anilistFormatToAnimeHayType(format);
+ 
+    // Danh sách title sẽ thử theo thứ tự ưu tiên
+    // English title trước vì animehay thường dùng tên tiếng Anh phổ biến
+    // (ví dụ: "One Piece", "Naruto", "Attack on Titan")
+    const titlesToTry: string[] = [];
+    if (title && title.trim()) titlesToTry.push(title.trim());
+    if (titleRomaji && titleRomaji.trim() && titleRomaji !== title) {
+      titlesToTry.push(titleRomaji.trim());
+    }
+ 
+    if (titlesToTry.length === 0) {
+      console.warn(`⚠️ [AnimeHay] No valid title to search for anilist ID ${anilistId}`);
+      return [];
+    }
+ 
+    // Import calculateSimilarity từ context của file route
+    // (hàm này đã được định nghĩa trong route.tsx, tái sử dụng)
+    // Nếu không có, dùng inline version bên dưới
+    const calcSim = (str1: string, str2: string): number => {
+      const s1 = str1.toLowerCase().trim();
+      const s2 = str2.toLowerCase().trim();
+      if (s1 === s2) return 1.0;
+      const normalize = (s: string) => s.replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').toLowerCase();
+      const n1 = normalize(s1);
+      const n2 = normalize(s2);
+      if (n1 === n2) return 0.95;
+      if (n1.includes(n2) || n2.includes(n1)) return 0.85;
+      const matrix: number[][] = [];
+      for (let i = 0; i <= n1.length; i++) matrix[i] = [i];
+      for (let j = 0; j <= n2.length; j++) matrix[0][j] = j;
+      for (let i = 1; i <= n1.length; i++) {
+        for (let j = 1; j <= n2.length; j++) {
+          const cost = n1[i - 1] === n2[j - 1] ? 0 : 1;
+          matrix[i][j] = Math.min(matrix[i-1][j]+1, matrix[i][j-1]+1, matrix[i-1][j-1]+cost);
+        }
+      }
+      return 1 - matrix[n1.length][n2.length] / Math.max(n1.length, n2.length);
+    };
+ 
+    let bestMatch: AnimeHaySearchResult | null = null;
+    let bestScore = 0;
+    let usedTitle = '';
+ 
+    // ── Bước 1: Thử từng title, dừng sớm nếu tìm được match tốt ────────────
+    for (const tryTitle of titlesToTry) {
+      console.log(`🔍 [AnimeHay] Searching: "${tryTitle}" (type: ${targetType})`);
+ 
+      let results: AnimeHaySearchResult[] = [];
+      try {
+        const { data } = await axios.get<{ results: AnimeHaySearchResult[] }>(
+          `${ANIMEHAY_API_URL}/search`,
+          {
+            params: { q: tryTitle },
+            timeout: 10000,
+          }
+        );
+        results = data?.results || [];
+      } catch (err) {
+        console.warn(`⚠️ [AnimeHay] Search request failed for "${tryTitle}":`, (err as Error).message);
+        continue; // Thử title tiếp theo
+      }
+ 
+      if (results.length === 0) {
+        console.warn(`⚠️ [AnimeHay] No results for "${tryTitle}"`);
+        continue;
+      }
+ 
+      // Score tất cả kết quả với title đang thử
+      const scored = results.map((r) => ({
+        result: r,
+        score:  scoreAnimeHayResult(r, tryTitle, targetType, calcSim),
+      })).sort((a, b) => b.score - a.score);
+ 
+      // Log top 3 để debug
+      console.log(`📊 [AnimeHay] Top matches for "${tryTitle}":`);
+      scored.slice(0, 3).forEach((item, idx) => {
+        console.log(
+          `  ${idx + 1}. "${item.result.title}" (${item.result.type ?? 'unknown'})` +
+          ` — score: ${(item.score * 100).toFixed(1)}%`
+        );
+      });
+ 
+      if (scored[0].score > bestScore) {
+        bestScore = scored[0].score;
+        bestMatch = scored[0].result;
+        usedTitle = tryTitle;
+      }
+ 
+      // Dừng sớm nếu đã có match rất tốt (>= 0.85) — không cần thử title khác
+      if (bestScore >= 0.85) {
+        console.log(`✅ [AnimeHay] Early stop — high confidence match found`);
+        break;
+      }
+    }
+ 
+    // ── Bước 2: Kiểm tra threshold ───────────────────────────────────────────
+    // Threshold 0.65 (cao hơn anineko 0.6) vì thiếu metadata để cross-verify
+    // Nếu score quá thấp → không match → tránh lấy sai anime
+    const MATCH_THRESHOLD = 0.65;
+ 
+    if (!bestMatch || bestScore < MATCH_THRESHOLD) {
+      console.warn(
+        `⚠️ [AnimeHay] No confident match found for anilist ID ${anilistId}.` +
+        ` Best score: ${(bestScore * 100).toFixed(1)}% (threshold: ${MATCH_THRESHOLD * 100}%)`
+      );
+      return [];
+    }
+ 
+    console.log(
+      `✅ [AnimeHay] Best match: "${bestMatch.title}"` +
+      ` (slug: ${bestMatch.animeSlug}, id: ${bestMatch.animeId})` +
+      ` — ${(bestScore * 100).toFixed(1)}% via title "${usedTitle}"`
+    );
+ 
+    // ── Bước 3: Fetch danh sách tập ──────────────────────────────────────────
+    let episodesData: AnimeHayEpisodeItem[] = [];
+    try {
+      const { data } = await axios.get<AnimeHayEpisodeItem[]>(
+        `${ANIMEHAY_API_URL}/episodes`,
+        {
+          params: {
+            anime_slug: bestMatch.animeSlug,
+            anime_id:   bestMatch.animeId,
+          },
+          timeout: 15000,
+        }
+      );
+      episodesData = Array.isArray(data) ? data : [];
+    } catch (err) {
+      console.error(`❌ [AnimeHay] Failed to fetch episodes for "${bestMatch.title}":`, (err as Error).message);
+      return [];
+    }
+ 
+    if (episodesData.length === 0) {
+      console.warn(`⚠️ [AnimeHay] No episodes returned for "${bestMatch.title}"`);
+      return [];
+    }
+ 
+    // ── Bước 4: Format episodes ───────────────────────────────────────────────
+    // Episode ID format: "{animeSlug}::{animeId}::{episodeId}::{epNum}"
+    // Tách ra tại animeHayEpisode() trong route /source
+    //
+    // LÝ DO CẦN 4 FIELDS:
+    //   - animeSlug + animeId → build URL /servers tại route source
+    //   - episodeId           → param episode_id cho /servers
+    //   - epNum               → param ep_num cho /servers (optional nhưng cần)
+    const episodes: Episode[] = episodesData
+      .filter((ep) => ep.episodeId && ep.number !== null)
+      .map((ep) => ({
+        // ID đầy đủ để route /source tách ra và gọi API
+        id:     `${bestMatch!.animeSlug}::${bestMatch!.animeId}::${ep.episodeId}::${ep.number}`,
+        number: ep.number ?? 0,
+        title:  ep.title || `Tập ${ep.number}`,
+      }));
+ 
+    console.log(
+      `✅ [AnimeHay] Formatted ${episodes.length} episodes` +
+      ` for "${bestMatch.title}" (slug: ${bestMatch.animeSlug})`
+    );
+ 
+    return [
+      {
+        providerId: 'vietsub',
+        id:         'vietsub',
+        episodes,
+      },
+    ];
+  } catch (error) {
+    console.error(
+      `❌ [AnimeHay] fetchAnimeHay error for anilist ID ${anilistId}:`,
+      error instanceof Error ? error.message : error
+    );
+    return [];
+  }
+}
+
 async function fetchAndCacheData(
   id: string,
   meta: string | null,
@@ -603,7 +852,7 @@ async function fetchAndCacheData(
   const malsync = await MalSync(id);
   const promises: Promise<Provider[]>[] = [];
 
-  let animeInfo: { title: string; year?: number; type?: string } | null = null;
+   let animeInfo: { title: string; titleRomaji?: string; year?: number; type?: string } | null = null;
   
   try {
     const anilistQuery = `
@@ -631,6 +880,7 @@ async function fetchAndCacheData(
       const media = data.data.Media;
       animeInfo = {
         title: media.title.english || media.title.romaji,
+        titleRomaji:  media.title.romaji,
         year: media.startDate?.year,
         type: media.format, // TV, MOVIE, OVA, etc.
       };
@@ -664,6 +914,12 @@ async function fetchAndCacheData(
       fetchAnimePahe(id, animeInfo.title, animeInfo.year, animeInfo.type)
     );
      promises.push(fetchAnineko(animeInfo.title, animeInfo.type));
+      promises.push(fetchAnimeHay(
+        id,
+        animeInfo.title,       // English title (ưu tiên)
+        animeInfo.type,        // TV | MOVIE | OVA ...
+        animeInfo.titleRomaji  // Romaji fallback — CẦN THÊM field này vào animeInfo
+     ));
   }
     
   // Correctly assign results from promises

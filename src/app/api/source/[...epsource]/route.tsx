@@ -466,6 +466,186 @@ async function aninekoEpisode(episodeid: string, subtype: string): Promise<Video
   }
 }
 
+const ANIMEHAY_API_URL = process.env.ANIMEHAY_API_URL || '';
+ 
+// ── Server priority (theo độ ổn định quan sát được) ──────────────────────────
+// AHS (ahay.stream) là server chính, HD, stable nhất
+// HY (abyssplayer.com) là fallback
+const ANIMEHAY_SERVER_PRIORITY = ['AHS', 'HY'];
+ 
+// ── Types ─────────────────────────────────────────────────────────────────────
+ 
+interface AnimeHayServer {
+  serverKey:  string;    // 'AHS' | 'HY'
+  serverName: string;
+  badge:      string;    // 'HD' | 'HY'
+  iframeUrl:  string;    // https://ahay.stream/embed-jw/{id}
+  domain:     string;    // 'ahay.stream'
+  supported:  boolean;   // true nếu /source có thể resolve
+}
+ 
+interface AnimeHaySourceResult {
+  m3u8:      string;    // https://sv2.vipah06.xyz/hls/{id}/master.m3u8?token=...
+  referer:   string;    // 'https://ahay.stream/'
+  origin:    string;    // 'https://ahay.stream'
+  proxy_url: string;    // URL để feed vào HLS player (local /proxy hoặc external)
+}
+ 
+// ── Main handler ──────────────────────────────────────────────────────────────
+ 
+/**
+ * Lấy stream source từ animehay08.site cho một tập phim.
+ *
+ * @param episodeid - Format: "{animeSlug}::{animeId}::{episodeId}::{epNum}"
+ *                   Ví dụ:  "one-piece::34::76166::1168"
+ */
+async function animeHayEpisode(episodeid: string): Promise<VideoData | null> {
+  try {
+    if (!ANIMEHAY_API_URL) {
+      console.error('❌ [AnimeHay] ANIMEHAY_API_URL env not set');
+      return null;
+    }
+ 
+    // ── Bước 1: Tách episode ID thành 4 thành phần ───────────────────────────
+    // Format: "{animeSlug}::{animeId}::{episodeId}::{epNum}"
+    const parts = episodeid.split('::');
+    if (parts.length !== 4) {
+      console.error(
+        `❌ [AnimeHay] Invalid episodeid format: "${episodeid}".` +
+        ` Expected: "{animeSlug}::{animeId}::{episodeId}::{epNum}"`
+      );
+      return null;
+    }
+ 
+    const [animeSlug, animeId, episodeId, epNumStr] = parts;
+    const epNum = parseFloat(epNumStr);
+ 
+    console.log(`🔍 [AnimeHay] Fetching servers for:`, {
+      animeSlug,
+      animeId,
+      episodeId,
+      epNum,
+    });
+ 
+    // ── Bước 2: Lấy danh sách server ─────────────────────────────────────────
+    let servers: AnimeHayServer[] = [];
+    try {
+      const { data } = await axios.get<AnimeHayServer[]>(
+        `${ANIMEHAY_API_URL}/servers`,
+        {
+          params: {
+            anime_slug:  animeSlug,
+            episode_id:  episodeId,
+            ep_num:      isNaN(epNum) ? undefined : epNum,
+          },
+          timeout: 15000,
+        }
+      );
+      servers = Array.isArray(data) ? data : [];
+    } catch (err) {
+      console.error(`❌ [AnimeHay] Failed to fetch servers:`, (err as Error).message);
+      return null;
+    }
+ 
+    if (servers.length === 0) {
+      console.error(`❌ [AnimeHay] No servers returned for episode ${episodeId}`);
+      return null;
+    }
+ 
+    // ── Bước 3: Chọn server theo priority, chỉ lấy supported servers ─────────
+    // Lọc ra server supported (ahay.stream, abyssplayer.com)
+    const supportedServers = servers.filter((s) => s.supported);
+ 
+    if (supportedServers.length === 0) {
+      console.error(`❌ [AnimeHay] No supported servers for episode ${episodeId}`);
+      return null;
+    }
+ 
+    // Sắp xếp theo ANIMEHAY_SERVER_PRIORITY
+    const sortedServers = [...supportedServers].sort((a, b) => {
+      const ai = ANIMEHAY_SERVER_PRIORITY.indexOf(a.serverKey);
+      const bi = ANIMEHAY_SERVER_PRIORITY.indexOf(b.serverKey);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    });
+ 
+    // ── Bước 4: Thử lần lượt từng server (fallback tự động) ──────────────────
+    let sourceResult: AnimeHaySourceResult | null = null;
+    let usedServer: AnimeHayServer | null = null;
+ 
+    for (const server of sortedServers) {
+      try {
+        console.log(
+          `🎬 [AnimeHay] Trying server: ${server.serverKey} (${server.domain})` +
+          ` — ${server.iframeUrl}`
+        );
+ 
+        const { data } = await axios.get<AnimeHaySourceResult>(
+          `${ANIMEHAY_API_URL}/source`,
+          {
+            params:  { url: server.iframeUrl },
+            timeout: 15000,
+          }
+        );
+ 
+        if (data?.m3u8 && data?.proxy_url) {
+          sourceResult = data;
+          usedServer   = server;
+          break; // Thành công, dừng thử
+        }
+      } catch (err) {
+        console.warn(
+          `⚠️ [AnimeHay] Server ${server.serverKey} failed:`,
+          err instanceof Error ? err.message : err
+        );
+        // Tiếp tục thử server tiếp theo
+      }
+    }
+ 
+    if (!sourceResult || !usedServer) {
+      console.error(`❌ [AnimeHay] All supported servers failed for episode ${episodeId}`);
+      return null;
+    }
+ 
+    console.log(
+      `✅ [AnimeHay] Resolved via server ${usedServer.serverKey} (${usedServer.domain})`
+    );
+    console.log(`   m3u8:      ${sourceResult.m3u8}`);
+    console.log(`   referer:   ${sourceResult.referer}`);
+    console.log(`   proxy_url: ${sourceResult.proxy_url}`);
+ 
+    // ── Bước 5: Format VideoData ──────────────────────────────────────────────
+    // KHÔNG wrap proxy_url qua /api/stream vì animehay-api proxy đã xử lý:
+    //   - CORS headers (Access-Control-Allow-Origin: *)
+    //   - Referer injection (Referer: ahay.stream/)
+    //   - Relative segment URL resolution (sd/index.m3u8 → absolute)
+    // Pattern giống hệt anineko trong getData.ts (isAnineko check)
+    const videoData: VideoData = {
+      sources: [
+        {
+          url:    sourceResult.proxy_url,  // proxy_url từ animehay-api
+          isM3U8: true,
+          type:   'hls',
+          quality: usedServer.badge || 'HD', // 'HD' | 'HY'
+        },
+      ],
+      tracks: [],  // animehay không có subtitle riêng (đã nhúng vào video — vietsub hardsub)
+      headers: {
+        Referer: sourceResult.referer,   // 'https://ahay.stream/' — cho reference
+        // x-provider flag để getData.ts nhận biết không cần wrap thêm proxy
+        'x-provider': 'animehay',
+      },
+    };
+ 
+    return videoData;
+  } catch (error) {
+    console.error(
+      `❌ [AnimeHay] animeHayEpisode error:`,
+      error instanceof Error ? error.message : error
+    );
+    return null;
+  }
+}
+
 // Xử lý request POST
 export const POST = async (req: NextRequest, context: { params: Promise<{ epsource: string[] }> }): Promise<NextResponse> => {
     const { params } = context;
@@ -522,6 +702,11 @@ export const POST = async (req: NextRequest, context: { params: Promise<{ epsour
 
     if (provider === "anineko") {          
     const data = await aninekoEpisode(episodeid, subtype);
+    return NextResponse.json(data);
+  }
+
+  if (provider === "vietsub") {
+    const data = await animeHayEpisode(episodeid);
     return NextResponse.json(data);
   }
 
