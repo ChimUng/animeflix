@@ -1,10 +1,10 @@
-import { Inter } from 'next/font/google'
+import { Alata } from 'next/font/google'
+// import localFont from 'next/font/local';
 import './globals.css'
 import { NextUiProvider } from "./NextUiProvider";
 import NextTopLoader from 'nextjs-toploader';
 import Search from '@/components/search/Search'
 import Footer from '@/components/Footer';
-// import localFont from 'next/font/local';
 import Script from "next/script";
 import { getAuthSession } from './api/auth/[...nextauth]/route';
 import { Toaster } from 'sonner'
@@ -12,24 +12,36 @@ import FloatingButton from '@/components/FloatingButton';
 import { AuthProvider } from './SessionProvider';
 import GoToTop from '@/components/GoToTop';
 import Changelogs from '@/components/Changelogs';
+import type { Metadata } from 'next'
 
-const inter = Inter({ subsets: ['latin'] })
+const alata = Alata({ subsets: ['latin', 'vietnamese'], weight: ['400'] });
 // const myfont = localFont({ src: "../static-fonts/28 Days Later.ttf" })
 
 const APP_NAME = "Animeflix";
-const APP_DEFAULT_TITLE = "Animeflix - Watch Anime Online";
-const APP_DESCRIPTION = "Xem phim anime vietsub online xem trên điện thoại di động và máy tính nhanh nhất.";
+const APP_DEFAULT_TITLE = "Animeflix - Watch Anime Online & Xem Phim Anime Vietsub HD";
+const APP_DESCRIPTION = "Watch anime online with English & Vietnamese subtitles for free. Xem phim anime vietsub online chất lượng cao HD, cập nhật tập mới nhanh nhất.";
 
-export const metadata = {
+export const metadata: Metadata = {
   metadataBase: new URL('https://animeflixnow.vercel.app'),
   applicationName: APP_NAME,
-  title: APP_DEFAULT_TITLE,
-  icons: {
-    icon: "/android-chrome-192x192.png",
-    apple: "/apple-touch-icon.png",
+  
+  title: {
+    default: APP_DEFAULT_TITLE,
+    template: `%s | ${APP_NAME}`,
   },
+  
   description: APP_DESCRIPTION,
+
   keywords: [
+    // Tiếng Việt
+    'xem anime vietsub',
+    'xem anime không quảng cáo',
+    'anime hay nhất',
+    'anime mới nhất',
+    'anime hot nhất',
+    'anime full hd',
+    'anime vietsub mới',
+    // Tiếng Anh
     'anime',
     'anilist-tracker',
     'trending anime',
@@ -46,47 +58,75 @@ export const metadata = {
     'english dubbed anime',
     'subbed and dubbed series',
     'anime series updates',
-    'anime episodes english sub',
-    'anime episodes english dub',
     'latest subbed anime',
     'latest dubbed anime',
-    'subbed anime streaming',
-    'dubbed anime streaming',
     'aniplay latest anime',
-    'xem anime vietsub',
-    'xem anime không quảng cáo',
-    'anime hay nhất',
-    'anime mới nhất',
-    'anime hot nhất',
-    'anime full hd',
-    'anime vietsub mới',
   ],
+
+  icons: {
+    icon: "/android-chrome-192x192.png",
+    apple: "/apple-touch-icon.png",
+  },
   manifest: "/manifest.json",
+
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: APP_DEFAULT_TITLE,
+    title: APP_NAME,
   },
+
   formatDetection: {
     telephone: false,
   },
+
   openGraph: {
     type: "website",
     siteName: APP_NAME,
     title: APP_DEFAULT_TITLE,
     description: APP_DESCRIPTION,
+    url: 'https://animeflixnow.vercel.app',
+    locale: 'vi_VN',        
+    alternateLocale: ['en_US'], 
+    images: [
+      {
+        url: '/settingsbanner.jpg', 
+        width: 1200,
+        height: 630,
+        alt: 'Animeflix - Watch Anime Online',
+      },
+    ],
   },
+
   twitter: {
-    card: "summary",
+    card: "summary_large_image",  
     title: APP_DEFAULT_TITLE,
     description: APP_DESCRIPTION,
+    images: ['/settingsbanner.jpg'],   
+  },
+
+  alternates: {
+    canonical: '/',
+    languages: {
+      'vi-VN': '/',
+      'en-US': '/',
+    },
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 
-
-// Định nghĩa kiểu cho props của RootLayout
 interface RootLayoutProps {
-  children: React.ReactNode; // Định nghĩa children có kiểu React.ReactNode
+  children: React.ReactNode; 
 }
 
 export default async function RootLayout({ children }: RootLayoutProps) { 
@@ -110,9 +150,8 @@ export default async function RootLayout({ children }: RootLayoutProps) {
         <meta name="google-site-verification" content="9Cj5Gd0-OuGDtGb4HpRqNfBXy3FuFCcFNWSvTPOlTzE" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
-        {/* <script src="https://kit.fontawesome.com/c189d5d7c5.js" crossOrigin="anonymous" async></script> */}
       </head>
-      <body className={inter.className}>
+      <body className={alata.className}>
         <AuthProvider session={session}>
           <NextUiProvider>
             {children}
