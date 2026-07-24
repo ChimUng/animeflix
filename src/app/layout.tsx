@@ -30,6 +30,11 @@ export const metadata: Metadata = {
     template: `%s | ${APP_NAME}`,
   },
   
+  icons: {
+    icon: "/android-chrome-192x192.png",
+    apple: "/apple-touch-icon.png",
+  },
+
   description: APP_DESCRIPTION,
 
   keywords: [
@@ -63,16 +68,12 @@ export const metadata: Metadata = {
     'aniplay latest anime',
   ],
 
-  icons: {
-    icon: "/android-chrome-192x192.png",
-    apple: "/apple-touch-icon.png",
-  },
   manifest: "/manifest.json",
 
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: APP_NAME,
+    title: APP_DEFAULT_TITLE,
   },
 
   formatDetection: {
@@ -87,21 +88,12 @@ export const metadata: Metadata = {
     url: 'https://animeflixnow.vercel.app',
     locale: 'vi_VN',        
     alternateLocale: ['en_US'], 
-    images: [
-      {
-        url: '/settingsbanner.jpg', 
-        width: 1200,
-        height: 630,
-        alt: 'Animeflix - Watch Anime Online',
-      },
-    ],
   },
 
   twitter: {
-    card: "summary_large_image",  
+    card: "summary",  
     title: APP_DEFAULT_TITLE,
     description: APP_DESCRIPTION,
-    images: ['/settingsbanner.jpg'],   
   },
 
   alternates: {
