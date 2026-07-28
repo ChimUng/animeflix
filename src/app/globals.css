@@ -95,6 +95,20 @@
     }
   }
 
+/* Text Animation đặc trừng đỏ - trắng của AnimeFlix */
+@layer utilities {
+  .text-animate-red {
+    @apply bg-gradient-to-r from-red-500 via-white to-red-500 bg-[length:200%_100%] animate-gradient-x text-transparent bg-clip-text font-semibold;
+  }
+}
+
+/* Card Hover Overlay hiện blur mờ  */
+@layer components {
+  .card-hover-overlay {
+    @apply absolute inset-0 z-10 text-white backdrop-blur-sm bg-gradient-to-t from-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out;
+  }
+}
+
 
 /* 404 Page */
 .button {

@@ -20,6 +20,19 @@
     pointer-events: none;
 }
 
+.heroembed {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100vw;
+    height: 56.25vw;      /* 16:9 */
+    min-height: 100%;
+    min-width: 177.78vh;  /* 16:9 */
+    transform: translate(-50%, -50%);
+    border: 0;
+    pointer-events: none;
+}
+
 .heroimg {
     overflow: hidden;
     width: 100%;
