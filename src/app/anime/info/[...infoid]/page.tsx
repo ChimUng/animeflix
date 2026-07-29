@@ -6,14 +6,12 @@ import { getAuthSession } from '@/app/api/auth/[...nextauth]/route';
 import { AnimeInfoAnilist } from '@/lib/Anilistfunctions';
 import { redis } from '@/lib/rediscache';
 
-// Interface for params passed from router
 interface Params {
   params: Promise<{
-    infoid: string[]; // [id] is an array of strings from dynamic route
+    infoid: string[];
   }>;
 }
 
-// Function to fetch anime info with Redis caching
 async function getInfo(id: number | string) {
   try {
     let cachedData: string | null = null;
@@ -31,7 +29,7 @@ async function getInfo(id: number | string) {
 
     const data = await AnimeInfoAnilist(id);
     const cacheTime = data?.nextAiringEpisode?.episode
-      ? 60 * 60 * 2 // 2 hours if there’s an upcoming episode
+      ? 60 * 60 * 24 * 1 // 24 hours if there’s an upcoming episode
       : 60 * 60 * 24 * 45; // 45 days if none
 
     if (redis && data) {
@@ -45,9 +43,8 @@ async function getInfo(id: number | string) {
   }
 }
 
-// SEO Metadata generation
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  const resolvedParams = await params; // Await params
+  const resolvedParams = await params;
   const id = resolvedParams.infoid[0];
   const data = await getInfo(id);
 
@@ -67,9 +64,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   };
 }
 
-// Anime Details Page
 const AnimeDetails = async ({ params }: Params) => {
-  const resolvedParams = await params; // Await params
+  const resolvedParams = await params; 
   const session = await getAuthSession();
   const id = Number(resolvedParams.infoid[0]);
 

@@ -40,3 +40,15 @@ export function formatTimeStamp(timestamp: number): string {
     };
     return date.toLocaleDateString("en-US", options);
 }
+
+// Format lại timestamp video process
+export function formatTime(totalSeconds?: number | null) {
+    if (!totalSeconds) return "00:00";
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+
+    const formattedMinutes = minutes < 10 ? `0${minutes}` : `${minutes}`;
+    const formattedSeconds = seconds < 10 ? `0${seconds}` : `${seconds}`;
+
+    return `${formattedMinutes}:${formattedSeconds}`;
+  }

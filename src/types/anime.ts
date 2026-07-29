@@ -46,6 +46,7 @@ export interface AnimeItem {
     seasonYear?: number | null;
     startDate?: FuzzyDate | null;
     endDate?: FuzzyDate | null;
+    airingAt?: number | null;
     nextAiringEpisode?: NextAiringEpisode | null;
     trailer?: Trailer | null;
     totalEpisodes?: number | null;
