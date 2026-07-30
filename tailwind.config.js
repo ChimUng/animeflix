@@ -46,7 +46,8 @@ module.exports = {
         d656: "#656264",
         d148: "#4d148c",
         d148h: "#d14836",
-		star: '#F5A524',
+		    star: '#F5A524',
+        d745: '#A4E745',
       },
       screens: {
         xxs: "375px",
@@ -70,7 +71,20 @@ module.exports = {
   },
   darkMode: "class",
   plugins: [
-    nextui(),
+    nextui({
+      themes: {
+        light: {
+          colors: {
+            focus: "#d14836",
+          },
+        },
+        dark: {
+          colors: {
+            focus: "#d14836",
+          },
+        },
+      },
+    }),
     require("@vidstack/react/tailwind.cjs")({
       prefix: "media",
     }),

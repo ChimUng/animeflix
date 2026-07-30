@@ -27,6 +27,39 @@ export interface Trailer {
     site?: string;
     thumbnail?: string;
 }
+export interface StudioNode {
+    id: number;
+    name: string;
+    siteUrl?: string;
+}
+
+export interface CharacterName {
+    first?: string | null;
+    last?: string | null;
+    full?: string | null;
+    native?: string | null;
+    userPreferred?: string | null;
+}
+
+export interface CharacterEdge {
+    id?: number;
+    role: string;
+    node: {
+        name: CharacterName;
+        image: {
+            large: string;
+        };
+    };
+    voiceActorRoles: {
+        voiceActor: {
+            id?: number;
+            name: CharacterName;
+            image: {
+                large: string;
+            };
+        };
+    }[];
+}
 
 export interface AnimeItem {
     id: number;
@@ -41,6 +74,7 @@ export interface AnimeItem {
     genres?: string[] | null;
     season?: string | null;
     format?: string | null;
+    type?: 'ANIME' | 'MANGA' | 'NOVEL' | string | null;
     averageScore?: number | null;
     popularity?: number | null;
     seasonYear?: number | null;
@@ -57,4 +91,8 @@ export interface AnimeItem {
     mediaRecommendation?: AnimeItem | null;
     node?: AnimeItem | null;
     relationType?: string | null;
+    source?: string | null;
+    countryOfOrigin?: string | null;
+    studios?: { nodes: StudioNode[] } | null;
+    characters?: { edges: CharacterEdge[] } | null;
 }
