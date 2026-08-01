@@ -62,6 +62,7 @@ export interface VideoSource {
     quality?: string;
     isM3U8?: boolean;
     type?: string;
+    isEmbed?: boolean;  
 }
 
 export interface VideoTrack {
