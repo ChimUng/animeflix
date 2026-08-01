@@ -30,7 +30,13 @@ export async function fetchAniZipEpisodeMeta(anilistId: number | string): Promis
     );
     const episodes = Object.values(data?.episodes || {});
     return episodes.map((ep) => ({
-      number: ep.episodeNumber ?? (ep.episode ? Number(ep.episode) : undefined),
+      // Ưu tiên absoluteEpisodeNumber (số tập tuyệt đối, khớp với cách provider đánh số).
+      // episodeNumber chỉ đúng cho season 1 hoặc phim 1 season -> dùng làm fallback.
+      // ep.episode (string) là phương án cuối nếu 2 field trên đều thiếu.
+      number:
+        ep.absoluteEpisodeNumber ??
+        ep.episodeNumber ??
+        (ep.episode ? Number(ep.episode) : undefined),
       img: ep.image,
       title: ep.title,
       description: ep.overview ?? ep.summary,

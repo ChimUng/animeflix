@@ -31,6 +31,29 @@ export function calculateSimilarity(str1: string, str2: string): number {
 }
 
 /**
+ * Bỏ (2011), dấu ngoặc/colon... để search engine của các domain thô match tốt hơn.
+ * VD: "Hunter x Hunter (2011)" -> "Hunter x Hunter 2011"
+ */
+export function cleanTitleForSearch(title: string): string {
+  return title
+    .replace(/\(/g, ' ')
+    .replace(/\)/g, ' ')
+    .replace(/:/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Trả về danh sách title unique để thử lần lượt khi search, ưu tiên title gốc trước,
+ * sau đó bản đã clean, sau đó romaji nếu có và khác 2 cái trên.
+ */
+export function buildTitleCandidates(title: string, titleRomaji?: string): string[] {
+  const candidates = [title, cleanTitleForSearch(title)];
+  if (titleRomaji?.trim()) candidates.push(titleRomaji.trim());
+  return [...new Set(candidates.filter(Boolean))];
+}
+
+/**
  * Chọn kết quả tốt nhất từ danh sách search result theo scoreFn, log top 3 để debug,
  * chỉ chấp nhận nếu score cao nhất > threshold.
  */

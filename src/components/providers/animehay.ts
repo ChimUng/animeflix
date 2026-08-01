@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Episode, Provider } from '@/types/episode';
 import { AnimeHaySearchResult, AnimeHayEpisodeItem } from '@/types/providers/animehay.raw';
-import { calculateSimilarity } from '@/lib/matching';
+import { calculateSimilarity, buildTitleCandidates } from '@/lib/matching'; 
 
 const ANIMEHAY_API_URL = process.env.ANIMEHAY_API_URL || '';
 
@@ -14,8 +14,6 @@ function anilistFormatToAnimeHayType(format?: string): string {
 function scoreAnimeHayResult(result: AnimeHaySearchResult, targetTitle: string, targetType: string): number {
   let score = calculateSimilarity(result.title, targetTitle) * 0.75;
   if (result.type && result.type.toLowerCase() === targetType.toLowerCase()) score += 0.2;
-  // score ở đây là rating của user trên animehay (0-10), chỉ dùng làm tie-breaker nhỏ,
-  // KHÔNG phải điểm matching
   if (result.score !== null && result.score > 0) score += (result.score / 10) * 0.05;
   return score;
 }
@@ -33,9 +31,8 @@ export async function fetchAnimeHayEpisodes(
     }
 
     const targetType = anilistFormatToAnimeHayType(format);
-    const titlesToTry: string[] = [];
-    if (title?.trim()) titlesToTry.push(title.trim());
-    if (titleRomaji?.trim() && titleRomaji !== title) titlesToTry.push(titleRomaji.trim());
+    
+    const titlesToTry = buildTitleCandidates(title, titleRomaji);
 
     if (titlesToTry.length === 0) {
       console.warn(`⚠️ [AnimeHay] No valid title for anilist ID ${anilistId}`);
@@ -67,10 +64,10 @@ export async function fetchAnimeHayEpisodes(
         bestScore = scored[0].score;
         bestMatch = scored[0].result;
       }
-      if (bestScore >= 0.85) break; // đủ tự tin, không cần thử title tiếp
+      if (bestScore >= 0.85) break; 
     }
 
-    const MATCH_THRESHOLD = 0.65; // cao hơn anineko vì thiếu metadata cross-verify
+    const MATCH_THRESHOLD = 0.65; 
     if (!bestMatch || bestScore < MATCH_THRESHOLD) {
       console.warn(`⚠️ [AnimeHay] No confident match for anilist ID ${anilistId} (best: ${(bestScore * 100).toFixed(1)}%)`);
       return [];
@@ -93,7 +90,6 @@ export async function fetchAnimeHayEpisodes(
       return [];
     }
 
-    // id gộp animeSlug::animeId::episodeId::number, tách ra ở bước lấy source sau này
     const episodes: Episode[] = episodesData
       .filter((ep) => ep.episodeId && ep.number !== null)
       .map((ep) => ({
@@ -104,7 +100,7 @@ export async function fetchAnimeHayEpisodes(
 
     console.log(`✅ [AnimeHay] ${episodes.length} episodes for "${bestMatch.title}"`);
 
-    return [{ providerId: 'vietsub', id: 'vietsub', episodes }];
+    return [{ providerId: 'animehay', id: 'animehay', episodes }];
   } catch (error) {
     console.error(`❌ [AnimeHay] fetchAnimeHayEpisodes error:`, error instanceof Error ? error.message : error);
     return [];
