@@ -18,7 +18,7 @@ async function searchAninekoOnce(title: string): Promise<AninekoSearchResult[]> 
   }
 }
 
-export async function fetchAninekoEpisodes(title: string, type?: string, titleRomaji?: string) {
+export async function fetchAninekoEpisodes(title: string, type?: string, titleRomaji?: string): Promise<Provider[]> {
   try {
     if (!ANINEKO_API_URL) return [];
     
@@ -70,6 +70,10 @@ export async function fetchAninekoEpisodes(title: string, type?: string, titleRo
         id: `${bestMatch.slug}::${ep.slug}`,
         number: ep.number ?? 0,
         title: ep.title,
+        // Badge SUB/DUB/HSUB có sẵn FREE trong chính response /episodes này — giữ lại để
+        // EpisodeFunctions.ts (computeFlatArrayOptions) dùng tính suboptions sub/dub,
+        // KHÔNG cần gọi thêm /servers cho từng tập chỉ để biết có dub hay không.
+        badges: ep.badges,
       }));
 
     console.log(`✅ [Anineko] Found ${episodes.length} episodes for "${bestMatch.title}"`);

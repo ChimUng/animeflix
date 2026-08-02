@@ -13,6 +13,11 @@ export interface Episode {
     img?: string;
     image?: string;
     isFiller?: boolean;
+    rating?: string;       // lấy từ AniZip (CombineEpisodeMeta), provider gốc không có field này
+    // Badge gốc từ provider (vd anineko: ["SUB","DUB","HSUB"]) — dùng để tính suboptions
+    // cho provider dạng mảng phẳng (xem computeFlatArrayOptions trong EpisodeFunctions.ts).
+    // Hiện chỉ anineko trả field này; các provider khác để undefined.
+    badges?: string[];
 }
 
 export interface Provider {
@@ -28,10 +33,14 @@ export interface EpisodeMeta {
     episode?: number;
     img?: string;
     image?: string;
-    title?: string | { en?: string; ['x-jat']?: string };
+    // Giới hạn CHỈ 2 ngôn ngữ en/ja (đã lọc sẵn ở fetchAniZipEpisodeMeta, lib/anizip.ts) —
+    // AniZip trả về ~13 ngôn ngữ (de/fr/it/es/ru/ko/ar/th/zh-Hans/x-jat...) nhưng app chỉ
+    // cần 2 cái này để hiển thị/fallback, không cần giữ nguyên object nặng nề.
+    title?: string | { en?: string; ja?: string };
     description?: string;
     overview?: string;
     summary?: string;
+    rating?: string;
 }
 
 export interface EpisodeInfo {
@@ -43,6 +52,7 @@ export interface EpisodeInfo {
     img?: string;
     image?: string;
     isFiller?: boolean;
+    rating?: string;
 }
 
 export interface GroupedEpisodes {

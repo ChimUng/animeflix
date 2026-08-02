@@ -3,7 +3,7 @@ export interface AniZipEpisodeTitle {
   en?: string;
   [lang: string]: string | undefined;
 }
- 
+
 export interface AniZipEpisodeRaw {
   tvdbShowId?: number;
   tvdbId?: number;
@@ -23,7 +23,7 @@ export interface AniZipEpisodeRaw {
   rating?: string;
   summary?: string;
 }
- 
+
 export interface AniZipMappings {
   animeplanet_id?: string;
   kitsu_id?: number;
@@ -38,11 +38,17 @@ export interface AniZipMappings {
   imdb_id?: string;
   themoviedb_id?: string;
 }
- 
+
+export interface AniZipImage {
+  coverType: string;
+  url: string;
+}
+
 export interface AniZipResponse {
   titles?: Record<string, string>;
   episodes?: Record<string, AniZipEpisodeRaw>;
   episodeCount?: number;
   specialCount?: number;
+  images?: AniZipImage[];
   mappings?: AniZipMappings;
 }

@@ -29,17 +29,17 @@ export async function fetchAniZipEpisodeMeta(anilistId: number | string): Promis
       `https://api.ani.zip/mappings?anilist_id=${anilistId}`
     );
     const episodes = Object.values(data?.episodes || {});
+    const fanartFallback = data?.images?.find((img) => img.coverType === 'Fanart')?.url;
+
     return episodes.map((ep) => ({
-      // Ưu tiên absoluteEpisodeNumber (số tập tuyệt đối, khớp với cách provider đánh số).
-      // episodeNumber chỉ đúng cho season 1 hoặc phim 1 season -> dùng làm fallback.
-      // ep.episode (string) là phương án cuối nếu 2 field trên đều thiếu.
       number:
         ep.absoluteEpisodeNumber ??
         ep.episodeNumber ??
         (ep.episode ? Number(ep.episode) : undefined),
-      img: ep.image,
-      title: ep.title,
+      img: ep.image || fanartFallback,   // fallback khi tập không có ảnh riêng
+      title: ep.title ? { en: ep.title.en, ja: ep.title.ja } : undefined,
       description: ep.overview ?? ep.summary,
+      rating: ep.rating,
     }));
   } catch (error) {
     console.error(`[AniZip] Error fetching episode meta for Anilist ID ${anilistId}:`, error instanceof Error ? error.message : error);
