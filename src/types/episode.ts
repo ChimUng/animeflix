@@ -93,4 +93,10 @@ export interface VideoData {
     intro?: VideoTimeRange;
     outro?: VideoTimeRange;
     headers?: Record<string, string>;
+    // ✅ MỚI — server key mà backend đã TỰ CHỌN khi client không truyền serverRaw
+    // (vd lần load đầu tiên của 1 tập). Cần field này để PlayerComponent có thể chạy
+    // getServers() và getSources() SONG SONG (không phải chờ getServers xong mới biết
+    // default server rồi mới resolve) mà vẫn highlight đúng nút trong ServerSelector.
+    // Format trùng với ServerOption.key (vd "sub:hd-1", "dub:StreamHG"...).
+    resolvedServerKey?: string;
 }

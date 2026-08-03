@@ -46,6 +46,11 @@ export async function listZoroServers(
 
 // Bước 4: resolve 1 server cụ thể. serverRaw = "<animeEpisodeId>::<type>::<serverName>".
 // Nếu không truyền server (lần load đầu) -> mặc định server đầu tiên của đúng subtype.
+//
+// ✅ FIX: trả thêm `resolvedServerKey` khi backend TỰ CHỌN server (không có serverRaw truyền
+// vào) — cho phép PlayerComponent gọi listZoroServers() (getServers) và resolveZoroSource()
+// (getSources) SONG SONG ở lần load đầu mà vẫn biết chính xác nút nào cần highlight trong
+// ServerSelector, thay vì phải đợi listZoroServers() xong rồi mới resolve tuần tự.
 export async function resolveZoroSource(
   anilistId: string,
   episodeid: string,
@@ -56,6 +61,7 @@ export async function resolveZoroSource(
     let animeEpisodeId: string;
     let category = subtype;
     let serverName: string | undefined;
+    let resolvedServerKey: string | undefined;
 
     if (serverRaw) {
       [animeEpisodeId, category, serverName] = serverRaw.split('::');
@@ -65,13 +71,17 @@ export async function resolveZoroSource(
       const first = servers.find((s) => s.type === category) ?? servers[0];
       if (!first) return null;
       [, , serverName] = first.raw.split('::');
+      resolvedServerKey = first.key;
     }
 
     const sourceRes = await axios.get(`${process.env.ZORO_URI}/episode/sources`, {
       params: { animeEpisodeId, server: serverName, category },
     });
 
-    return (sourceRes.data?.data as VideoData) ?? null;
+    const data = (sourceRes.data?.data as VideoData) ?? null;
+    if (!data) return null;
+
+    return resolvedServerKey ? { ...data, resolvedServerKey } : data;
   } catch (error) {
     console.error('❌ [Zoro] resolveZoroSource error:', error instanceof Error ? error.message : error);
     return null;

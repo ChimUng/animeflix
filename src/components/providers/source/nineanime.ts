@@ -18,6 +18,9 @@ export async function listNineAnimeServers(): Promise<ServerOption[]> {
   ];
 }
 
+// ✅ FIX: trả thêm `resolvedServerKey` (luôn xác định được ngay vì 9anime chỉ có 1 server
+// cố định mỗi subtype) để đồng nhất contract VideoData với các provider khác, cho phép
+// PlayerComponent chạy getServers + getSources song song ở mọi provider.
 export async function resolveNineAnimeSource(
   anilistId: string,
   episodeid: string,
@@ -55,6 +58,7 @@ export async function resolveNineAnimeSource(
       intro: streamData.results.intro ?? firstStream.intro,
       outro: streamData.results.outro ?? firstStream.outro,
       headers: { Referer: 'https://rapid-cloud.co/' },
+      resolvedServerKey: `${category}:${server}`,
     };
   } catch (error) {
     console.error('❌ [9anime] resolveNineAnimeSource error:', error instanceof Error ? error.message : error);

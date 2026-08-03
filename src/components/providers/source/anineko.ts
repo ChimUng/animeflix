@@ -59,6 +59,10 @@ export async function listAninekoServers(episodeid: string): Promise<ServerOptio
 
 // Bước 4 — resolve 1 iframeUrl cụ thể thành m3u8 proxy. Không truyền serverRaw -> tự thử
 // lần lượt theo priority + fallback subtype (sub -> hsub) như logic cũ.
+//
+// ✅ FIX: trả thêm `resolvedServerKey` = key của candidate vừa resolve thành công, để
+// PlayerComponent chạy listAninekoServers() (getServers) và resolveAninekoSource()
+// (getSources) SONG SONG mà vẫn highlight đúng server trong ServerSelector.
 export async function resolveAninekoSource(
   episodeid: string,
   subtype: string,
@@ -91,6 +95,7 @@ export async function resolveAninekoSource(
               ? [{ url: data.subtitle, lang: data.subtitleLabel || 'English', kind: 'subtitles', default: true }]
               : [],
             headers: { Referer: data.referer },
+            resolvedServerKey: candidate.key !== 'manual' ? candidate.key : undefined,
           };
         }
       } catch (err) {

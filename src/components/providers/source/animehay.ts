@@ -62,6 +62,9 @@ export async function listAnimeHayServers(episodeid: string): Promise<ServerOpti
     }));
 }
 
+// ✅ FIX: trả thêm `resolvedServerKey` khi backend TỰ CHỌN server (serverRaw không truyền)
+// để PlayerComponent chạy listAnimeHayServers() + resolveAnimeHaySource() SONG SONG mà vẫn
+// highlight đúng server trong ServerSelector.
 export async function resolveAnimeHaySource(episodeid: string, serverRaw?: string): Promise<VideoData | null> {
   try {
     if (!ANIMEHAY_API_URL) return null;
@@ -83,6 +86,7 @@ export async function resolveAnimeHaySource(episodeid: string, serverRaw?: strin
             sources: [{ url: data.proxy_url, isM3U8: true, type: 'hls', quality: candidate.key }],
             tracks: [],
             headers: { Referer: data.referer, 'x-provider': 'animehay' },
+            resolvedServerKey: candidate.key !== 'manual' ? candidate.key : undefined,
           };
         }
       } catch (err) {
