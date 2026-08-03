@@ -3,7 +3,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 
 interface CustomHeaderProps {
-  brandName?: string;
+  brandName: string;
+  episodeNum?: number;   // thêm dòng này
   autoHide?: boolean;
   hideDelay?: number;
 }

@@ -4,6 +4,7 @@ import { useDraggable } from 'react-use-draggable-scroll';
 import Link from 'next/link';
 import styles from '../../styles/Genrecard.module.css'; 
 import { genreCovers, genreOptions } from '../catalogcomponent/options';
+import { LeftArrowIcon, RightArrowIcon } from '@/lib/SvgIcons';
 
 function GenreCard() {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -44,24 +45,18 @@ function GenreCard() {
             <span className={`${styles.leftarrow}`}>
             <button
                 className={`${styles.arrowbtn} ${leftActive ? styles.arrowactive : styles.arrowinactive}`}
-                onClick={(e) => {
-                e.preventDefault(); e.stopPropagation();
-                scroll(-500);
-                }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); scroll(-500); }}
             >
-                <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8" fill="none"><path d="M15 18L9 12L15 6" /></svg>
+                <LeftArrowIcon width={24} height={24} strokeWidth={1.8} />
             </button>
             </span>
 
             <span className={`${styles.rightarrow}`}>
             <button
                 className={`${styles.arrowbtn} ${rightActive ? styles.arrowactive : styles.arrowinactive}`}
-                onClick={(e) => {
-                e.preventDefault(); e.stopPropagation();
-                scroll(500);
-                }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); scroll(500); }}
             >
-                <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8" fill="none"><path d="M9 6L15 12L9 18" /></svg>
+                <RightArrowIcon width={24} height={24} strokeWidth={1.8} />
             </button>
             </span>
 
@@ -75,7 +70,7 @@ function GenreCard() {
                 const cover = genreCovers[genre.value as keyof typeof genreCovers];
                 if (!cover) return null;
                 return (
-                <Link href={`anime/catalog?genres=${genre.value}&year=2025`} key={genre.value} className="mr-3">
+                <Link href={`/anime/catalog?genre=${encodeURIComponent(genre.value)}`} key={genre.value} className="mr-3">
                     <div className="relative group w-44 h-24 md:w-48 md:h-28 lg:w-60 lg:h-32 rounded-2xl overflow-hidden">
                     <img
                         src={cover}

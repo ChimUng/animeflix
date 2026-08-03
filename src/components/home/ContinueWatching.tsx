@@ -7,79 +7,58 @@ import { Popover, PopoverTrigger, PopoverContent } from "@nextui-org/react";
 import { useRouter } from "next-nprogress-bar";
 import { toast } from "sonner";
 import Skeleton from "react-loading-skeleton";
-import {deleteEpisodes, getWatchHistory} from "@/lib/EpHistoryfunctions";
-import { IWatch } from "@/mongodb/models/watch"; 
-import { Session } from "next-auth"; 
-interface DeleteParams {
-  epId?: string;
-  aniId?: string;
-}
+import { deleteEpisodes, getWatchHistory } from "@/lib/EpHistoryfunctions";
+import { DeleteParams, WatchData } from "@/types/watch";
+import { Session } from "next-auth";
+import { formatTime } from "@/utils/TimeFunctions";
+import VideoProgressSave from "@/utils/VideoProgressSave";
+import { buildWatchUrl } from "@/utils/watchUrl";
 
-// Nếu chưa có type Session thì tạm dùng any
 interface ContinueWatchingProps {
-    session: Session | null;
+  session: Session | null;
 }
 
 function ContinueWatching({ session }: ContinueWatchingProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { events } = useDraggable(containerRef as React.MutableRefObject<HTMLDivElement>);
 
-  const [storedData, setStoredData] = useState<IWatch[]>([]);
+  const [storedData, setStoredData] = useState<WatchData[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const [, , removeVideoProgress, getAllVideoProgress] = VideoProgressSave();
 
-  function filterHistory(history: IWatch[]) {
+  function filterHistory(history: WatchData[]) {
     const sortedData = history.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
-    const filteredHistory = sortedData.reduce<IWatch[]>((acc, curr) => {
+    return sortedData.reduce<WatchData[]>((acc, curr) => {
       if (curr.epId !== null && !acc.find((item) => item.aniId === curr.aniId)) {
         acc.push(curr);
       }
       return acc;
     }, []);
-
-    return filteredHistory;
-  }
-
-  function removeFromLocalStorage(id: string) {
-    const history = JSON.parse(
-      localStorage.getItem("vidstack_settings") || "{}"
-    );
-    if (history[id]) {
-      delete history[id];
-      localStorage.setItem("vidstack_settings", JSON.stringify(history));
-    }
   }
 
   useEffect(() => {
     const fetchData = async () => {
-      if (typeof window !== "undefined") {
-        if (session?.user?.name) {
-          const history = (await getWatchHistory()) ?? [];
-          if (history?.length > 0) {
-            const data = filterHistory(history);
-            setStoredData(data);
-          }
-          setLoading(false);
-        } else {
-          const data = JSON.parse(
-            localStorage.getItem("vidstack_settings") || "{}"
-          );
-          if (data) {
-            const mappedValues = Object.keys(data).map((key) => data[key]);
-            const sortedData = mappedValues.sort(
-              (a: IWatch, b: IWatch) =>
-                new Date(b.createdAt).getTime() -
-                new Date(a.createdAt).getTime()
-            );
-            setStoredData(sortedData);
-          }
-          setLoading(false);
+      if (typeof window === "undefined") return;
+
+      if (session?.user?.name) {
+        const history = (await getWatchHistory()) ?? [];
+        if (history.length > 0) {
+          setStoredData(filterHistory(history));
         }
+        setLoading(false);
+        return;
       }
+
+      const localData = getAllVideoProgress() as unknown as WatchData[];
+      const sortedData = localData.sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setStoredData(sortedData);
+      setLoading(false);
     };
 
     fetchData();
@@ -87,33 +66,24 @@ function ContinueWatching({ session }: ContinueWatchingProps) {
 
   async function RemovefromHistory(id: string, aniTitle: string) {
     try {
-      const data: DeleteParams = {};
-      if (id) {
-        data.aniId = id;
-      }
       if (session?.user?.name) {
+        const data: DeleteParams = { aniId: id };
         const response = await deleteEpisodes(data);
-        if (response) {
-          const { remainingData, deletedData } = response;
-          toast.success(`${aniTitle}`, {
-            description: `Successfully removed ${
-              deletedData?.deletedCount || 0
-            } episode${
-              deletedData?.deletedCount > 1 ? "s" : ""
-            }`,
-          });
-          if (remainingData && remainingData.length > 0) {
-            const data = filterHistory(remainingData);
-            setStoredData(data);
-          } else {
-            setStoredData([]);
-          }
-          removeFromLocalStorage(id);
-        } else {
+
+        if (!response) {
           toast.error("Failed to remove anime from history. Please try again later.");
+          return;
         }
+
+        const { remainingData, deletedCount } = response;
+        toast.success(`${aniTitle}`, {
+          description: `Successfully removed ${deletedCount} episode${deletedCount > 1 ? "s" : ""}`,
+        });
+
+        setStoredData(remainingData && remainingData.length > 0 ? filterHistory(remainingData) : []);
+        removeVideoProgress(id);
       } else {
-        removeFromLocalStorage(id);
+        removeVideoProgress(id);
         toast.success(`${aniTitle}`, {
           description: `Removed anime from watch history.`,
         });
@@ -122,17 +92,6 @@ function ContinueWatching({ session }: ContinueWatchingProps) {
     } catch {
       toast.error("Failed to remove anime from history");
     }
-  }
-
-  function formatTime(totalSeconds?: number | null) {
-    if (!totalSeconds) return "00:00";
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = Math.floor(totalSeconds % 60);
-
-    const formattedMinutes = minutes < 10 ? `0${minutes}` : `${minutes}`;
-    const formattedSeconds = seconds < 10 ? `0${seconds}` : `${seconds}`;
-
-    return `${formattedMinutes}:${formattedSeconds}`;
   }
 
   if (!loading && storedData.length === 0) {
@@ -155,7 +114,7 @@ function ContinueWatching({ session }: ContinueWatchingProps) {
         {!loading &&
           storedData?.map((anime) => (
             <div
-              key={anime?.aniId || anime?.id}
+              key={anime?.aniId}
               className="flex flex-col gap-2 shrink-0 cursor-pointer relative group/item"
             >
               <Popover placement="bottom-end" offset={10} radius={"sm"}>
@@ -183,10 +142,7 @@ function ContinueWatching({ session }: ContinueWatchingProps) {
                       <button
                         className="py-2 px-2 w-full text-left outline-none border-none"
                         onClick={() =>
-                          RemovefromHistory(
-                            anime.aniId || anime.id,
-                            anime.aniTitle || ""
-                          )
+                          RemovefromHistory(anime.aniId, anime.aniTitle || "")
                         }
                       >
                         Xóa bản ghi
@@ -198,13 +154,13 @@ function ContinueWatching({ session }: ContinueWatchingProps) {
                           className="px-2 py-2 w-full text-left border-none outline-none"
                           onClick={() =>
                             router.push(
-                              `/anime/watch?id=${
-                                anime?.aniId || anime?.id
-                              }&host=${anime?.provider}&epid=${
-                                anime?.nextepId || anime?.epid
-                              }&ep=${anime?.nextepNum || anime?.epnum}&type=${
-                                anime.subtype
-                              }`
+                              buildWatchUrl({
+                                id: anime?.aniId ?? "",
+                                provider: anime?.provider ?? "",
+                                epId: anime?.nextepId || anime?.epid || "",
+                                epNum: anime?.nextepNum || anime?.epnum || "",
+                                subdub: anime?.subtype ?? "sub",
+                              })
                             )
                           }
                         >
@@ -217,11 +173,13 @@ function ContinueWatching({ session }: ContinueWatchingProps) {
               </Popover>
               <Link
                 className="relative w-60 sm:w-64 md:w-80 aspect-video group"
-                href={`/anime/watch?id=${
-                  anime?.aniId || anime?.id 
-                }&host=${anime?.provider}&epid=${
-                  anime?.epId || anime?.epid
-                }&ep=${anime?.epNum || anime?.epnum}&type=${anime.subtype}`}
+                href={buildWatchUrl({
+                  id: anime?.aniId ?? "",
+                  provider: anime?.provider ?? "",
+                  epId: anime?.epId || anime?.epid || "",
+                  epNum: anime?.epNum || anime?.epnum || "",
+                  subdub: anime?.subtype ?? "sub",
+                })}
               >
                 <div className="overflow-hidden w-full aspect-video rounded-lg">
                   <Image
@@ -239,20 +197,15 @@ function ContinueWatching({ session }: ContinueWatchingProps) {
                       {anime?.aniTitle}
                     </span>
                     <span className="text-[0.7rem] text-[#D1D7E0]">
-                      {formatTime(anime?.timeWatched)} /{" "}
-                      {formatTime(anime?.duration)} - Tập{" "}
+                      {formatTime(anime?.timeWatched)} / {formatTime(anime?.duration)} - Tập{" "}
                       {anime?.epNum || anime?.epnum}
                     </span>
                   </div>
                 </div>
                 <span
-                  className={`absolute bottom-0 left-2 right-2 h-[1px] rounded-xl bg-red-600 z-10`}
+                  className="absolute bottom-0 left-2 right-2 h-[1px] rounded-xl bg-red-600 z-10"
                   style={{
-                    width: `${
-                      anime.duration
-                        ? ((anime.timeWatched || 0) / anime.duration) * 95
-                        : 0
-                    }%`,
+                    width: `${anime.duration ? ((anime.timeWatched || 0) / anime.duration) * 95 : 0}%`,
                   }}
                 />
               </Link>
@@ -260,10 +213,7 @@ function ContinueWatching({ session }: ContinueWatchingProps) {
           ))}
         {loading &&
           [1, 2].map((item) => (
-            <div
-              key={item}
-              className="relative w-60 sm:w-64 md:w-80 aspect-video transition-opacity duration-300 ease-in-out"
-            >
+            <div key={item} className="relative w-60 sm:w-64 md:w-80 aspect-video transition-opacity duration-300 ease-in-out">
               <div className="w-full">
                 <Skeleton className="w-fit aspect-video" />
               </div>

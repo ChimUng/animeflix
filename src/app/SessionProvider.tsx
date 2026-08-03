@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect } from "react";
 import { SessionProvider } from "next-auth/react";
-import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
+// import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
+import NextTopLoader from 'nextjs-toploader';
 import { Session } from "next-auth";
 import "react-loading-skeleton/dist/skeleton.css";
 import { SkeletonTheme } from "react-loading-skeleton";
@@ -18,7 +19,7 @@ export function AuthProvider({ children, session }: AuthProviderProps) {
         const hasToastShown = sessionStorage.getItem("toastShown");
 
         if (!hasToastShown && session?.user) {
-           setTimeout(() => {
+            setTimeout(() => {
             toast.success(`Chào mừng, ${session.user?.name}! Bạn hiện đang đăng nhập.`);
         }, 300);
             sessionStorage.setItem("toastShown", "true");
@@ -34,12 +35,13 @@ export function AuthProvider({ children, session }: AuthProviderProps) {
         <SkeletonTheme baseColor="#18181b" highlightColor="#1e1e24" borderRadius={"0.5rem"}>
             {children}
         </SkeletonTheme>
-        <ProgressBar
+        {/* <ProgressBar
             height="3px"
             color="#CA1313"
             options={{ showSpinner: true }}
             // shallowRouting
-        />
+        /> */}
+        <NextTopLoader color="#CA1313" />
         </SessionProvider>
     );
 }

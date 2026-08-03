@@ -1,7 +1,9 @@
 import React from "react";
 import Link from "next/link";
 import styles from "../../styles/Epimglist.module.css";
-import { AnimeItem, EpisodeInfo } from "@/lib/types";
+import { AnimeItem } from "@/types/anime";
+import { EpisodeInfo } from "@/types/episode";
+import { buildWatchUrl } from "@/utils/watchUrl";
 
 interface EpNumListProps {
     data: AnimeItem;
@@ -20,10 +22,13 @@ const EpNumList: React.FC<EpNumListProps> = ({data,epdata,defaultProvider,subtyp
 
             return (
             <Link
-                href={`/anime/watch?id=${data?.id}&host=${defaultProvider}&epid=${encodeURIComponent(
-                episode?.id || episode?.episodeId || ""
-                )}&ep=${episode?.number}&type=${subtype}`}
-                key={episode?.id || episode?.episodeId}
+                href={buildWatchUrl({
+                    id: data?.id ?? "",
+                    provider: defaultProvider,
+                    epId: episode?.id || episode?.episodeId || "",
+                    epNum: episode?.number ?? "",
+                    subdub: subtype,
+                    })}
             >
                 <div
                 className={`${isFiller ? "bg-[#d14836]/20" : "bg-[#67686f]/40"} ${

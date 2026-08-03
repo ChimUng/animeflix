@@ -65,7 +65,7 @@
 
 .alttitle {
   margin: 0 0 3px 0;
-  color: #ffffffb2;
+  color: #d14836;
   text-overflow: ellipsis;
   overflow: hidden;
   max-width: 500px;
@@ -82,13 +82,13 @@
 }
 
 .detailswatch {
-  background-color: white;
+  background-color: #D23434;
   border: none;
   margin: 8px 0 8px 0;
   align-items: center;
   display: flex;
   width: max-content;
-  color: black;
+  color: white;
   padding: 8px 17px;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);

@@ -8,14 +8,15 @@ interface ReleaseLog {
   changes: string[];
 }
 
-const newVersion: string = "Bốc lửa";
+const newVersion: string = "New Version 2.0";
 
 const releaseLogs: ReleaseLog[] = [
   {
-    version: "Bốc lửa",
+    version: "New Version 2.0",
     changes: [
-      "7/18/2026 add vietsub provider",
+      "3/8/2026 add vietsub provider",
       "7/17/2026 add anineko provider",
+      "Update new UI for animeflix",
       "Fixed hls videostream.",
       "Fixed translate animes.",
       "Add custom Iframe player.",

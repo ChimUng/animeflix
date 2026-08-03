@@ -2,17 +2,14 @@ import React, { useState } from 'react';
 import { Select, SelectItem, Input, Textarea, Button } from "@nextui-org/react";
 import { updatelist } from '@/lib/anilistqueries';
 import { toast } from 'sonner';
-import { MediaListEntry } from '@/lib/AnilistUser';
+import { MediaListEntry } from '@/types/anilist';
+import type { Session } from 'next-auth';
 
 interface Props {
     list: MediaListEntry | null;
     eplength: number;
     Handlelist: () => void;
-    session: {
-        user: {
-        token: string;
-        };
-    };
+    session: Session | null;
     id: number;
     setList: (entry: MediaListEntry | null) => void;
 }
@@ -24,27 +21,27 @@ const statusOptions = [
     { name: "Đang xem lại", value: "REPEATING" },
     { name: "Tạm dừng", value: "PAUSED" },
     { name: "Đã bỏ", value: "DROPPED" },
-    ];
+];
 
-    function Addtolist({ list, eplength, Handlelist, session, id, setList }: Props) {
+function Addtolist({ list, eplength, Handlelist, session, id, setList }: Props) {
     const [status, setStatus] = useState<string>(list?.status || '');
     const [score, setScore] = useState<number>(list?.score || 0);
     const [progress, setProgress] = useState<number>(list?.progress || 0);
     const [startDate, setStartDate] = useState<string>(() => {
         if (list?.startedAt) {
-        const { year, month, day } = list.startedAt;
-        if (year !== null && month !== null && day !== null) {
-            return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-        }
+            const { year, month, day } = list.startedAt;
+            if (year != null && month != null && day != null) {
+                return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+            }
         }
         return '';
     });
     const [finishDate, setFinishDate] = useState<string>(() => {
         if (list?.completedAt) {
-        const { year, month, day } = list.completedAt;
-        if (year !== null && month !== null && day !== null) {
-            return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-        }
+            const { year, month, day } = list.completedAt;
+            if (year != null && month != null && day != null) {
+                return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+            }
         }
         return '';
     });
@@ -54,104 +51,137 @@ const statusOptions = [
     const extractDateInfo = (dateString: string) => {
         const dateObj = new Date(dateString);
         return {
-        year: dateObj.getFullYear(),
-        month: dateObj.getMonth() + 1,
-        day: dateObj.getDate(),
+            year: dateObj.getFullYear(),
+            month: dateObj.getMonth() + 1,
+            day: dateObj.getDate(),
         };
     };
 
+    // Clamp thay vì chặn cứng: luôn cập nhật, kẹp giá trị trong [min, max], vẫn toast khi vượt/dưới ngưỡng
     const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newProgress = Number(e.target.value);
+        const raw = e.target.value;
+        if (raw === '') { setProgress(0); return; }
+        let newProgress = Number(raw);
+        if (Number.isNaN(newProgress)) return;
         if (newProgress > eplength) {
-        toast.error(`Progress cannot exceed the maximum value ${eplength}`);
-        } else {
-        setProgress(newProgress);
+            toast.error(`Tiến độ không thể vượt quá ${eplength}`);
+            newProgress = eplength;
         }
+        if (newProgress < 0) {
+            toast.error("Tiến độ không thể âm");
+            newProgress = 0;
+        }
+        setProgress(newProgress);
     };
 
     const handleScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newScore = Number(e.target.value);
+        const raw = e.target.value;
+        if (raw === '') { setScore(0); return; }
+        let newScore = Number(raw);
+        if (Number.isNaN(newScore)) return;
         if (newScore > 10) {
-        toast.error("Score cannot exceed 10");
-        } else {
-        setScore(newScore);
+            toast.error("Đánh giá không thể vượt quá 10");
+            newScore = 10;
         }
+        if (newScore < 0) {
+            toast.error("Đánh giá không thể âm");
+            newScore = 0;
+        }
+        setScore(newScore);
+    };
+
+    const handleRewatchesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = e.target.value;
+        if (raw === '') { setRewatches(0); return; }
+        let newVal = Number(raw);
+        if (Number.isNaN(newVal)) return;
+        if (newVal < 0) newVal = 0;
+        setRewatches(newVal);
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        try {
-        const startedAtDateInfo = startDate ? extractDateInfo(startDate) : null;
-        const finishAtDateInfo = finishDate ? extractDateInfo(finishDate) : null;
-
-        const response = await fetch("https://graphql.anilist.co/", {
-            method: "POST",
-            headers: {
-            "Content-Type": "application/json",
-            Accept: 'application/json',
-            Authorization: `Bearer ${session.user.token}`,
-            },
-            body: JSON.stringify({
-            query: updatelist,
-            variables: {
-                mediaId: id,
-                progress: progress || 0,
-                status: status || null,
-                score: score || 0,
-                startedAt: startedAtDateInfo || null,
-                completedAt: finishAtDateInfo || null,
-                repeat: rewatches || 0,
-                notes: notes || null,
-            },
-            }),
-        });
-        const { data } = await response.json();
-        if (data.SaveMediaListEntry === null) {
-            toast.error("Something went wrong");
+        const token = session?.user?.token;
+        if (!token) {
+            toast.error("Vui lòng đăng nhập lại");
             return;
         }
-        setList(data.SaveMediaListEntry);
-        toast.success("List entry updated");
-        Handlelist();
+        try {
+            const startedAtDateInfo = startDate ? extractDateInfo(startDate) : null;
+            const finishAtDateInfo = finishDate ? extractDateInfo(finishDate) : null;
+
+            const response = await fetch("https://graphql.anilist.co/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    query: updatelist,
+                    variables: {
+                        id: list?.id ?? null,
+                        mediaId: id,
+                        progress: progress || 0,
+                        status: status || null,
+                        score: score || 0,
+                        startedAt: startedAtDateInfo || null,
+                        completedAt: finishAtDateInfo || null,
+                        repeat: rewatches || 0,
+                        notes: notes || null,
+                    },
+                }),
+            });
+            const { data } = await response.json();
+            if (!data?.SaveMediaListEntry) {
+                toast.error("Something went wrong");
+                return;
+            }
+            setList(data.SaveMediaListEntry);
+            toast.success("List entry updated");
+            Handlelist();
         } catch (error) {
-        toast.error("Something went wrong");
-        console.error(error);
+            toast.error("Something went wrong");
+            console.error(error);
         }
     };
 
     const deleteList = async () => {
-        try {
-        const response = await fetch("https://graphql.anilist.co/", {
-            method: "POST",
-            headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${session.user.token}`,
-            },
-            body: JSON.stringify({
-            query: `
-                mutation DeleteMediaListEntry($id: Int) {
-                DeleteMediaListEntry(id: $id) {
-                    deleted
-                }
-                }
-            `,
-            variables: {
-                id: list?.id,
-            },
-            }),
-        });
-        const { data } = await response.json();
-        if (data.DeleteMediaListEntry?.deleted === true) {
-            toast.success("List entry deleted");
-            setList(null);
-            Handlelist();
+        const token = session?.user?.token;
+        if (!token) {
+            toast.error("Vui lòng đăng nhập lại");
             return;
         }
-        toast.error("Something went wrong");
+        try {
+            const response = await fetch("https://graphql.anilist.co/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    query: `
+                        mutation DeleteMediaListEntry($id: Int) {
+                        DeleteMediaListEntry(id: $id) {
+                            deleted
+                        }
+                        }
+                    `,
+                    variables: { id: list?.id },
+                }),
+            });
+            const { data } = await response.json();
+            if (data?.DeleteMediaListEntry?.deleted === true) {
+                toast.success("List entry deleted");
+                setList(null);
+                Handlelist();
+                return;
+            }
+            toast.error("Something went wrong");
         } catch (error) {
-        toast.error("Something went wrong");
-        console.error(error);
+            toast.error("Something went wrong");
+            console.error(error);
         }
     };
 
@@ -170,6 +200,20 @@ const statusOptions = [
                 trigger: "m-0 !min-h-[34px] w-full pr-0",
                 listbox: "m-0 p-0",
                 }}
+                listboxProps={{
+                    itemClasses: {
+                        base: [
+                            // Đổi màu nền & chữ khi hover hoặc dùng bàn phím focus vào
+                            "data-[hover=true]:bg-d148h",
+                            "data-[hover=true]:text-white",
+                            "data-[selectable=true]:focus:bg-d148h",
+                            "data-[selectable=true]:focus:text-white",
+                            // Đổi màu nền & chữ cho item đang được chọn (đang active)
+                            "data-[selected=true]:bg-d148h",
+                            "data-[selected=true]:text-white",
+                        ],
+                    },
+                }}
                 radius="sm"
                 disallowEmptySelection={true}
             >
@@ -185,6 +229,8 @@ const statusOptions = [
                 labelPlacement="outside"
                 placeholder="Đánh giá"
                 radius="sm"
+                min={0}
+                max={10}
                 classNames={{
                 mainWrapper: "p-0 m-0 !h-[34px]",
                 inputWrapper: "m-0 !min-h-[34px] w-full",
@@ -198,11 +244,12 @@ const statusOptions = [
                 labelPlacement="outside"
                 placeholder="Tiến độ"
                 radius="sm"
+                min={0}
+                max={eplength}
                 classNames={{
                 mainWrapper: "p-0 m-0 !h-[34px]",
                 inputWrapper: "m-0 !min-h-[34px] w-full",
                 }}
-                max={eplength}
                 value={progress.toString()}
                 onChange={handleProgressChange}
             />
@@ -227,8 +274,9 @@ const statusOptions = [
                 label="Tổng số lần xem lại"
                 labelPlacement="outside"
                 radius="sm"
+                min={0}
                 value={rewatches.toString()}
-                onChange={(e) => setRewatches(Number(e.target.value))}
+                onChange={handleRewatchesChange}
             />
             </div>
             <Textarea

@@ -1,14 +1,13 @@
 "use client"
-import React from 'react'; // Import React
+import React from 'react';
 import { usePathname } from 'next/navigation';
 import { motion } from "framer-motion";
 
-// Định nghĩa interface cho props của component Template
 interface TemplateProps {
-    children: React.ReactNode; // children có kiểu là React.ReactNode
+    children: React.ReactNode;
 }
 
-export default function Template({ children }: TemplateProps) { // Áp dụng interface vào props
+export default function Template({ children }: TemplateProps) {
     const pathname = usePathname();
 
     return (

@@ -27,12 +27,14 @@ import { VideoLayout } from "./components/layouts/video-layout";
 import { updateEp } from "@/lib/EpHistoryfunctions";
 import { saveProgress } from "@/lib/AnilistUser";
 import { useSettings, useTitle, useNowPlaying } from '@/lib/store';
-import { AnimeItem, GroupedEpisodes } from '@/lib/types';
+import { buildWatchUrl } from "@/utils/watchUrl";
+import type { AnimeItem } from "@/types/anime";
+import type { GroupedEp, SavedEpisode, SkipTime } from "@/types/stream";
 import { CustomHeader } from "./CustomHeader";
 
-
-
-// Type for session object
+// Session rút gọn — Player chỉ cần name/token để save progress, không cần Session đầy đủ
+// của next-auth. PlayerComponent.tsx tự adapt Session -> shape này trước khi truyền xuống
+// (xem comment "adaptedSession" trong PlayerComponent.tsx).
 interface Session {
   user?: {
     name?: string;
@@ -40,23 +42,11 @@ interface Session {
   };
 }
 
-// Type for saved episode progress
-interface SavedEpisode {
-  timeWatched: number;
-}
-
-// Type for skip times (OP/ED)
-interface SkipTime {
-  startTime: number;
-  endTime: number;
-  text: string;
-}
-
 // Main props interface for the Player component
 interface PlayerProps {
   dataInfo?: AnimeItem | null; // Cho phép null
   id: string | number;
-  groupedEp?: GroupedEpisodes | null; // Cập nhật sau ở lỗi
+  groupedEp?: GroupedEp | null;
   src: string;
   session?: Session;
   savedep?: SavedEpisode[];
@@ -64,6 +54,7 @@ interface PlayerProps {
   thumbnails?: { src: string }[];
   skiptimes?: SkipTime[];
   onError?: () => void; // Callback for error handling
+  load?: MediaLoadingStrategy; // Cho phép PlayerComponent override strategy loading trực tiếp
 }
 
 // --- Component ---
@@ -78,7 +69,8 @@ const Player: React.FC<PlayerProps> = ({
   subtitles,
   thumbnails,
   skiptimes,
-  onError
+  onError,
+  load,
 }) => {
   const settings = useStore(useSettings, (state) => state.settings);
   const animetitle = useStore(useTitle, (state) => state.animetitle);
@@ -154,11 +146,20 @@ const Player: React.FC<PlayerProps> = ({
     setIsPlaying(false);
   }
 
+  // ✅ Fix: dùng buildWatchUrl thay vì tự nối query-string "/anime/watch?id=..." (format cũ,
+  // không còn khớp với route path-based hiện tại "/anime/watch/{id}/{provider}/{epId}/{epNum}/{subdub}").
   function onEnded() {
-    if (!nextep?.id && !nextep?.episodeId) return;
+    const nextEpId = nextep?.id || nextep?.episodeId;
+    if (!nextEpId) return;
     if (settings?.autonext) {
       router.push(
-        `/anime/watch?id=${dataInfo?.id}&host=${provider}&epid=${nextep?.id || nextep?.episodeId}&ep=${nextep?.number}&type=${subtype}`
+        buildWatchUrl({
+          id: dataInfo?.id ?? id,
+          provider: provider ?? "",
+          epId: nextEpId,
+          epNum: nextep?.number ?? "",
+          subdub: subtype ?? "sub",
+        })
       );
     }
   }
@@ -292,7 +293,7 @@ const Player: React.FC<PlayerProps> = ({
       ref={playerRef}
       playsInline
       aspectRatio="16/9"
-      load={settings?.load as MediaLoadingStrategy | undefined ?? 'idle'}
+      load={load ?? (settings?.load as MediaLoadingStrategy | undefined) ?? 'idle'}
       muted={settings?.audio || false}
       autoPlay={settings?.autoplay || false}
       title={currentep?.title || `EP ${epNum}` || 'Loading...'}

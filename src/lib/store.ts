@@ -10,6 +10,8 @@ interface Settings {
     load: string;
     audio: boolean;
     herotrailer: boolean;
+    pipedInstance?: string;
+    pipedCheckedAt?: number;
 }
 
 interface SettingsState {
@@ -27,6 +29,8 @@ export const useSettings = create<SettingsState>()(
             load: "idle",
             audio: false,
             herotrailer: true,
+            pipedInstance: undefined,
+            pipedCheckedAt: undefined,
         },
         setSettings: (settings) => set({ settings }),
         }),
@@ -66,6 +70,22 @@ export const useSubtype = create<SubTypeState>()(
     )
 );
 
+// 3b. EpListType Store (trước đây đọc/ghi localStorage thủ công trong Episodesection)
+interface EpListTypeState {
+    eplisttype: number;
+    setEplistType: (eplisttype: number) => void;
+}
+
+export const useEpListType = create<EpListTypeState>()(
+    persist(
+        (set) => ({
+        eplisttype: 2,
+        setEplistType: (eplisttype) => set({ eplisttype }),
+        }),
+        { name: "eplisttype" }
+    )
+);
+
 // 4. Searchbar Store
 interface SearchbarState {
     Isopen: boolean;
@@ -79,20 +99,20 @@ export const useSearchbar = create<SearchbarState>()((set) => ({
 
 // 5. NowPlaying Store
 interface NowPlaying {
-  epId: string;
-  provider: string;
-  epNum: string;
-  subtype: string; 
+    epId: string;
+    provider: string;
+    epNum: string;
+    subtype: string; 
 }
 
 interface NowPlayingState {
-  nowPlaying?: NowPlaying;
-  setNowPlaying: (nowPlaying: NowPlaying) => void;
+    nowPlaying: NowPlaying;   // bỏ ? ở đây
+    setNowPlaying: (nowPlaying: NowPlaying) => void;
 }
 
 export const useNowPlaying = create<NowPlayingState>()((set) => ({
-    nowPlaying: undefined,
-    setNowPlaying: (nowPlaying) => set({ nowPlaying }),
+  nowPlaying: { epId: "", provider: "", epNum: "", subtype: "sub" },
+  setNowPlaying: (nowPlaying) => set({ nowPlaying }),
 }));
 
 // 6. DataInfo Store
@@ -100,12 +120,31 @@ interface DataInfoState {
     dataInfo?: AnimeItem;
     setDataInfo: (dataInfo: AnimeItem) => void;
 }
-// dùng để lưu thông tin anime, như title, coverImage, description, v.v.
-// sử dụng đề xuất anime cùng thể loại với anime đang xem
-// sử dụng thông tin anime chi tiết trong page watching
-//  Nút "Thêm vào danh sách yêu thích" ❤️
-// Nút "Chia sẻ lên mạng xã hội"
+
 export const useDataInfo = create<DataInfoState>()((set) => ({
     dataInfo: undefined,
     setDataInfo: (dataInfo) => set({ dataInfo }),
 }));
+
+/*
+Zustand store — là gì và tại sao không truyền prop thẳng
+
+Zustand ở đây đóng 2 vai trò khác nhau, tách theo 2 nhóm:
+
+Nhóm có persist (lưu localStorage) — là preferences của người dùng, tồn tại xuyên phiên:
+
+useSettings — bật/tắt autoplay, autoskip, âm thanh...
+useTitle — ngôn ngữ hiển thị title đang chọn (romaji/english/userPreferred)
+useSubtype — sub/dub đang chọn
+
+Nhóm không persist — là UI/session state tạm thời, mất khi F5:
+
+useSearchbar — search bar đang mở hay đóng
+useNowPlaying — tập đang xem (epId, provider, epNum)
+useDataInfo — thông tin anime hiện tại đang xem (dùng để chia sẻ giữa các component xa nhau)
+
+Zustand đóng vai trò tương tự React Context(NextUI, SessionProvider - là ví dụ để cho phép các client component chia sẻ state)
+nhưng nhẹ hơn (không gây re-render toàn cây khi 1 giá trị đổi,
+nhờ bạn dùng useStore(useTitle, selector) chỉ subscribe đúng phần cần) 
+và có thêm persist middleware để lưu localStorage miễn phí (Context không tự có).
+*/

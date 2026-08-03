@@ -1,22 +1,16 @@
-"use client"; // Error components must be Client Components
+"use client";
 
 import Navbarcomponent from "@/components/navbar/Navbar";
 import { useRouter } from 'next-nprogress-bar';
-// import { useEffect } from 'react';
+
 
 interface ErrorPageProps {
-  error: Error; // 'error' là một đối tượng Error
-  reset: () => void; // 'reset' là một hàm không nhận đối số và không trả về gì
+    error: Error; 
+    reset: () => void; 
 }
 
-export default function ErrorPage({
-    reset,
-}: ErrorPageProps) { // Áp dụng interface ErrorPageProps vào props
+export default function ErrorPage({ reset, error }: ErrorPageProps) {
 
-  // useEffect(() => {
-  //   // Log the error to an error reporting service
-  //   console.error(error);
-  // }, [error]);
     const router = useRouter();
 
     return (
@@ -29,7 +23,6 @@ export default function ErrorPage({
             <div className="flex flex-row gap-4">
             <button className="bg-white text-black font-medium py-2 px-3 rounded-lg"
                 onClick={
-                // Attempt to recover by trying to re-render the segment
                 () => reset()
                 }
             >
@@ -40,7 +33,7 @@ export default function ErrorPage({
                     router.push("/");
                 }}
             >
-               Trang chủ
+                Trang chủ
             </button>
             </div>
         </div>

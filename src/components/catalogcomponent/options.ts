@@ -184,7 +184,9 @@ export const sortbyOptions = [
     { name: "Popularity", value: "POPULARITY_DESC" },
     { name: "Trending", value: "TRENDING_DESC" },
     { name: "Favorites", value: "FAVOURITES_DESC" },
+    { name: "Cập nhật gần đây", value: "UPDATED_AT_DESC" },
 ];
+
 export const yearOptions = [
     { name: "1998", value: "1998" },
     { name: "1999", value: "1999" },

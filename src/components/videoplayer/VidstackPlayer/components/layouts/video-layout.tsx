@@ -12,12 +12,12 @@ import * as Menus from '../menus';
 import * as Sliders from '../sliders';
 import { TimeGroup } from '../time-group';
 import { Titleb } from '../title';
-import { GroupedEpisodes } from '@/lib/types';
+import { GroupedEp } from '@/types/stream';
 import { TextTrackInit } from "@vidstack/react";
 
 // Interface for component props
 export interface VideoLayoutProps {
-  groupedEp?: GroupedEpisodes | null; 
+  groupedEp?: GroupedEp | null; 
   thumbnails?: string;
   subtitles?: TextTrackInit[];
 }

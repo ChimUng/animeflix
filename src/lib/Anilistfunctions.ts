@@ -1,5 +1,34 @@
 "use server"
-import { trending, animeinfo, advancedsearch, top100anime, seasonal, popular, popularthisseasonal, popularmovie, mostfavorite } from "./anilistqueries";
+import { trending, animeinfo, advancedsearch, top100anime, seasonal, popular, popularmovie, mostfavorite, weeklySchedule } from "./anilistqueries";
+
+// Function to get the current season and year
+const getCurrentSeasonAndYear = () => {
+    const month = new Date().getMonth() + 1;
+    const year = new Date().getFullYear();
+    if (month <= 3) return { season: "WINTER", year };
+    if (month <= 6) return { season: "SPRING", year };
+    if (month <= 9) return { season: "SUMMER", year };
+    return { season: "FALL", year };
+};
+
+// Function to get the next season and year
+const getNextSeasonAndYear = () => {
+    const seasons = ['WINTER', 'SPRING', 'SUMMER', 'FALL'];
+    const month = new Date().getMonth() + 1;
+    const year = new Date().getFullYear();
+
+    let currentSeasonIndex: number;
+    if (month <= 3) currentSeasonIndex = 0;
+    else if (month <= 6) currentSeasonIndex = 1;
+    else if (month <= 9) currentSeasonIndex = 2;
+    else currentSeasonIndex = 3;
+
+    const nextSeasonIndex = (currentSeasonIndex + 1) % 4;
+    const nextSeason = seasons[nextSeasonIndex];
+    const nextYear = nextSeasonIndex === 0 ? year + 1 : year;
+
+    return { season: nextSeason, year: nextYear };
+};
 
 export const TrendingAnilist = async () => {
     try {
@@ -71,31 +100,17 @@ export const Top100Anilist = async () => {
 };
 
 export const PopularThisSeason = async () => {
-    const getCurrentSeasonAndYear = () => {
-        const month = new Date().getMonth() + 1;
-        const year = new Date().getFullYear();
-        if (month <= 3) return { season: "WINTER", year };
-        if (month <= 6) return { season: "SPRING", year };
-        if (month <= 9) return { season: "SUMMER", year };
-        return { season: "FALL", year };
-    };
-
     const { season, year } = getCurrentSeasonAndYear();
-
     try {
         const res = await fetch("https://graphql.anilist.co", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-        },
-        body: JSON.stringify({
-            query: popularthisseasonal, // tái sử dụng từ file query
-            variables: { page: 1, perPage: 12, season, seasonYear: year }
-        }),
-        next: { revalidate: 3600 },
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({
+                query: seasonal,
+                variables: { page: 1, perPage: 10, season, seasonYear: year }
+            }),
+            next: { revalidate: 3600 },
         });
-
         const data = await res.json();
         return data.data.Page.media;
     } catch (err) {
@@ -104,41 +119,18 @@ export const PopularThisSeason = async () => {
     }
 };
 
-const getNextSeasonAndYear = () => {
-        const seasons = ['WINTER', 'SPRING', 'SUMMER', 'FALL'];
-        const month = new Date().getMonth() + 1;
-        const year = new Date().getFullYear();
-
-        let currentSeasonIndex: number;
-        if (month <= 3) currentSeasonIndex = 0; // WINTER
-        else if (month <= 6) currentSeasonIndex = 1; // SPRING
-        else if (month <= 9) currentSeasonIndex = 2; // SUMMER
-        else currentSeasonIndex = 3; // FALL
-
-        const nextSeasonIndex = (currentSeasonIndex + 1) % 4;
-        const nextSeason = seasons[nextSeasonIndex];
-        const nextYear = nextSeasonIndex === 0 ? year + 1 : year;
-
-        return { season: nextSeason, year: nextYear };
-};
-
-export const PopularNextSeason = async () => { 
+export const PopularNextSeason = async () => {
     const { season, year } = getNextSeasonAndYear();
-
     try {
         const res = await fetch("https://graphql.anilist.co", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-        },
-        body: JSON.stringify({
-            query: popularthisseasonal,
-            variables: { page: 1, perPage: 12, season, seasonYear: year }
-        }),
-        next: { revalidate: 3600 },
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({
+                query: seasonal,
+                variables: { page: 1, perPage: 12, season, seasonYear: year }
+            }),
+            next: { revalidate: 3600 },
         });
-
         const data = await res.json();
         return data.data.Page.media;
     } catch (err) {
@@ -166,28 +158,6 @@ export const PopularMovie = async () => {
         return data.data.Page.media;
     } catch (err) {
         console.error("Error fetching popular movies:", err);
-    }
-};
-
-export const SeasonalAnilist = async () => {
-    try {
-        const res = await fetch("https://graphql.anilist.co", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-        },
-        body: JSON.stringify({
-            query: seasonal,
-            variables: { page: 1, perPage: 10 },
-        }),
-        next: { revalidate: 3600 },
-        });
-
-        const data = await res.json();
-        return data.data.Page.media;
-    } catch (err) {
-        console.error("Error fetching seasonal:", err);
     }
 };
 
@@ -242,7 +212,8 @@ export const AdvancedSearch = async (
     formatvalue: string | null = null,
     genrevalue: { type: string; value: string }[] = [],
     sortbyvalue: string | null = null,
-    currentPage: number = 1
+    currentPage: number = 1,
+    airingvalue: string | null = null 
     ) => {
     const types: Record<string, string[]> = {};
 
@@ -254,7 +225,6 @@ export const AdvancedSearch = async (
         types[type] = [value];
         }
     }
-
     try {
         const res = await fetch("https://graphql.anilist.co", {
         method: "POST",
@@ -269,21 +239,42 @@ export const AdvancedSearch = async (
             page: currentPage,
             ...(searchvalue && {
             search: searchvalue,
-            sort: ["SEARCH_MATCH"], // 💥 ép sắp xếp chuẩn theo tìm kiếm
+            sort: ["SEARCH_MATCH"],
             }),
             ...(selectedYear && { seasonYear: selectedYear }),
             ...(seasonvalue && { season: seasonvalue }),
             ...(formatvalue && { format: [formatvalue] }),
-            ...(sortbyvalue && !searchvalue && { sort: [sortbyvalue] }), // ✅ chỉ sort nếu không search
+            ...(sortbyvalue && !searchvalue && { sort: [sortbyvalue] }),
+            ...(airingvalue && { status: airingvalue }),
             ...(types && { ...types }),
         }
         }),
+        next: { revalidate: 120 },
         });
-
+ 
         const data = await res.json();
-        return data.data.Page; // gồm pageInfo và media
+        return data.data.Page;
     } catch (err) {
-        console.error("❌ Error in advanced search:", err);
+        console.error("Error in advanced search:", err);
         return null;
+    }
+};
+
+export const WeeklyScheduleAnilist = async (from: number, to: number) => {
+    try {
+        const res = await fetch("https://graphql.anilist.co", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({
+                query: weeklySchedule,
+                variables: { page: 1, perPage: 50, from, to },
+            }),
+            next: { revalidate: 3600 },
+        });
+        const data = await res.json();
+        return data?.data?.Page?.airingSchedules ?? [];
+    } catch (err) {
+        console.error("Error fetching weekly schedule:", err);
+        return [];
     }
 };

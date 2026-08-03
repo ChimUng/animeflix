@@ -36,6 +36,7 @@ import { IoAirplane, IoPlaySkipBack, IoPlaySkipForward } from "react-icons/io5";
 import { RiReplay10Fill as ReplayIcon, RiPictureInPicture2Fill } from "react-icons/ri";
 import { GrBackTen, GrForwardTen } from "react-icons/gr";
 import { GroupedEpisodes } from '@/lib/types';
+import { buildWatchUrl } from "@/utils/watchUrl";
 
 export interface MediaButtonProps {
   tooltipPlacement: TooltipPlacement;
@@ -109,9 +110,17 @@ export function NextEpisode({ tooltipPlacement, offset, groupedEp }: MediaButton
   const nowPlaying = useStore(useNowPlaying, (state) => state.nowPlaying);
   const dataInfo = useStore(useDataInfo, (state) => state.dataInfo);
   function handleNext() {
-    router.push(
-      `/anime/watch?id=${dataInfo?.id}&host=${nowPlaying?.provider}&epid=${groupedEp?.nextep?.id || groupedEp?.nextep?.episodeId}&ep=${groupedEp?.nextep?.number}&type=${nowPlaying?.subtype}`
-    );
+    if (!groupedEp?.nextep) return;
+    
+    const nextUrl = buildWatchUrl({
+      id: dataInfo?.id ?? "",
+      provider: nowPlaying?.provider ?? "",
+      epId: groupedEp.nextep.id || groupedEp.nextep.episodeId || "",
+      epNum: groupedEp.nextep.number || "",
+      subdub: nowPlaying?.subtype ?? "sub",
+    });
+
+    router.push(nextUrl);
   }
 
   return (
@@ -143,9 +152,17 @@ export function PreviousEpisode({ tooltipPlacement, offset, groupedEp }: MediaBu
   const nowPlaying = useStore(useNowPlaying, (state) => state.nowPlaying);
   const dataInfo = useStore(useDataInfo, (state) => state.dataInfo);
   function handlePrev() {
-    router.push(
-      `/anime/watch?id=${dataInfo?.id}&host=${nowPlaying?.provider}&epid=${groupedEp?.previousep?.id || groupedEp?.previousep?.episodeId}&ep=${groupedEp?.previousep?.number}&type=${nowPlaying?.subtype}`
-    );
+    if (!groupedEp?.previousep) return;
+
+    const prevUrl = buildWatchUrl({
+      id: dataInfo?.id ?? "",
+      provider: nowPlaying?.provider ?? "",
+      epId: groupedEp.previousep.id || groupedEp.previousep.episodeId || "",
+      epNum: groupedEp.previousep.number || "",
+      subdub: nowPlaying?.subtype ?? "sub",
+    });
+
+    router.push(prevUrl);
   }
 
   return (
@@ -279,9 +296,15 @@ export function PlayNextButton({ groupedEp }: MediaButtonProps) { //tooltipPlace
       type="button"
       onClick={() => {
         if (groupedEp?.nextep) {
-          router.push(
-            `/anime/watch?id=${dataInfo?.id}&host=${nowPlaying?.provider}&epid=${groupedEp?.nextep?.id || groupedEp?.nextep?.episodeId}&ep=${groupedEp?.nextep?.number}&type=${nowPlaying?.subtype}`
-          );
+          const nextUrl = buildWatchUrl({
+            id: dataInfo?.id ?? "",
+            provider: nowPlaying?.provider ?? "",
+            epId: groupedEp.nextep.id || groupedEp.nextep.episodeId || "",
+            epNum: groupedEp.nextep.number || "",
+            subdub: nowPlaying?.subtype ?? "sub",
+          });
+          
+          router.push(nextUrl);
         }
       }}
       className="nextbtn hidden absolute bottom-[70px] sm:bottom-[83px] text-[15px] right-4 z-[40] bg-[d14836] text-black py-2 px-3 rounded-[4px] font-medium"

@@ -85,7 +85,7 @@ const PlayerAnimeInfo: React.FC<{ data: AnimeItem | null }> = ({ data }) => {
             </div>
             <div className="hidden sm:flex flex-wrap gap-2 mt-auto pt-2">
               {genres?.slice(0, 5).map((genre: string) => (
-                <Link key={genre} className="px-2.5 py-1 text-xs text-gray-200 bg-[#27272a] hover:bg-[#3f3f46] rounded-full transition-colors" href={`/catalog?genres=${genre}`}>
+                <Link key={genre} className="px-2.5 py-1 text-xs text-gray-200 bg-[#27272a] hover:bg-[#3f3f46] rounded-full transition-colors" href={`anime/catalog?genre=${genre}`}>
                   {genre}
                 </Link>
               ))}
@@ -99,7 +99,7 @@ const PlayerAnimeInfo: React.FC<{ data: AnimeItem | null }> = ({ data }) => {
         {/* Genres cho mobile */}
         <div className="sm:hidden flex flex-wrap gap-2">
             {genres?.slice(0, 5).map((genre: string) => (
-                <Link key={genre} className="px-2.5 py-1 text-xs text-gray-200 hover:brightness-150 ring-1 ring-cyan-500 rounded-full transition-colors" href={`/catalog?genres=${genre}`}>
+                <Link key={genre} className="px-2.5 py-1 text-xs text-gray-200 hover:brightness-150 ring-1 ring-cyan-500 rounded-full transition-colors" href={`anime/catalog?genre=${genre}`}>
                     {genre}
                 </Link>
             ))}

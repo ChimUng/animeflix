@@ -1,60 +1,27 @@
-// Mark this file as a Server Action file
 'use server'
 
 import { getAuthSession } from "@/app/api/auth/[...nextauth]/route";
 import { connectMongo } from "@/mongodb/db";
 import { revalidatePath } from "next/cache";
 import { Session } from "next-auth";
-// Import IWatch từ file model của bạn, đây là nguồn tin cậy duy nhất cho kiểu dữ liệu
 import Watch, { IWatch } from '@/mongodb/models/watch';
-import { DeleteResult as MongooseDeleteResult } from "mongodb";
+import { DeleteParams, DeleteResult, UpdateEpParams, WatchData } from '@/types/watch';
 
-// --- Type Definitions ---
-
-// Sử dụng các thuộc tính từ IWatch để đảm bảo tính nhất quán
-// Omit dùng để loại bỏ các trường không cần thiết từ IWatch
-type UpdateEpParams = Omit<Partial<IWatch>, '_id' | 'createdAt' | 'userName'> & {
-  userName?: string;
-  aniId: string;
-  epNum: number;
-};
-
-// Define the structure for the parameters of the deleteEpisodes function
-interface DeleteParams {
-  epId?: string;
-  aniId?: string;
-}
-
-// Define a clearer return type for the delete function
-type DeleteResult = {
-  message: string;
-  remainingData?: IWatch[];
-  deletedData?: IWatch | MongooseDeleteResult | null;
-}
-
-// --- Server Actions ---
-
-export const getWatchHistory = async (): Promise<IWatch[] | void> => {
+export const getWatchHistory = async (): Promise<WatchData[] | void> => {
   try {
     await connectMongo();
     const session: Session | null = await getAuthSession();
     if (!session?.user?.name) {
-      return []; // Trả về mảng rỗng nếu chưa đăng nhập
-    }
-    // Sử dụng IWatch cho kiểu dữ liệu của history
-    const history: IWatch[] = await Watch.find({ userName: session.user.name });
-
-    if (!history) {
       return [];
     }
-    return JSON.parse(JSON.stringify(history));
+    const history: IWatch[] = await Watch.find({ userName: session.user.name });
+    return JSON.parse(JSON.stringify(history || []));
   } catch (error) {
     console.error("Error fetching watch history", error);
   }
   revalidatePath("/");
 };
 
-// Sửa kiểu của epNum thành number để khớp với schema
 export const createWatchEp = async (aniId: string, epNum: number): Promise<void | null> => {
   try {
     await connectMongo();
@@ -71,7 +38,7 @@ export const createWatchEp = async (aniId: string, epNum: number): Promise<void 
     });
 
     if (existingWatch) {
-      return null; // Trả về null để báo hiệu đã tồn tại
+      return null;
     }
 
     await Watch.create({
@@ -79,14 +46,12 @@ export const createWatchEp = async (aniId: string, epNum: number): Promise<void 
       aniId: aniId,
       epNum: epNum,
     });
-
   } catch (error) {
-    console.error("Oops! Something went wrong while creating the episode tracking:", error);
+    console.error("Error creating episode tracking:", error);
   }
 };
 
-// Sửa kiểu của epNum thành number
-export const getEpisode = async (aniId: string, epNum: number): Promise<IWatch[] | void> => {
+export const getEpisode = async (aniId: string, epNum: number): Promise<WatchData[] | void> => {
   try {
     await connectMongo();
     const session: Session | null = await getAuthSession();
@@ -95,7 +60,6 @@ export const getEpisode = async (aniId: string, epNum: number): Promise<IWatch[]
     }
 
     if (aniId && epNum) {
-      // Sử dụng IWatch cho kiểu dữ liệu của episode
       const episode: IWatch[] = await Watch.find({
         userName: session.user.name,
         aniId: aniId,
@@ -118,7 +82,7 @@ export const updateEp = async (params: UpdateEpParams): Promise<void> => {
     if (!session?.user?.name) {
       return;
     }
-    
+
     const { aniId, epNum, ...updateData } = params;
 
     await Watch.findOneAndUpdate(
@@ -136,7 +100,7 @@ export const updateEp = async (params: UpdateEpParams): Promise<void> => {
       { new: true, upsert: false }
     );
   } catch (error) {
-    console.log('Error updating episode:', error);
+    console.error('Error updating episode:', error);
   }
 }
 
@@ -146,35 +110,36 @@ export const deleteEpisodes = async (data: DeleteParams): Promise<DeleteResult |
     const session: Session | null = await getAuthSession();
 
     if (!session?.user?.name) {
-      return { message: "User not authenticated" };
+      return { message: "User not authenticated", deletedCount: 0 };
     }
 
-    let deletedData;
+    let deletedCount = 0;
 
     if (data.epId) {
-      deletedData = await Watch.findOneAndDelete({
+      const deleted = await Watch.findOneAndDelete({
         userName: session.user.name,
-        epId: data.epId
+        epId: data.epId,
       });
+      deletedCount = deleted ? 1 : 0;
     } else if (data.aniId) {
-      deletedData = await Watch.deleteMany({
+      const result = await Watch.deleteMany({
         userName: session.user.name,
         aniId: data.aniId,
       });
+      deletedCount = result.deletedCount ?? 0;
     } else {
-      return { message: "Invalid request, provide epId or aniId" };
+      return { message: "Invalid request, provide epId or aniId", deletedCount: 0 };
     }
 
-    if (!deletedData || (deletedData.deletedCount !== undefined && deletedData.deletedCount === 0)) {
-        return { message: "Data not found for deletion" };
+    if (deletedCount === 0) {
+      return { message: "Data not found for deletion", deletedCount: 0 };
     }
 
-    // Sử dụng IWatch cho kiểu dữ liệu của remainingData
-    const remainingData: IWatch[] = JSON.parse(JSON.stringify(await Watch.find({ userName: session.user.name })));
+    const remainingData: WatchData[] = JSON.parse(JSON.stringify(await Watch.find({ userName: session.user.name })));
 
-    return { message: `Removed from history`, remainingData, deletedData };
+    return { message: "Removed from history", remainingData, deletedCount };
   } catch (error) {
-    console.log(error);
-    return { message: "An error occurred during deletion." };
+    console.error(error);
+    return { message: "An error occurred during deletion.", deletedCount: 0 };
   }
 }

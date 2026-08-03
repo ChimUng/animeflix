@@ -1,3 +1,12 @@
+import { useEffect, useState } from "react";
+
+export interface CountdownParts {
+    ngay: number;
+    gio: number;
+    phut: number;
+    giay: number;
+}
+
 // Tính thời gian tương đối (x phút trước, x ngày trước, ...)
 export function NotificationTime(createdAt: number): string {
     const currentTimestamp = Math.floor(Date.now() / 1000);
@@ -51,4 +60,48 @@ export function formatTime(totalSeconds?: number | null) {
     const formattedSeconds = seconds < 10 ? `0${seconds}` : `${seconds}`;
 
     return `${formattedMinutes}:${formattedSeconds}`;
+}
+
+export function useCountdown(airingAt?: number | null): CountdownParts | null {
+  const [timeLeft, setTimeLeft] = useState<CountdownParts | null>(null);
+
+  useEffect(() => {
+    if (!airingAt) {
+      setTimeLeft(null);
+      return;
+    }
+
+    const tick = () => {
+      const diff = airingAt * 1000 - Date.now();
+      if (diff <= 0) {
+        setTimeLeft(null);
+        return false;
+      }
+      setTimeLeft({
+        ngay: Math.floor(diff / 86400000),
+        gio: Math.floor((diff % 86400000) / 3600000),
+        phut: Math.floor((diff % 3600000) / 60000),
+        giay: Math.floor((diff % 60000) / 1000),
+      });
+      return true;
+    };
+
+    if (!tick()) return;
+    const intervalId = setInterval(() => {
+      if (!tick()) clearInterval(intervalId);
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [airingAt]);
+
+  return timeLeft;
+}
+
+export function formatCountdown(t: CountdownParts, short = false): string {
+  if (short) {
+    if (t.ngay > 0) return `${t.ngay} ngày ${t.gio} giờ`;
+    if (t.gio > 0) return `${t.gio} giờ ${t.phut} phút`;
+    return `${t.phut} phút ${t.giay} giây`;
   }
+  return `${t.ngay} ngày, ${t.gio} giờ, ${t.phut} phút, ${t.giay} giây`;
+}

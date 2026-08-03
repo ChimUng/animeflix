@@ -1,6 +1,4 @@
-import React from "react";
 import { Metadata } from "next";
-import { Session } from "next-auth";
 import { AnimeInfoAnilist } from "@/lib/Anilistfunctions";
 import NextAiringDate from "@/components/videoplayer/NextAiringDate";
 import PlayerAnimeCard from "@/components/videoplayer/PlayerAnimeCard";
@@ -8,25 +6,26 @@ import PlayerAnimeInfo from "@/components/videoplayer/PlayerAnimeInfo";
 import Navbarcomponent from "@/components/navbar/Navbar";
 import PlayerComponent from "@/components/videoplayer/PlayerComponent";
 import Animecards from "@/components/CardComponent/Animecards";
-import { createWatchEp, getEpisode } from "@/lib/EpHistoryfunctions";
+import { createWatchEp, getEpisode, updateEp } from "@/lib/EpHistoryfunctions";
 import { redis } from "@/lib/rediscache";
-import { AnimeItem } from "@/lib/types";
-import { getAuthSession } from "../../api/auth/[...nextauth]/route";
-import { IWatch } from "@/mongodb/models/watch";
-import { updateEp } from "@/lib/EpHistoryfunctions";
-
-// Interface cho SavedEpisode (khớp với player.tsx)
-interface SavedEpisode {
-  timeWatched: number;
-}
+import { getAuthSession } from "../../../api/auth/[...nextauth]/route";
+import type { WatchData } from "@/types/watch";
+import type { Session } from "next-auth";
+import type { AnimeItem } from "@/types/anime";
+import type { SavedEpisode, WatchRouteParams } from "@/types/stream";
 
 export interface PageProps {
-  searchParams: {
-    id?: string;
-    host?: string;
-    ep?: string;
-    epid?: string;
-    type?: string;
+  params: Promise<{ watchid: string[] }>;
+}
+
+function parseWatchParams(watchid: string[] = []): WatchRouteParams {
+  const [id, provider = "anineko", epidRaw = "", epnum = "1", type = "sub"] = watchid;
+  return {
+    id: id || "",
+    provider,
+    epId: epidRaw ? decodeURIComponent(epidRaw) : "",
+    epNum: epnum,
+    subdub: type,
   };
 }
 
@@ -50,13 +49,12 @@ async function getInfo(id: string): Promise<AnimeItem | null> {
   }
 }
 
-export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const params = await searchParams; // ✅ phải await trong Next.js 15
-  const id = params.id || "";
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { watchid } = await params;
+  const { id, epNum } = parseWatchParams(watchid);
   const data = await getInfo(id);
-  const epnum = params.ep || "1";
 
-  const title = `Tập ${epnum} - ${data?.title?.english || data?.title?.romaji || "Anime"}`;
+  const title = `Tập ${epNum} - ${data?.title?.english || data?.title?.romaji || "Anime"}`;
   const description = data?.description?.slice(0, 180) || "Xem anime Online.";
 
   return {
@@ -76,26 +74,25 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   };
 }
 
-async function Ephistory(session: Session | null, aniId: string, epNum: number, data: AnimeItem, epId: string): Promise<void | IWatch[] | null> {
+async function Ephistory(
+  session: Session | null,
+  aniId: string,
+  epNum: number,
+  data: AnimeItem,
+  epId: string
+): Promise<WatchData[] | null> {
   try {
     if (session && aniId && epNum) {
-      // 1. Lưu lịch sử cơ bản
       await createWatchEp(aniId, epNum);
-
-      // 2. Update thêm metadata từ data
       await updateEp({
         aniId,
         epNum,
         epId,
         aniTitle: data?.title?.english || data?.title?.romaji || data?.title?.native || "Unknown",
-        image: data?.bannerImage || 
-          data?.coverImage?.extraLarge || 
-          data?.coverImage?.large || "",
-        subtype: "sub", // hoặc lấy từ searchParams.type
+        image: data?.bannerImage || data?.coverImage?.extraLarge || data?.coverImage?.large || "",
+        subtype: "sub",
       });
-
-      // 3. Lấy episode đã lưu
-      return await getEpisode(aniId, epNum);
+      return (await getEpisode(aniId, epNum)) ?? null;
     }
     return null;
   } catch (error) {
@@ -104,14 +101,10 @@ async function Ephistory(session: Session | null, aniId: string, epNum: number, 
   }
 }
 
-async function AnimeWatch({ searchParams }: PageProps) {
-  const params = await searchParams; // ✅ phải await
+async function AnimeWatch({ params }: PageProps) {
+  const { watchid } = await params;
+  const { id, provider, epId, epNum, subdub } = parseWatchParams(watchid);
   const session = await getAuthSession();
-  const id = params.id || "";
-  const provider = params.host || "gogoanime";
-  const epNum = params.ep || "1";
-  const epId = params.epid || "";
-  const subdub = params.type || "sub";
 
   if (!id || !epId) {
     return <div>Error: Missing required parameters.</div>;
@@ -120,14 +113,12 @@ async function AnimeWatch({ searchParams }: PageProps) {
   const data = await getInfo(id);
   const savedepRaw = await Ephistory(session, id, parseInt(epNum), data!, epId);
 
-  // Chuyển đổi savedep sang SavedEpisode[]
   const savedep: SavedEpisode[] = Array.isArray(savedepRaw)
     ? savedepRaw
         .filter((item) => item.timeWatched != null)
-        .map((item) => ({
-          timeWatched: item.timeWatched!,
-        }))
+        .map((item) => ({ timeWatched: item.timeWatched! }))
     : [];
+
 
   return (
     <>
@@ -153,14 +144,7 @@ async function AnimeWatch({ searchParams }: PageProps) {
             <PlayerAnimeCard data={data?.recommendations?.nodes} id="Đề xuất" />
           </div>
         </div>
-        {/* <div className="lg:hidden">
-          <Animecards 
-            data={data?.recommendations?.nodes?.map(item => item.mediaRecommendation) || null} 
-            cardid="Đề xuất"
-          />
-        </div> */}
       </div>
-    {/* === KHỐI 2: THÔNG TIN CHI TIẾT VÀ LIÊN QUAN === */}
       <div className="w-full flex flex-col lg:flex-row lg:max-w-[98%] mx-auto xl:max-w-[94%] lg:gap-[6px] mt-[3px]">
         <div className="flex-grow w-full h-full">
           <PlayerAnimeInfo data={data} />
@@ -170,10 +154,9 @@ async function AnimeWatch({ searchParams }: PageProps) {
             <PlayerAnimeCard data={data?.relations?.edges} id="Liên quan" />
           </div>
         </div>
-        {/* PHẦN ĐỀ XUẤT CHO MOBILE */}
         <div className="lg:hidden">
-          <Animecards 
-            data={data?.recommendations?.nodes?.map(item => item.mediaRecommendation) || null} 
+          <Animecards
+            data={data?.recommendations?.nodes?.map((item) => item.mediaRecommendation) || []}
             cardid="Đề xuất"
           />
         </div>

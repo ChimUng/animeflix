@@ -51,9 +51,16 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return {
     title: data?.title?.english || data?.title?.romaji || 'Loading...',
     description: data?.description?.slice(0, 180),
+    alternates: {
+      canonical: `/anime/info/${id}`,
+    },
     openGraph: {
+      type: "website",
+      siteName: "Animeflix",
+      locale: 'vi_VN',
+      alternateLocale: ['en_US'],
       title: data?.title?.english || data?.title?.romaji,
-      images: [data?.coverImage?.extraLarge],
+      images: [data?.coverImage?.extraLarge || data?.coverImage?.large],
       description: data?.description,
     },
     twitter: {
@@ -69,8 +76,7 @@ const AnimeDetails = async ({ params }: Params) => {
   const session = await getAuthSession();
   const id = Number(resolvedParams.infoid[0]);
 
-  const data = await AnimeInfoAnilist(id);
-  if (!data) return <div>Error loading anime.</div>;
+  const data = await getInfo(id);
 
   return (
     <div className="">

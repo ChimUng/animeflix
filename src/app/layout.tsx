@@ -1,18 +1,17 @@
 import { Alata } from 'next/font/google'
 // import localFont from 'next/font/local';
 import './globals.css'
-import { NextUiProvider } from "./NextUiProvider";
-import NextTopLoader from 'nextjs-toploader';
+import type { Metadata } from 'next'
 import Search from '@/components/search/Search'
 import Footer from '@/components/Footer';
-import Script from "next/script";
-import { getAuthSession } from './api/auth/[...nextauth]/route';
-import { Toaster } from 'sonner'
-import FloatingButton from '@/components/FloatingButton';
-import { AuthProvider } from './SessionProvider';
 import GoToTop from '@/components/GoToTop';
 import Changelogs from '@/components/Changelogs';
-import type { Metadata } from 'next'
+import Script from "next/script";
+import FloatingButton from '@/components/FloatingButton';
+import { Toaster } from 'sonner'
+import { getAuthSession } from './api/auth/[...nextauth]/route';
+import { AuthProvider } from './SessionProvider';
+import { NextUiProvider } from "./NextUiProvider";
 
 const alata = Alata({ subsets: ['latin', 'vietnamese'], weight: ['400'] });
 // const myfont = localFont({ src: "../static-fonts/28 Days Later.ttf" })
@@ -149,7 +148,6 @@ export default async function RootLayout({ children }: RootLayoutProps) {
             {children}
           </NextUiProvider>
         </AuthProvider>
-        <NextTopLoader color="#CA1313" />
         <Toaster richColors={true} closeButton={true} theme="dark" />
         <Search />
         <Changelogs />

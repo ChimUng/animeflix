@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 
 const GoToTop = () => {
     const [isVisible, setIsVisible] = useState(false);
-    // Thêm state để kiểm soát class animation khi ẩn đi
     const [animationClass, setAnimationClass] = useState<string>('');
 
     const goToBtn = () => {
@@ -15,18 +14,17 @@ const GoToTop = () => {
         const winScroll: number = document.body.scrollTop || document.documentElement.scrollTop;
 
         if (winScroll > heightToHidden) {
-        if (!isVisible) { // Nếu đang ẩn và cần hiện
+        if (!isVisible) { 
             setIsVisible(true);
-            setAnimationClass('animate-slide-in-right'); // Áp dụng animation hiện vào
+            setAnimationClass('animate-slide-in-right');
         }
         } else {
-        if (isVisible) { // Nếu đang hiện và cần ẩn
-            setAnimationClass('animate-slide-out-right'); // Áp dụng animation ẩn ra
-            // Sau khi animation kết thúc, ẩn hoàn toàn (xóa khỏi DOM)
+        if (isVisible) {
+            setAnimationClass('animate-slide-out-right');
             setTimeout(() => {
             setIsVisible(false);
-            setAnimationClass(''); // Reset animation class
-            }, 300); // Thời gian này phải khớp với thời gian animation (0.3s)
+            setAnimationClass(''); 
+            }, 300);
         }
         }
     };

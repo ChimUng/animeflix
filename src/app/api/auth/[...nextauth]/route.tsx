@@ -1,4 +1,3 @@
-// Bỏ luôn import Profile (vì không tồn tại trong next-auth)
 import NextAuth, { NextAuthOptions } from "next-auth";
 import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
 import clientPromise from "@/mongodb/db";

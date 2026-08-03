@@ -3,32 +3,11 @@ import React, { useRef, useState } from 'react';
 import styles from '../../styles/Animecard.module.css';
 import { useDraggable } from 'react-use-draggable-scroll';
 import Image from 'next/image';
-
-// Kiểu cho nhân vật
-interface AnimeItem {
-    role: string;
-    node: {
-        name: {
-        full: string;
-        };
-        image: {
-        large: string;
-        };
-    };
-    voiceActorRoles: {
-        voiceActor: {
-        name: {
-            full: string;
-        };
-        image: {
-            large: string;
-        };
-        };
-    }[];
-}
+import { CharacterEdge } from '@/types/anime';
+import { LeftArrowIcon, RightArrowIcon } from '@/lib/SvgIcons'; 
 
 interface CharactersProps {
-    data: AnimeItem[];
+    data: CharacterEdge[];
 }
 
 function Characters({ data }: CharactersProps) {
@@ -75,10 +54,10 @@ function Characters({ data }: CharactersProps) {
         <div className={styles.animecard}>
         <div className={styles.animeitems}>
             <span className={`${styles.leftarrow} ${isLeftArrowActive ? styles.active : styles.notactive}`}>
-            <svg onClick={scrollLeft} xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="mt-4"><path d="m15 18-6-6 6-6"></path></svg>
+                <LeftArrowIcon onClick={scrollLeft} width="28" height="28" className="mb-4" />
             </span>
             <span className={`${styles.rightarrow} ${isRightArrowActive ? styles.active : styles.notactive}`}>
-            <svg onClick={scrollRight} xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="mt-4"><path d="m9 18 6-6-6-6"></path></svg>
+                <RightArrowIcon onClick={scrollRight} width="28" height="28" className="mb-4" />
             </span>
             <div
             className={styles.cardcontainer}
@@ -88,7 +67,7 @@ function Characters({ data }: CharactersProps) {
             onScroll={handleScroll}
             >
             {data?.map((character, index) => (
-                <div className="h-full" key={index}>
+                <div className="h-full" key={character.id ?? index}>
                 <div
                     className="w-[135px] md:w-[155px] xl:w-[175px] h-[200px] md:h-[230px] xl:h-[265px] relative rounded-lg cursor-pointer"
                     onMouseEnter={() => setHoveredIndex(index)}
@@ -97,22 +76,24 @@ function Characters({ data }: CharactersProps) {
                     <Image
                     className={`w-full h-full rounded-lg transition-opacity duration-500 absolute ${hoveredIndex === index ? 'opacity-0' : 'opacity-100'} top-0 left-0`}
                     src={character?.node?.image?.large}
-                    alt={character?.node?.name?.full}
+                    alt={character?.node?.name?.full ?? ''}
                     width={170}
                     height={230}
                     />
-                    <Image
-                    className="w-full h-full top-0 left-0 rounded-lg"
-                    src={character?.voiceActorRoles[0]?.voiceActor?.image.large}
-                    alt={character?.node?.name?.full}
-                    width={170}
-                    height={230}
-                    />
+                    {character?.voiceActorRoles?.[0]?.voiceActor?.image?.large && (
+                        <Image
+                        className="w-full h-full top-0 left-0 rounded-lg"
+                        src={character.voiceActorRoles[0].voiceActor.image.large}
+                        alt={character?.node?.name?.full ?? ''}
+                        width={170}
+                        height={230}
+                        />
+                    )}
                     <div className="p-2 absolute top-0 left-0 align-bottom flex flex-col-reverse w-full h-full bg-gradient-to-b from-transparent via-transparent to-black">
                     <div className="font-medium text-xs opacity-80 text-white">{character.role}</div>
                     <div className="font-semibold text-white text-sm">
                         {hoveredIndex === index
-                        ? character?.voiceActorRoles[0]?.voiceActor?.name.full
+                        ? character?.voiceActorRoles?.[0]?.voiceActor?.name?.full
                         : character?.node?.name?.full}
                     </div>
                     </div>

@@ -23,7 +23,7 @@
 }
 
 .selected{
-    color: white!important;
+    color: #A4E745!important;
     opacity: 1!important;
 }
 
@@ -33,7 +33,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background-color: white;
+    background-color: #A4E745;
 }
 
 .detailsheading{
@@ -88,6 +88,12 @@
 
 .con{
     color: #ffffffb2;
+    flex-grow: 1;
+    font-size: 14px;
+}
+
+.conAccent {
+    color: #A4E745;
     flex-grow: 1;
     font-size: 14px;
 }

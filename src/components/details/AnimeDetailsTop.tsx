@@ -2,23 +2,21 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import styles from '../../styles/AnimeDetailsTop.module.css';
-import {Modal,ModalContent,ModalHeader,ModalBody,Button,useDisclosure,} from "@nextui-org/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, Button, useDisclosure } from "@nextui-org/react";
 import Link from 'next/link';
 import Addtolist from './Addtolist';
 import { signIn } from 'next-auth/react';
 import { useTitle } from '@/lib/store';
 import { useStore } from 'zustand';
-import {MediaListEntry} from '@/lib/AnilistUser';
-import { AnimeItem } from '@/lib/types';
+import type { Session } from "next-auth";
+import { MediaListEntry } from '@/types/anilist';
+import { AnimeItem } from '@/types/anime';
+import { StarScoreIcon, PlayIconV2 } from '@/lib/SvgIcons';
 
 interface AnimeDetailsTopProps {
-    data: AnimeItem; 
-    list: MediaListEntry | null; 
-    session: {
-        user: {
-        token: string;
-        };
-    };
+    data: AnimeItem;
+    list: MediaListEntry | null;
+    session: Session | null;
     setList: (entry: MediaListEntry | null) => void;
     url?: string | null;
 }
@@ -56,7 +54,7 @@ const AnimeDetailsTop: React.FC<AnimeDetailsTopProps> = ({ data, list, session, 
                 {() => (
                 <>
                     <ModalHeader className="flex flex-col gap-0">
-                    {data.title?.[animetitle] || data?.title?.romaji}
+                    {data.title?.[animetitle as keyof typeof data.title] || data?.title?.romaji}
                     </ModalHeader>
                     <ModalBody>
                     <div>
@@ -83,7 +81,7 @@ const AnimeDetailsTop: React.FC<AnimeDetailsTopProps> = ({ data, list, session, 
 
             <div className={styles.detailstitle}>
             <h1 className={`${styles.title} text-[1.7rem] font-[500]`}>
-                {data?.title?.[animetitle] || data?.title?.romaji}
+                {data?.title?.[animetitle as keyof typeof data.title] || data?.title?.romaji}
             </h1>
 
             <h4 className={styles.alttitle}>
@@ -91,10 +89,12 @@ const AnimeDetailsTop: React.FC<AnimeDetailsTopProps> = ({ data, list, session, 
             </h4>
 
             <p className={styles.scores}>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-[17px] h-[17px] mr-[2px]">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                </svg>
-                {data?.averageScore / 10} |
+                {data?.averageScore != null && (
+                    <>
+                        <StarScoreIcon className="w-[17px] h-[17px] mr-[2px] fill-star text-star inline" />
+                        {(data.averageScore / 10).toFixed(1)} |
+                    </>
+                )}
                 <span className={data?.status === 'RELEASING' ? styles.activestatus : styles.notactive}>
                 {data?.status}
                 </span>
@@ -106,9 +106,7 @@ const AnimeDetailsTop: React.FC<AnimeDetailsTopProps> = ({ data, list, session, 
                     className={`${styles.detailswatch} ${!url && 'opacity-50 bg-black pointer-events-none'} hover:opacity-80 transition-all`}
                     href={url ?? ''}
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 mr-1">
-                    <path fillRule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clipRule="evenodd" />
-                    </svg>
+                    <PlayIconV2 className="w-5 h-5 mr-1" />
                     {list?.status === 'COMPLETED' ? 'Rewatch' : (list?.progress ?? 0) > 0 ? `Watch Ep ${(list?.progress ?? 0) + 1}` : 'Xem ngay'}
                 </Link>
                 ) : (
@@ -120,7 +118,7 @@ const AnimeDetailsTop: React.FC<AnimeDetailsTopProps> = ({ data, list, session, 
                 {list?.status ? 'Chỉnh sửa danh sách' : 'Thêm vào danh sách'}
                 </Button>
 
-                {session?.user ? (
+                {session?.user?.token ? (
                 <Modal
                     isOpen={openlist}
                     onOpenChange={Handlelist}
@@ -156,7 +154,7 @@ const AnimeDetailsTop: React.FC<AnimeDetailsTopProps> = ({ data, list, session, 
                                 priority
                                 />
                                 <div className='px-2 sm:px-4 mb-4 font-medium !text-xl text-white max-w-full line-clamp-2'>
-                                {data?.title?.[animetitle] || data?.title?.romaji}
+                                {data?.title?.[animetitle as keyof typeof data.title] || data?.title?.romaji}
                                 </div>
                             </div>
                             </div>
@@ -165,7 +163,7 @@ const AnimeDetailsTop: React.FC<AnimeDetailsTopProps> = ({ data, list, session, 
                                 session={session}
                                 setList={setList}
                                 list={list}
-                                id={Number(data.id)} 
+                                id={Number(data.id)}
                                 eplength={data?.episodes ?? (data?.nextAiringEpisode?.episode !== undefined ? data.nextAiringEpisode.episode - 1 : undefined) ?? 24}
                                 Handlelist={Handlelist}
                             />

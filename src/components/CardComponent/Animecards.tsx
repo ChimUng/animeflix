@@ -4,15 +4,17 @@ import styles from '../../styles/Animecard.module.css';
 import { useDraggable } from 'react-use-draggable-scroll';
 import Link from 'next/link';
 import ItemContent from './ItemContent';
-import { AnimeItem } from '@/lib/types'; 
+import { LeftArrowIcon, RightArrowIcon } from '@/lib/SvgIcons'; 
+import { AnimeItem } from '@/types/anime'; 
 
 interface AnimecardsProps {
-    data: AnimeItem[] | null;
+    data: AnimeItem[];
     cardid: string;
     show?: boolean;
+    viewMoreHref?: string;
 }
 
-function Animecards({ data, cardid, show = true }: AnimecardsProps) {
+function Animecards({ data, cardid, show = true, viewMoreHref }: AnimecardsProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const { events } = useDraggable(containerRef as React.MutableRefObject<HTMLDivElement>);
     const [isLeftArrowActive, setIsLeftArrowActive] = useState(false);
@@ -48,49 +50,35 @@ function Animecards({ data, cardid, show = true }: AnimecardsProps) {
     const scrollRight = () => smoothScroll(500);
 
     const renderItem = (item: AnimeItem) => {
-        // console.log('Item trong renderItem:', item);
         let anime: AnimeItem;
-        // console.log('anime:', item);
-        // console.log('item:', item.title?.romaji, '| currentEpisode:', item.currentEpisode);
-        // console.log('Trending:', item.title?.romaji, '| next:', item.nextAiringEpisode?.episode);
         let href = '';
 
         if (cardid === 'Các tập gần đây') {
-        anime = {
-            ...item,
-            coverImage: item.coverImage,
-            title: item.title,
-            status: item.status,
-            format: item.format,
-            episodes: item.episodes,
-            totalEpisodes: item.totalEpisodes,
-            currentEpisode: item.currentEpisode,
-            description: item.description || "No description available", // Thêm description mặc định cho bản vi hoạt động
-        };
-
-        const gogo = item.episodesData?.data.find((x) => x.providerId === 'gogoanime');
-        const currentEp = gogo?.episodes.find((x) => x.number === item.currentEpisode);
-        href = `/anime/watch/${anime.id}/gogoanime/${item.currentEpisode}?epid=${encodeURIComponent(currentEp?.id || '')}&type=sub`;
+            anime = { ...item };
+            href = `/anime/info/${anime.id}`;
+            
         } else if (cardid === 'Đề xuất' && item.mediaRecommendation) {
-        anime = {
-            ...item.mediaRecommendation,
-        };
-        href = `/anime/info/${anime.id}`;
+            anime = {
+                ...item.mediaRecommendation,
+            };
+            href = `/anime/info/${anime.id}`;
+
         } else if (cardid === 'Related Anime' && item.node) {
-        anime = {
-            ...item.node,
-            relationType: item.relationType,
-        };
-        href = `/anime/info/${anime.id}`;
+            anime = {
+                ...item.node,
+                relationType: item.relationType,
+            };
+            href = `/anime/info/${anime.id}`;
+
         } else {
-        anime = item;
-        href = `/anime/info/${anime.id}`;
+            anime = item;
+            href = `/anime/info/${anime.id}`;
         }
-        // console.log('Rendering ItemContent, cardid:', cardid, 'anime id:', anime.id);
-    return (
-        <Link href={href} key={String(anime.id)}>
-            <ItemContent anime={anime} cardid={cardid} />
-        </Link>
+
+        return (
+            <Link href={href} key={String(anime.id)}>
+                <ItemContent anime={anime} cardid={cardid} />
+            </Link>
         );
     };
     
@@ -98,16 +86,30 @@ function Animecards({ data, cardid, show = true }: AnimecardsProps) {
         <div className={styles.animecard}>
         {show && (
             <div className={styles.cardhead}>
-            <span className={styles.bar}></span>
-            <h1 className={styles.headtitle}>{cardid}</h1>
+                <div className="flex items-center gap-2">
+                    <span className={styles.bar}></span>
+                    <h1 className={styles.headtitle}>{cardid}</h1>
+                </div>
+
+                {viewMoreHref && (
+                    <Link
+                        href={viewMoreHref}
+                        className="group/more flex items-center rounded-full border border-white/25 px-2.5 py-1 overflow-hidden transition-all duration-300 hover:gap-1.5 hover:border-star"
+                    >
+                        <span className="max-w-0 opacity-0 whitespace-nowrap overflow-hidden text-star text-sm font-medium transition-all duration-300 group-hover/more:max-w-[80px] group-hover/more:opacity-100">
+                            Xem thêm
+                        </span>
+                        <RightArrowIcon className="w-4 h-4 text-white/70 transition-colors duration-300 group-hover/more:text-star" />
+                    </Link>
+                )}
             </div>
         )}
         <div className={styles.animeitems}>
             <span className={`${styles.leftarrow} ${isLeftArrowActive ? styles.active : styles.notactive}`}>
-            <svg onClick={scrollLeft} xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="mb-4"><path d="m15 18-6-6 6-6"></path></svg>
+                <LeftArrowIcon onClick={scrollLeft} width="28" height="28" className="mb-4" />
             </span>
             <span className={`${styles.rightarrow} ${isRightArrowActive ? styles.active : styles.notactive}`}>
-            <svg onClick={scrollRight} xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="mb-4"><path d="m9 18 6-6-6-6"></path></svg>
+                <RightArrowIcon onClick={scrollRight} width="28" height="28" className="mb-4" />
             </span>
             <div className={styles.cardcontainer} id={cardid} {...events} ref={containerRef} onScroll={handleScroll}>
             {data?.length ? data.map(renderItem) : Array.from({ length: 15 }, (_, i) => (

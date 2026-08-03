@@ -1,16 +1,26 @@
 "use client"
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Select, SelectItem, Tooltip } from "@nextui-org/react";
 import styles from '../styles/Episodesection.module.css'
 import { getEpisodes } from "@/lib/getData";
-import { ProvidersMap } from "@/utils/EpisodeFunctions";
+import { ProvidersMap, getSubOptionsForProvider } from "@/utils/EpisodeFunctions";
 import EpImageList from "./Episodelists/EpImageList";
 import EpNumList from "./Episodelists/EpNumList";
 import EpImgContent from "./Episodelists/EpImgContent";
 import { toast } from "sonner";
-import { useSubtype } from '@/lib/store';
+import { useSubtype, useEpListType } from '@/lib/store';
 import { useStore } from 'zustand';
-import { AnimeItem, Episode, Provider } from '@/lib/types';
+import { AnimeItem } from '@/types/anime';
+import { Episode, Provider } from '@/types/episode';
+import {
+    EpRefreshIcon,
+    EpReverseIcon,
+    EpGridIcon,
+    EpCardListIcon,
+    EpCompactListIcon,
+    EpFilterToggleIcon,
+} from "@/lib/SvgIcons";
+import { buildWatchUrl } from "@/utils/watchUrl";
 
 interface Props {
     data: AnimeItem;
@@ -19,39 +29,50 @@ interface Props {
     setUrl: (url: string | null) => void;
 }
 
+// Chỉ đổi label hiển thị UI, providerId thật (dùng trong url/watch, getSources...) giữ nguyên.
+const PROVIDER_LABELS: Record<string, string> = {
+    anineko: 'Eng',
+    animehay: 'Viet',
+};
+
 const Episodesection: React.FC<Props> = ({ data, id, progress, setUrl }) => {
     const subtype = useStore(useSubtype, (state) => state.subtype);
+    const setSubType = useSubtype((state) => state.setSubType);
+    const eplisttype = useStore(useEpListType, (state) => state.eplisttype);
+    const setEplistType = useEpListType((state) => state.setEplistType);
+
     const [loading, setloading] = useState(true);
-    const [reversed, setReversed] = useState(false);
-    const [filteredEpisodes, setFilteredEpisodes] = useState<Episode[]>([]);
-    const [selectedRange, setSelectedRange] = useState("1-100");
-    const [eplisttype, setEplistType] = useState<number>(2);
     const [showSelect, setShowSelect] = useState(false);
     const [defaultProvider, setdefaultProvider] = useState<string>("");
-    const [suboptions, setSuboptions] = useState<string[]>([]);
     const [episodeData, setEpisodeData] = useState<Provider[] | null>(null);
-    const [dubcount, setDubcount] = useState<number>(0);
     const [currentEpisodes, setCurrentEpisodes] = useState<Episode[]>([]);
 
-    useEffect(() => {
-        const listtype = localStorage.getItem("eplisttype");
-        if (listtype) {
-        setEplistType(parseInt(listtype, 10));
-        }
-    }, []);
+    // selectedRange + reversed chỉ là "cách hiển thị", KHÔNG mutate mảng episode gốc.
+    // filteredEpisodes luôn derive lại từ currentEpisodes + 2 giá trị này (useMemo dưới đây),
+    // nên đổi range không còn làm mất trạng thái đảo thứ tự như code cũ.
+    const [selectedRange, setSelectedRange] = useState("1-100");
+    const [reversed, setReversed] = useState(false);
 
-    const toggleShowSelect = () => {
-        setShowSelect(!showSelect);
-    };
+    const toggleShowSelect = () => setShowSelect(!showSelect);
 
     const handleSubDub = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        useSubtype.setState({ subtype: e.target.value });
+        setSubType(e.target.value);
     };
 
     const handleOptionClick = (option: number) => {
         setEplistType(option);
-        localStorage.setItem("eplisttype", option.toString());
     };
+
+    // provider object hiện đang chọn — nguồn duy nhất để tính suboptions/dubLength,
+    // recompute mỗi khi đổi provider (khác code cũ chỉ tính 1 lần lúc load).
+    const currentProviderObj = useMemo(
+        () => episodeData?.find((p) => p.providerId === defaultProvider) ?? null,
+        [episodeData, defaultProvider]
+    );
+    const { suboptions, dubLength: dubcount } = useMemo(
+        () => getSubOptionsForProvider(currentProviderObj),
+        [currentProviderObj]
+    );
 
     useEffect(() => {
         const fetchepisodes = async () => {
@@ -59,9 +80,7 @@ const Episodesection: React.FC<Props> = ({ data, id, progress, setUrl }) => {
             const response = await getEpisodes(id.toString(), data?.status ?? "FINISHED", false);
             setEpisodeData(response ?? null);
             if (response) {
-            const { suboptions, dubLength } = ProvidersMap(response, defaultProvider, setdefaultProvider);
-            setSuboptions(suboptions);
-            setDubcount(dubLength);
+            ProvidersMap(response, defaultProvider, setdefaultProvider);
             }
             setloading(false);
         } catch (error) {
@@ -79,6 +98,16 @@ const Episodesection: React.FC<Props> = ({ data, id, progress, setUrl }) => {
         setdefaultProvider(e.target.value);
     };
 
+    // ✅ Fix: subtype persist qua zustand (localStorage) không tự biết đổi theo provider.
+    // Vd đang ở Gogoanime chọn 'dub', chuyển sang Anineko/Animepahe (suboptions chỉ có ['sub'])
+    // -> subtype vẫn kẹt 'dub' cũ -> nhánh lọc dưới trả mảng rỗng -> UI hiện nhầm
+    // "Anime hiện không khả dụng" dù provider có đủ tập. Tự reset về option hợp lệ đầu tiên.
+    useEffect(() => {
+        if (suboptions.length > 0 && !suboptions.includes(subtype)) {
+            setSubType(suboptions[0]);
+        }
+    }, [suboptions, subtype, setSubType]);
+
     useEffect(() => {
         const provider = episodeData?.find((i) => i.providerId === defaultProvider);
         let filteredEp: Episode[] = [];
@@ -92,7 +121,14 @@ const Episodesection: React.FC<Props> = ({ data, id, progress, setUrl }) => {
             }
         } else {
             if (Array.isArray(provider.episodes)) {
-            filteredEp = subtype === "dub" ? provider.episodes.slice(0, dubcount) : provider.episodes;
+            // ✅ Fix: trước đây dùng `.slice(0, dubcount)` giả định dub luôn liên tục từ tập 1
+            // (đúng kiểu cũ của gogoanime) — với anineko, badges cho biết CHÍNH XÁC tập nào
+            // có dub (không nhất thiết liên tục từ đầu), nên lọc trực tiếp theo badges.
+            // Provider không có badges (animepahe/animehay/zoro/9anime) -> suboptions chỉ có
+            // 'sub' (xem computeFlatArrayOptions) nên nhánh 'dub' sẽ không bao giờ chạy tới.
+            filteredEp = subtype === "dub"
+                ? provider.episodes.filter((ep) => ep.badges?.includes("DUB"))
+                : provider.episodes;
             } else {
             filteredEp = subtype === "dub" ? provider.episodes.dub ?? [] : provider.episodes.sub ?? [];
             }
@@ -117,21 +153,39 @@ const Episodesection: React.FC<Props> = ({ data, id, progress, setUrl }) => {
     }
 
     const handleRangeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const [start, end] = e.target.value.split("-").map(Number);
-        const selectedEpisodes = currentEpisodes?.slice(start - 1, end);
-        setFilteredEpisodes(selectedEpisodes || []);
         setSelectedRange(e.target.value);
     };
 
+    // Đổi provider/subtype -> danh sách tập hoàn toàn khác -> reset range + bỏ đảo thứ tự cũ.
+    // ✅ Fix UX: trước đây LUÔN nhảy về bucket đầu "1-100" — với anime dài tập (vd One Piece
+    // 1171 tập), user đang xem tới tập 1050 mà đổi provider là phải tự tay chọn lại range
+    // "1001-1100". Giờ tính sẵn bucket chứa (progress + 1) làm mặc định.
     useEffect(() => {
-        const initialEpisodes = currentEpisodes?.slice(0, 100);
-        setFilteredEpisodes(initialEpisodes || []);
-    }, [currentEpisodes]);
+        if (currentEpisodes.length === 0) {
+            setSelectedRange("1-0");
+        } else {
+            const target = progress > 0 ? progress + 1 : 1;
+            const bucketStart = Math.floor((target - 1) / 100) * 100 + 1;
+            const bucketEnd = Math.min(bucketStart + 99, currentEpisodes.length);
+            // Phòng trường hợp target vượt quá số tập hiện có (vd progress lệch do đổi provider
+            // có ít tập hơn) -> rơi về bucket cuối cùng hợp lệ thay vì range rỗng.
+            if (bucketStart > currentEpisodes.length) {
+                const lastBucketStart = Math.floor((currentEpisodes.length - 1) / 100) * 100 + 1;
+                setSelectedRange(`${lastBucketStart}-${currentEpisodes.length}`);
+            } else {
+                setSelectedRange(`${bucketStart}-${bucketEnd}`);
+            }
+        }
+        setReversed(false);
+    }, [currentEpisodes, progress]);
 
-    const reverseOrder = () => {
-        setReversed(!reversed);
-        setFilteredEpisodes([...filteredEpisodes].reverse());
-    };
+    const filteredEpisodes = useMemo(() => {
+        const [start, end] = selectedRange.split("-").map(Number);
+        const rangeEpisodes = currentEpisodes.slice((start || 1) - 1, end || 0);
+        return reversed ? [...rangeEpisodes].reverse() : rangeEpisodes;
+    }, [currentEpisodes, selectedRange, reversed]);
+
+    const reverseOrder = () => setReversed((prev) => !prev);
 
     const refreshEpisodes = async () => {
         setloading(true);
@@ -139,9 +193,7 @@ const Episodesection: React.FC<Props> = ({ data, id, progress, setUrl }) => {
         const response = await getEpisodes(id.toString(), data?.status ?? "FINISHED", true);
         setEpisodeData(response ?? null);
         if (response) {
-            const { suboptions, dubLength } = ProvidersMap(response, defaultProvider, setdefaultProvider);
-            setSuboptions(suboptions);
-            setDubcount(dubLength);
+            ProvidersMap(response, defaultProvider, setdefaultProvider);
         }
         setloading(false);
         toast.success("Episodes refreshed successfully!");
@@ -158,9 +210,13 @@ const Episodesection: React.FC<Props> = ({ data, id, progress, setUrl }) => {
             ? currentEpisodes.find((i) => i.number === progress + 1)
             : currentEpisodes[0];
         if (episode) {
-            const watchurl = `/anime/watch?id=${data?.id}&host=${defaultProvider}&epid=${encodeURIComponent(
-            episode?.id || episode?.episodeId || ""
-            )}&ep=${episode?.number}&type=${subtype}`;
+            const watchurl = buildWatchUrl({
+                id: data?.id ?? "",
+                provider: defaultProvider,
+                epId: episode?.id || episode?.episodeId || "",
+                epNum: episode?.number ?? "",
+                subdub: subtype,
+            });
             setUrl(watchurl);
         } else {
             setUrl(null);
@@ -179,20 +235,7 @@ const Episodesection: React.FC<Props> = ({ data, id, progress, setUrl }) => {
             {data?.status !== "NOT_YET_RELEASED" && data?.type !== "MANGA" && (
                 <Tooltip content="Refresh Episodes">
                 <button className={styles.refresh} onClick={refreshEpisodes}>
-                    <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className={`w-[22px] h-[22px] ${loading ? "animate-spin" : ""}`}
-                    >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
-                    />
-                    </svg>
+                    <EpRefreshIcon className={`w-[22px] h-[22px] ${loading ? "animate-spin" : ""}`} />
                 </button>
                 </Tooltip>
             )}
@@ -249,7 +292,7 @@ const Episodesection: React.FC<Props> = ({ data, id, progress, setUrl }) => {
                     {episodeData && episodeData.length > 0 ? (
                         episodeData.map((item) => (
                         <SelectItem key={item.providerId} value={item.providerId}>
-                            {item.providerId}
+                            {PROVIDER_LABELS[item.providerId] ?? item.providerId}
                         </SelectItem>
                         ))
                     ) : (
@@ -291,96 +334,37 @@ const Episodesection: React.FC<Props> = ({ data, id, progress, setUrl }) => {
                     className={`mx-[6px] cursor-pointer ${eplisttype === 1 ? "selected" : ""}`}
                     onClick={() => handleOptionClick(1)}
                     >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                        stroke={`${eplisttype === 1 ? "#ca1313" : "currentColor"}`}
+                    <EpGridIcon
                         className="w-6 h-6"
-                    >
-                        <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
-                        />
-                    </svg>
+                        stroke={eplisttype === 1 ? "#ca1313" : "currentColor"}
+                    />
                     </span>
                     <span
                     className={`mx-[6px] cursor-pointer ${eplisttype === 2 ? "selected" : ""}`}
                     onClick={() => handleOptionClick(2)}
                     >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                        stroke={`${eplisttype === 2 ? "#ca1313" : "currentColor"}`}
+                    <EpCardListIcon
                         className="w-6 h-6"
-                    >
-                        <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M6 6.878V6a2.25 2.25 0 0 1 2.25-2.25h7.5A2.25 2.25 0 0 1 18 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 0 0 4.5 9v.878m13.5-3A2.25 2.25 0 0 1 19.5 9v.878m0 0a2.246 2.246 0 0 0-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0 1 21 12v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6c0-.98.626-1.813 1.5-2.122"
-                        />
-                    </svg>
+                        stroke={eplisttype === 2 ? "#ca1313" : "currentColor"}
+                    />
                     </span>
                     <span
                     className={`mx-[6px] cursor-pointer ${eplisttype === 3 ? "selected" : ""}`}
                     onClick={() => handleOptionClick(3)}
                     >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                        stroke={`${eplisttype === 3 ? "#ca1313" : "currentColor"}`}
+                    <EpCompactListIcon
                         className="w-6 h-6"
-                    >
-                        <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12"
-                        />
-                    </svg>
+                        stroke={eplisttype === 3 ? "#ca1313" : "currentColor"}
+                    />
                     </span>
                 </div>
-                <button className={styles.refresh} onClick={reverseOrder}>
-                    <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="w-[22px] h-[22px]"
-                    >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"
-                    />
-                    </svg>
-                </button>
+                <Tooltip content={reversed ? "Đang đảo thứ tự" : "Đảo thứ tự"}>
+                    <button className={styles.refresh} onClick={reverseOrder}>
+                    <EpReverseIcon className="w-[22px] h-[22px]" />
+                    </button>
+                </Tooltip>
                 <span className={styles.toggleicons} onClick={toggleShowSelect}>
-                    <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="w-6 h-6"
-                    >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.398.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z"
-                    />
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                    />
-                    </svg>
+                    <EpFilterToggleIcon className="w-6 h-6" />
                 </span>
                 </div>
             </div>
@@ -462,7 +446,7 @@ const Episodesection: React.FC<Props> = ({ data, id, progress, setUrl }) => {
                 {episodeData && episodeData.length > 0 ? (
                     episodeData.map((item) => (
                     <SelectItem key={item.providerId} value={item.providerId}>
-                        {item.providerId}
+                        {PROVIDER_LABELS[item.providerId] ?? item.providerId}
                     </SelectItem>
                     ))
                 ) : (

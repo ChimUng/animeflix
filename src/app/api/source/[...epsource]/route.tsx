@@ -1,726 +1,176 @@
 import axios from 'axios';
-// import { redis } from '@/lib/rediscache'; 
-import { NextResponse, NextRequest } from "next/server";
-// import AnimePahe from '@/components/providers/animepahe';
-import { RawEpisode, AnifyProvider, VideoData } from '@/utils/EpisodeFunctions';
+import { NextResponse, NextRequest } from 'next/server';
+import { redis } from '@/lib/rediscache';
+import { ServerListResponse, ServerOption } from '@/types/stream';
+import { VideoData } from '@/types/episode';
+import { listZoroServers, resolveZoroSource } from '@/components/providers/source/zoro';
+import { listNineAnimeServers, resolveNineAnimeSource } from '@/components/providers/source/nineanime';
+import { listAnimePaheServers, resolveAnimePaheSource } from '@/components/providers/source/animepahe';
+import { listAninekoServers, resolveAninekoSource } from '@/components/providers/source/anineko';
+import { listAnimeHayServers, resolveAnimeHaySource } from '@/components/providers/source/animehay';
 
-// Định nghĩa kiểu dữ liệu cho phần body của request
 interface RequestBody {
-  source: string;
+  action: 'servers' | 'resolve';
+  source?: string; // 'consumet' | 'anify' — chỉ dùng cho gogoanime (legacy)
   provider: string;
   episodeid: string;
   episodenum: number | string;
   subtype: string;
+  serverRaw?: string;
+  serverKey?: string;
 }
 
-// Định nghĩa kiểu dữ liệu cho params của route
-// interface RouteParams {
-//   params: {
-//     epsource: string[];
-//   };
-// }
+// ✅ MỚI — cache resolve source theo HẠT MỊN (provider + episodeId + subtype + server cụ thể),
+// KHÔNG gộp chung theo kiểu "toàn bộ provider" như cache episode listing (route.tsx danh sách
+// tập), vì mỗi lần FE chỉ resolve đúng 1 server -> cache đúng key thực tế được gọi.
+//
+// TTL cố tình NGẮN (5 phút): link m3u8/iframe thường kèm token có hạn, cache dài sẽ trả link
+// chết. Mục đích cache ở đây chỉ là dedupe khi nhiều user cùng xem 1 tập hot trong thời gian
+// ngắn (giảm tải cho provider upstream), không phải cache lâu dài như metadata tập phim.
+const SOURCE_CACHE_TTL = 60 * 5;
 
-// Hàm lấy dữ liệu từ Consumet API
-async function consumetEpisode(id: string): Promise<RawEpisode[] | null> {
-    try {
-        const { data } = await axios.get(
-            `${process.env.CONSUMET_URI}/meta/anilist/watch/${id}`
-        );
-        return data;
-    } catch (error) {
-        console.error(error);
-        return null;
-    }
+// ✅ MỚI — cache DANH SÁCH SERVER (tên server vd HD-1/StreamHG/Earnvids/AHS/HY...),
+// KHÔNG PHẢI link m3u8/iframe thật (đó là SOURCE_CACHE_TTL ở trên). Danh sách server gần
+// như không đổi theo thời gian (chỉ đổi khi provider thêm/bớt server hẳn), nên TTL có thể
+// dài hơn nhiều mà không sợ trả dữ liệu chết như link có token hết hạn.
+const SERVERS_CACHE_TTL = 60 * 30; // 30 phút
+
+function buildSourceCacheKey(id: string, body: RequestBody): string {
+  return `source:${body.provider}:${id}:${body.episodeid}:${body.subtype}:${body.serverRaw ?? 'auto'}`;
 }
 
-/**
- * Gọi AniZip để lấy MAL ID từ Anilist ID (fallback)
- */
-async function fetchAniZipMalId(anilistId: string): Promise<string | null> {
+function buildServersCacheKey(id: string, body: RequestBody): string {
+  return `servers:${body.provider}:${id}:${body.episodeid}`;
+}
+
+// legacy gogoanime/consumet — giữ nguyên hành vi cũ, không có bước "servers" riêng.
+async function consumetEpisode(id: string): Promise<VideoData | null> {
   try {
-    const { data } = await axios.get(`https://api.ani.zip/mappings?anilist_id=${anilistId}`);
-    return data?.mappings?.mal_id?.toString() || null;
-  } catch (error: unknown) {
-    console.error('fetchAniZipMalId error:', (error as Error)?.message ?? error);
-    return null;
-  }
-}
-
-/**
- * Gọi MalSync để tìm slug của Hianime/Zoro
- * Trả về slug ví dụ: 'steinsgate-0-92' hoặc null nếu không tìm được
- */
-async function malSyncGetZoroSlug(id: string): Promise<string | null> {
-  try {
-    const { data } = await axios.get(`${process.env.MALSYNC_URI}${id}`);
-    // if (!data?.Sites) return null;
-
-    const sites = Object.keys(data.Sites).map((providerId) => ({
-      providerId: providerId.toLowerCase(),
-      data: Object.values(data.Sites[providerId]) as { title: string; url?: string }[],
-    }));
-
-    const zoroSite = sites.find((s) => s.providerId === 'zoro');
-    if (!zoroSite) return null;
-
-    const rawUrl = zoroSite.data?.[0]?.url;
-    if (!rawUrl) return null;
-
-    // chuyển 'https://hianime.to/steinsgate-0-92' => 'steinsgate-0-92'
-    const slug = rawUrl.replace(/^https?:\/\/(www\.)?hianime\.to\//i, '').replace(/^\/|\/$/g, '');
-    return slug || null;
-  } catch (error: unknown) {
-    console.error('malSyncGetZoroSlug error:', (error as Error)?.message ?? error);
-    return null;
-  }
-}
-
-/**
- * Build animeEpisodeId theo doc Zoro: "<slug>?ep=<episodeid>"
- * Quy trình:
- *  1) Thử MalSync(anilistId)
- *  2) Nếu fail, thử fetchAniZipMalId -> gọi lại MalSync với MAL ID
- *  3) Nếu tìm được slug trả về `${slug}?ep=${episodeid}` else null
- */
-export async function buildZoroAnimeEpisodeId(
-  anilistId: string,
-  episodeid: string
-): Promise<string | null> {
-  // 1) Thử MalSync với anilist id
-  let slug = await malSyncGetZoroSlug(anilistId);
-
-  // 2) Fallback: AniZip -> MAL ID -> MalSync
-  if (!slug) {
-    const malId = await fetchAniZipMalId(anilistId);
-    if (malId && malId !== anilistId) {
-      slug = await malSyncGetZoroSlug(malId);
-    }
-  }
-
-  if (!slug) return null;
-  return `${slug}?ep=${episodeid}`;
-}
-
-// Hàm lấy dữ liệu từ nguồn Zoro (với fallback là Anify)
-async function zoroEpisode(
-  provider: string,
-  episodeid: string,
-  epnum: number | string,
-  id: string,
-  subtype: string
-): Promise<VideoData | null> {
-  try {
-    let animeEpisodeId: string | null = null;
-
-    // ✅ KIỂM TRA: Nếu episodeid đã chứa "?ep=" thì đã được build rồi
-    if (episodeid.includes('?ep=')) {
-      console.log('✅ episodeid đã ở dạng đầy đủ:', episodeid);
-      animeEpisodeId = episodeid;
-    } else {
-      // ✅ Nếu episodeid chỉ là số episode thuần túy, build animeEpisodeId
-      console.log('🔨 Building animeEpisodeId từ:', { id, episodeid });
-      animeEpisodeId = await buildZoroAnimeEpisodeId(id, episodeid);
-    }
-
-    // Fallback: nếu vẫn null thì dùng episodeid gốc
-    const paramValue = animeEpisodeId ?? episodeid;
-    
-    console.log('🎯 Final animeEpisodeId:', paramValue);
-
-    // Bước 1: Gọi API lấy danh sách servers
-    const serverRes = await axios.get(`${process.env.ZORO_URI}/episode/servers`, {
-      params: {
-        animeEpisodeId: paramValue,
-      },
-    });
-
-    const serverData = serverRes.data?.data;
-    if (!serverData) {
-      console.error('❌ Không có serverData');
-      return null;
-    }
-
-    const serverList = serverData[subtype]; // subtype là 'sub' hoặc 'dub'
-    if (!serverList || serverList.length === 0) {
-      console.error('❌ Không có serverList cho subtype:', subtype);
-      return null;
-    }
-
-    const firstServer = serverList[1]; // Ưu tiên lấy server đầu tiên
-    if (!firstServer) {
-      console.error('❌ Không có firstServer');
-      return null;
-    }
-
-    console.log('🎬 Sử dụng server:', firstServer.serverName);
-
-    // Bước 2: Gọi API lấy stream từ server đầu tiên
-    const sourceRes = await axios.get(`${process.env.ZORO_URI}/episode/sources`, {
-      params: {
-        animeEpisodeId: paramValue,
-        server: firstServer.serverName,
-        category: subtype,
-      },
-    });
-
-    const videoData = sourceRes.data?.data;
-    if (!videoData) {
-      console.error('❌ Không có videoData');
-      return null;
-    }
-
-    console.log('✅ Lấy videoData thành công');
-    return videoData;
-  } catch (error) {
-    console.error('❌ zoroEpisode error:', error);
-    return null;
-  }
-}
-
-// ✅ HÀM MỚI CHO 9ANIME
-async function nineAnimeEpisode(
-  provider: string,
-  episodeid: string,
-  epnum: number | string,
-  id: string,
-  subtype: string
-): Promise<VideoData | null> {
-  try {
-    let animeEpisodeId: string | null = null;
-
-    if (episodeid.includes('?ep=')) {
-      console.log('✅ [9anime] episodeid đã ở dạng đầy đủ:', episodeid);
-      animeEpisodeId = episodeid;
-    } else {
-      console.log('🔨 [9anime] Building animeEpisodeId từ:', { id, episodeid });
-      animeEpisodeId = await buildZoroAnimeEpisodeId(id, episodeid);
-    }
-
-    const paramValue = animeEpisodeId ?? episodeid;
-    console.log('🎯 [9anime] Final animeEpisodeId:', paramValue);
-
-    const server = 'hd-1';
-
-    const streamRes = await axios.get(`${process.env.ZENIME_URL}/api/stream`, {
-      params: {
-        id: paramValue,
-        server: server,
-        type: subtype,
-      },
-    });
-
-    const streamData = streamRes.data;
-
-    if (!streamData?.success || !streamData?.results?.streamingLink) {
-      console.error('❌ [9anime] Không có streamingLink');
-      return null;
-    }
-
-    const streamingLink = streamData.results.streamingLink;
-
-    // Fix: streamingLink là array, lấy phần tử đầu tiên
-    const firstStream = Array.isArray(streamingLink) ? streamingLink[0] : streamingLink;
-
-    if (!firstStream) {
-      console.error('❌ [9anime] Không có firstStream');
-      return null;
-    }
-
-    // Fix: link là string trực tiếp, không phải object có .file
-    const fileUrl = typeof firstStream.link === 'string'
-      ? firstStream.link
-      : firstStream.link?.file;
-
-    if (!fileUrl) {
-      console.error('❌ [9anime] Không có file URL');
-      return null;
-    }
-
-    // tracks nằm ở results.tracks, không phải streamingLink.tracks
-    const tracks = streamData.results.tracks ?? firstStream.tracks ?? [];
-
-    const videoData: VideoData = {
-      sources: [
-        {
-          url: fileUrl,
-          isM3U8: firstStream.type === 'hls',
-          type: firstStream.type,
-        }
-      ],
-      tracks: tracks.map((track: { file: string; label: string; kind: string; default?: boolean }) => ({
-        url: track.file,
-        lang: track.label,
-        kind: track.kind,
-        default: track.default,
-      })),
-      intro: streamData.results.intro ?? firstStream.intro,
-      outro: streamData.results.outro ?? firstStream.outro,
-      headers: {
-        Referer: 'https://rapid-cloud.co/',
-      },
-    };
-
-    console.log('✅ [9anime] Lấy videoData thành công');
-    return videoData;
-  } catch (error) {
-    console.error('❌ [9anime] nineAnimeEpisode error:', error);
-    return null;
-  }
-}
-
-// Hàm lấy dữ liệu từ Anify API
-async function AnifyEpisode(
-    provider: string, 
-    episodeid: string, 
-    epnum: number | string, 
-    id: string, 
-    subtype: string
-): Promise<AnifyProvider | null> {
-    try {
-        const { data } = await axios.get(
-            `https://api.anify.tv/sources?providerId=${provider}&watchId=${encodeURIComponent(
-                episodeid
-            )}&episodeNumber=${epnum}&id=${id}&subType=${subtype}`
-        );
-        return data;
-    } catch (error) {
-        console.error(error);
-        return null;
-    }
-}
-
-// ✅ HÀM AnimePahe - SIMPLE VERSION
-async function animePaheEpisode(episodeid: string, animeId: string, epNum: number | string): Promise<VideoData | null> {
-  try {
-    console.log('🔍 [AnimePahe] episodeId:', episodeid, 'animeId:', animeId, 'epNum:', epNum);
-
-    const proxyBase = process.env.ANIMEPAHE_PROXY || process.env.NEXT_PUBLIC_ANIMEPAHE_PROXY;
-    
-    console.log('🔑 proxyBase:', proxyBase); // debug
-    
-    if (!proxyBase) {
-      console.error('❌ [AnimePahe] ANIMEPAHE_PROXY env not set');
-      return null;
-    }
-
-    const workerUrl = new URL(`${proxyBase}/animepahe-source`);
-    workerUrl.searchParams.set('episodeid', episodeid);
-    workerUrl.searchParams.set('animeId', animeId);
-    workerUrl.searchParams.set('epNum', String(epNum));
-    workerUrl.searchParams.set('subtype', 'sub');
-
-    console.log('🌐 [AnimePahe] Calling CF Worker:', workerUrl.toString());
-
-    const res = await fetch(workerUrl.toString(), {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-      cache: 'no-store' as RequestCache,
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error(`❌ [AnimePahe] Worker returned ${res.status}:`, errText);
-      return null;
-    }
-
-    const data = await res.json() as VideoData;
-
-    if (!data?.sources?.length) {
-      console.error('❌ [AnimePahe] No sources in worker response');
-      return null;
-    }
-
-    console.log('✅ [AnimePahe] Got sources from CF Worker:', data.sources.length);
+    const { data } = await axios.get(`${process.env.CONSUMET_URI}/meta/anilist/watch/${id}`);
     return data;
-
   } catch (error) {
-    console.error('❌ [AnimePahe] animePaheEpisode error:', error);
+    console.error('consumetEpisode error:', error);
     return null;
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// ANINEKO PROVIDER
-// ─────────────────────────────────────────────────────────────
-const ANINEKO_API_URL = process.env.ANINEKO_API_URL || '';
+async function handleServers(id: string, body: RequestBody): Promise<ServerListResponse> {
+  let servers: ServerOption[] = [];
 
-interface AninekoServer {
-  server: string;
-  type: string; // 'hsub' | 'sub' | 'dub'
-  iframeUrl: string;
-  domain: string;
-  supported: boolean;
-}
-
-interface AninekoSourceResult {
-  m3u8: string;
-  referer: string;
-  origin: string;
-  subtitle: string | null;
-  subtitleLabel: string | null;
-  proxy_url: string;
-}
-
-// Ưu tiên server ổn định trước (theo mức độ tin cậy quan sát được)
-const ANINEKO_SERVER_PRIORITY = ['HD-1', 'StreamHG', 'Earnvids'];
-
-async function aninekoEpisode(episodeid: string, subtype: string): Promise<VideoData | null> {
-  try {
-    if (!ANINEKO_API_URL) {
-      console.error('❌ [Anineko] ANINEKO_API_URL env not set');
-      return null;
-    }
-
-    const [animeSlug, episodeSlug] = episodeid.split('::');
-    if (!animeSlug || !episodeSlug) {
-      console.error('❌ [Anineko] Invalid episodeid format:', episodeid);
-      return null;
-    }
-
-    console.log('🔍 [Anineko] Fetching servers:', { animeSlug, episodeSlug });
-
-    const { data: servers } = await axios.get<AninekoServer[]>(`${ANINEKO_API_URL}/servers`, {
-      params: { anime_slug: animeSlug, episode_slug: episodeSlug },
-      timeout: 15000,
-    });
-
-    if (!Array.isArray(servers) || servers.length === 0) {
-      console.error('❌ [Anineko] No servers returned');
-      return null;
-    }
-
-    const supported = servers.filter((s) => s.supported);
-
-    // sub → ưu tiên type "sub" (có phụ đề rời), fallback "hsub" (hardsub, vẫn xem được)
-    // dub → chỉ type "dub"
-    const wantedTypes = subtype === 'dub' ? ['dub'] : ['sub', 'hsub'];
-
-    const candidates = wantedTypes
-      .flatMap((t) => supported.filter((s) => s.type === t))
-      .sort((a, b) => {
-        const ai = ANINEKO_SERVER_PRIORITY.indexOf(a.server);
-        const bi = ANINEKO_SERVER_PRIORITY.indexOf(b.server);
-        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-      });
-
-    if (candidates.length === 0) {
-      console.error(`❌ [Anineko] No supported "${subtype}" server found`);
-      return null;
-    }
-
-    let result: AninekoSourceResult | null = null;
-    let usedServer: AninekoServer | null = null;
-
-    // Thử lần lượt từng server cho tới khi resolve thành công (fallback tự động)
-    for (const candidate of candidates) {
-      try {
-        console.log(`🎬 [Anineko] Trying server: ${candidate.server} (${candidate.type})`);
-        const { data } = await axios.get<AninekoSourceResult>(`${ANINEKO_API_URL}/source`, {
-          params: { url: candidate.iframeUrl },
-          timeout: 15000,
-        });
-        if (data?.m3u8 && data?.proxy_url) {
-          result = data;
-          usedServer = candidate;
-          break;
-        }
-      } catch (err) {
-        console.warn(`⚠️ [Anineko] Server ${candidate.server} failed:`, err instanceof Error ? err.message : err);
-      }
-    }
-
-    if (!result || !usedServer) {
-      console.error('❌ [Anineko] All servers failed to resolve');
-      return null;
-    }
-
-    console.log(`✅ [Anineko] Resolved via ${usedServer.server} (${usedServer.type})`);
-
-    const videoData: VideoData = {
-      sources: [
-        {
-          url: result.proxy_url, // ✅ đã trỏ qua anineko-proxy, tự CORS + rewrite segment
-          isM3U8: true,
-          type: 'hls',
-        },
-      ],
-      tracks: result.subtitle
-        ? [
-            {
-              url: result.subtitle,
-              lang: result.subtitleLabel || 'English',
-              kind: 'subtitles',
-              default: true,
-            },
-          ]
-        : [],
-      headers: {
-        Referer: result.referer,
-      },
-    };
-
-    return videoData;
-  } catch (error) {
-    console.error('❌ [Anineko] aninekoEpisode error:', error);
-    return null;
+  switch (body.provider) {
+    case 'zoro':
+      servers = await listZoroServers(id, body.episodeid);
+      break;
+    case '9anime':
+      servers = await listNineAnimeServers();
+      break;
+    case 'animepahe':
+      servers = await listAnimePaheServers();
+      break;
+    case 'anineko':
+      servers = await listAninekoServers(body.episodeid);
+      break;
+    case 'animehay':
+    case 'vietsub':
+      servers = await listAnimeHayServers(body.episodeid);
+      break;
+    default:
+      servers = []; // gogoanime/consumet: không có bước chọn server
   }
+
+  return { providerId: body.provider, episodeId: body.episodeid, servers };
 }
 
-const ANIMEHAY_API_URL = process.env.ANIMEHAY_API_URL || '';
- 
-// ── Server priority (theo độ ổn định quan sát được) ──────────────────────────
-// AHS (ahay.stream) là server chính, HD, stable nhất
-// HY (abyssplayer.com) là fallback
-const ANIMEHAY_SERVER_PRIORITY = ['AHS', 'HY'];
- 
-// ── Types ─────────────────────────────────────────────────────────────────────
- 
-interface AnimeHayServer {
-  serverKey:  string;    // 'AHS' | 'HY'
-  serverName: string;
-  badge:      string;    // 'HD' | 'HY'
-  iframeUrl:  string;    // https://ahay.stream/embed-jw/{id}
-  domain:     string;    // 'ahay.stream'
-  supported:  boolean;   // true nếu /source có thể resolve
-}
- 
-interface AnimeHaySourceResult {
-  m3u8:      string;    // https://sv2.vipah06.xyz/hls/{id}/master.m3u8?token=...
-  referer:   string;    // 'https://ahay.stream/'
-  origin:    string;    // 'https://ahay.stream'
-  proxy_url: string;    // URL để feed vào HLS player (local /proxy hoặc external)
-}
- 
-// ── Main handler ──────────────────────────────────────────────────────────────
- 
-/**
- * Lấy stream source từ animehay08.site cho một tập phim.
- *
- * @param episodeid - Format: "{animeSlug}::{animeId}::{episodeId}::{epNum}"
- *                   Ví dụ:  "one-piece::34::76166::1168"
- */
-async function animeHayEpisode(episodeid: string): Promise<VideoData | null> {
-  try {
-    if (!ANIMEHAY_API_URL) {
-      console.error('❌ [AnimeHay] ANIMEHAY_API_URL env not set');
-      return null;
-    }
- 
-    // ── Bước 1: Tách episode ID thành 4 thành phần ───────────────────────────
-    // Format: "{animeSlug}::{animeId}::{episodeId}::{epNum}"
-    const parts = episodeid.split('::');
-    if (parts.length !== 4) {
-      console.error(
-        `❌ [AnimeHay] Invalid episodeid format: "${episodeid}".` +
-        ` Expected: "{animeSlug}::{animeId}::{episodeId}::{epNum}"`
-      );
-      return null;
-    }
- 
-    const [animeSlug, animeId, episodeId, epNumStr] = parts;
-    const epNum = parseFloat(epNumStr);
- 
-    console.log(`🔍 [AnimeHay] Fetching servers for:`, {
-      animeSlug,
-      animeId,
-      episodeId,
-      epNum,
-    });
- 
-    // ── Bước 2: Lấy danh sách server ─────────────────────────────────────────
-    let servers: AnimeHayServer[] = [];
+// ✅ MỚI — bọc handleServers bằng cache Redis (xem SERVERS_CACHE_TTL ở trên).
+// Chỉ cache khi có ít nhất 1 server trả về, tránh cache "rỗng" đè lên kết quả tốt sau này
+// (vd upstream tạm thời lỗi 1 lần lúc mới deploy).
+async function handleServersCached(id: string, body: RequestBody): Promise<ServerListResponse> {
+  const cacheKey = buildServersCacheKey(id, body);
+
+  if (redis) {
     try {
-      const { data } = await axios.get<AnimeHayServer[]>(
-        `${ANIMEHAY_API_URL}/servers`,
-        {
-          params: {
-            anime_slug:  animeSlug,
-            episode_id:  episodeId,
-            ep_num:      isNaN(epNum) ? undefined : epNum,
-          },
-          timeout: 15000,
-        }
-      );
-      servers = Array.isArray(data) ? data : [];
+      const cached = await redis.get(cacheKey);
+      if (cached) return JSON.parse(cached) as ServerListResponse;
     } catch (err) {
-      console.error(`❌ [AnimeHay] Failed to fetch servers:`, (err as Error).message);
-      return null;
+      console.warn('⚠️ [api/source] Redis get error (servers):', err);
     }
- 
-    if (servers.length === 0) {
-      console.error(`❌ [AnimeHay] No servers returned for episode ${episodeId}`);
-      return null;
+  }
+
+  const data = await handleServers(id, body);
+
+  if (data.servers.length > 0 && redis) {
+    try {
+      await redis.setex(cacheKey, SERVERS_CACHE_TTL, JSON.stringify(data));
+    } catch (err) {
+      console.warn('⚠️ [api/source] Redis set error (servers):', err);
     }
- 
-    // ── Bước 3: Chọn server theo priority, chỉ lấy supported servers ─────────
-    // Lọc ra server supported (ahay.stream, abyssplayer.com)
-    const supportedServers = servers.filter((s) => s.supported);
- 
-    if (supportedServers.length === 0) {
-      console.error(`❌ [AnimeHay] No supported servers for episode ${episodeId}`);
-      return null;
-    }
- 
-    // Sắp xếp theo ANIMEHAY_SERVER_PRIORITY
-    const sortedServers = [...supportedServers].sort((a, b) => {
-      const ai = ANIMEHAY_SERVER_PRIORITY.indexOf(a.serverKey);
-      const bi = ANIMEHAY_SERVER_PRIORITY.indexOf(b.serverKey);
-      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-    });
- 
-    // ── Bước 4: Thử lần lượt từng server (fallback tự động) ──────────────────
-    let sourceResult: AnimeHaySourceResult | null = null;
-    let usedServer: AnimeHayServer | null = null;
- 
-    for (const server of sortedServers) {
-      try {
-        console.log(
-          `🎬 [AnimeHay] Trying server: ${server.serverKey} (${server.domain})` +
-          ` — ${server.iframeUrl}`
-        );
- 
-        const { data } = await axios.get<AnimeHaySourceResult>(
-          `${ANIMEHAY_API_URL}/source`,
-          {
-            params:  { url: server.iframeUrl },
-            timeout: 15000,
-          }
-        );
- 
-        if (data?.m3u8 && data?.proxy_url) {
-          sourceResult = data;
-          usedServer   = server;
-          break; // Thành công, dừng thử
-        }
-      } catch (err) {
-        console.warn(
-          `⚠️ [AnimeHay] Server ${server.serverKey} failed:`,
-          err instanceof Error ? err.message : err
-        );
-        // Tiếp tục thử server tiếp theo
-      }
-    }
- 
-    if (!sourceResult || !usedServer) {
-      console.error(`❌ [AnimeHay] All supported servers failed for episode ${episodeId}`);
-      return null;
-    }
- 
-    console.log(
-      `✅ [AnimeHay] Resolved via server ${usedServer.serverKey} (${usedServer.domain})`
-    );
-    console.log(`   m3u8:      ${sourceResult.m3u8}`);
-    console.log(`   referer:   ${sourceResult.referer}`);
-    console.log(`   proxy_url: ${sourceResult.proxy_url}`);
- 
-    // ── Bước 5: Format VideoData ──────────────────────────────────────────────
-    // KHÔNG wrap proxy_url qua /api/stream vì animehay-api proxy đã xử lý:
-    //   - CORS headers (Access-Control-Allow-Origin: *)
-    //   - Referer injection (Referer: ahay.stream/)
-    //   - Relative segment URL resolution (sd/index.m3u8 → absolute)
-    // Pattern giống hệt anineko trong getData.ts (isAnineko check)
-    const videoData: VideoData = {
-      sources: [
-        {
-          url:    sourceResult.proxy_url,  // proxy_url từ animehay-api
-          isM3U8: true,
-          type:   'hls',
-          quality: usedServer.badge || 'HD', // 'HD' | 'HY'
-        },
-      ],
-      tracks: [],  // animehay không có subtitle riêng (đã nhúng vào video — vietsub hardsub)
-      headers: {
-        Referer: sourceResult.referer,   // 'https://ahay.stream/' — cho reference
-        // x-provider flag để getData.ts nhận biết không cần wrap thêm proxy
-        'x-provider': 'animehay',
-      },
-    };
- 
-    return videoData;
-  } catch (error) {
-    console.error(
-      `❌ [AnimeHay] animeHayEpisode error:`,
-      error instanceof Error ? error.message : error
-    );
-    return null;
+  }
+
+  return data;
+}
+
+async function resolveSourceUncached(id: string, body: RequestBody): Promise<VideoData | null> {
+  const epnum = body.episodenum;
+
+  switch (body.provider) {
+    case 'zoro':
+      return resolveZoroSource(id, body.episodeid, body.subtype, body.serverRaw);
+    case '9anime':
+      return resolveNineAnimeSource(id, body.episodeid, body.subtype, body.serverRaw);
+    case 'animepahe':
+      return resolveAnimePaheSource(body.episodeid, id, epnum);
+    case 'anineko':
+      return resolveAninekoSource(body.episodeid, body.subtype, body.serverRaw);
+    case 'animehay':
+    case 'vietsub':
+      return resolveAnimeHaySource(body.episodeid, body.serverRaw);
+    default:
+      return consumetEpisode(body.episodeid);
   }
 }
 
-// Xử lý request POST
-export const POST = async (req: NextRequest, context: { params: Promise<{ epsource: string[] }> }): Promise<NextResponse> => {
-    const { params } = context;
-    const resolvedParams = await params; // ✅ phải await
-    const id = resolvedParams.epsource[0];
+async function handleResolve(id: string, body: RequestBody): Promise<VideoData | null> {
+  const cacheKey = buildSourceCacheKey(id, body);
 
-    const { source, provider, episodeid, episodenum, subtype}: RequestBody = await req.json();
-
-    /*
-    // Đoạn mã cache với Redis (đã được type-safe)
-    const cacheKey = `source:${params.epsource[0]}`;
-    const cacheTime = 25 * 60; // 25 phút
-
+  if (redis) {
     try {
-        const cached = await redis.get(cacheKey);
-        if (cached) {
-            const cachedData = JSON.parse(cached as string);
-            return NextResponse.json(cachedData);
-        }
-    } catch (e) {
-        console.error("Lỗi khi đọc cache Redis:", e)
+      const cached = await redis.get(cacheKey);
+      if (cached) return JSON.parse(cached) as VideoData;
+    } catch (err) {
+      console.warn('⚠️ [api/source] Redis get error:', err);
     }
+  }
 
-    // ... logic lấy data ...
+  const result = await resolveSourceUncached(id, body);
 
+  if (result && redis) {
     try {
-        await redis.setex(cacheKey, cacheTime, JSON.stringify(data));
-    } catch(e) {
-        console.error("Lỗi khi ghi cache Redis:", e)
+      await redis.setex(cacheKey, SOURCE_CACHE_TTL, JSON.stringify(result));
+    } catch (err) {
+      console.warn('⚠️ [api/source] Redis set error:', err);
     }
-
-    return NextResponse.json(data);
-    */
-
-    if (source === "consumet") {
-        const data = await consumetEpisode(episodeid);
-        return NextResponse.json(data);
-    }
-
-    if (provider === "zoro") {
-        const data = await zoroEpisode(provider, episodeid, episodenum, id, subtype);
-        return NextResponse.json(data);
-    }
-
-     if (provider === "9anime") {
-        const data = await nineAnimeEpisode(provider, episodeid, episodenum, id, subtype);
-        return NextResponse.json(data);
-    }
-
-     if (provider === "animepahe") {
-    const data = await animePaheEpisode(episodeid, id, episodenum);
-    return NextResponse.json(data);
   }
 
-    if (provider === "anineko") {          
-    const data = await aninekoEpisode(episodeid, subtype);
-    return NextResponse.json(data);
-  }
-
-  if (provider === "vietsub") {
-    const data = await animeHayEpisode(episodeid);
-    return NextResponse.json(data);
-  }
-
-    if (source === "anify") {
-        const data = await AnifyEpisode(provider, episodeid, episodenum, id, subtype);
-        return NextResponse.json(data);
-    }
-
-    
-    // if (source === "animepahe") {
-    //     const data = await animepaheEpisode(Number(id), episodeid);
-    //     return NextResponse.json(data);
-    // }
-
-    // Trả về lỗi nếu không có source nào khớp
-    return NextResponse.json({ error: 'Invalid source specified' }, { status: 400 });
+  return result;
 }
+
+export const POST = async (
+  req: NextRequest,
+  context: { params: Promise<{ epsource: string[] }> }
+): Promise<NextResponse> => {
+  const { params } = context;
+  const resolvedParams = await params;
+  const id = resolvedParams.epsource[0];
+  const body: RequestBody = await req.json();
+
+  if (body.action === 'servers') {
+    const data = await handleServersCached(id, body);
+    return NextResponse.json(data);
+  }
+
+  const data = await handleResolve(id, body);
+  if (!data) {
+    return NextResponse.json({ error: 'No source found for this server' }, { status: 404 });
+  }
+  return NextResponse.json(data);
+};

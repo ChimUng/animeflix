@@ -1,85 +1,10 @@
 import { checkEnvironment } from "./checkEnvironment";
-
-interface RecentEpisode {
-  id: string;
-  title: {
-    romaji: string;
-    english?: string;
-    native?: string;
-  };
-  coverImage: {
-    large: string;
-    medium: string;
-    extraLarge?: string;
-  };
-  status: string;
-  format: string;
-  currentEpisode?: number;
-  totalEpisodes?: number;
-  latestEpisode?: string;
-  description?: string; 
-}
-
-export interface Episode {
-  id?: string;
-  episodeId?: string;
-  number: number;
-  title?: string;
-  description?: string;
-  img?: string;
-  image?: string;
-  isFiller?: boolean;
-}
-
-export interface Provider {
-    providerId: string;
-    id: string;
-    consumet?: boolean;
-    episodes: Episode[] | { sub?: Episode[]; dub?: Episode[] };
-}
-
-export interface AnimeItem {
-  id: string | number;
-  bannerImage?: string;
-  coverImage?: {
-    extraLarge?: string;
-  };
-  type?: string;
-  status?: string;
-  nextAiringEpisode?: {
-    episode: number;
-  };
-}
-
-export interface Source {
-  sources: {
-    url: string;
-    quality: string;
-    isM3U8: boolean;
-    isEmbed?: boolean;
-  }[];
-  tracks?: {
-    url: string;
-    lang: string;
-    kind?: string;
-  }[];
-  headers?: Record<string, string>;
-  download?: string;
-  intro?: {
-    start: number;
-    end: number;
-  };
-  outro?: {
-    start: number;
-    end: number;
-  };
-}
+import { RecentEpisode, Provider, VideoData } from "@/types/episode";
+import { ServerListResponse, ServerOption } from "@/types/stream";
 
 export const getRecentEpisodes = async (): Promise<RecentEpisode[] | undefined> => {
   try {
-    const response = await fetch(`${checkEnvironment()}/api/recent`, {
-      cache: "no-store",
-    });
+    const response = await fetch(`${checkEnvironment()}/api/recent`, { cache: "no-store" });
     if (!response.ok) throw new Error("Failed to fetch recent episodes");
     const data = await response.json();
     return data as RecentEpisode[];
@@ -112,17 +37,47 @@ export const getEpisodes = async (
   }
 };
 
-export const getSources = async (
+export const getServers = async (
   id: string,
   provider: string,
   epid: string,
   epnum: number,
   subdub: string
-): Promise<Source | undefined> => {
+): Promise<ServerListResponse | undefined> => {
   try {
     const response = await fetch(`${checkEnvironment()}/api/source/${id}`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        action: "servers",
+        provider: provider === "gogobackup" ? "gogoanime" : provider,
+        episodeid: epid,
+        episodenum: epnum,
+        subtype: subdub,
+      }),
+    });
+    if (!response.ok) throw new Error("Failed to fetch server list");
+    return (await response.json()) as ServerListResponse;
+  } catch (error) {
+    console.error("Error fetching server list:", error);
+    return undefined;
+  }
+};
+
+export const getSources = async (
+  id: string,
+  provider: string,
+  epid: string,
+  epnum: number,
+  subdub: string,
+  server?: ServerOption | null
+): Promise<VideoData | undefined> => {
+  try {
+    const response = await fetch(`${checkEnvironment()}/api/source/${id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "resolve",
         source:
           provider === "gogoanime" || provider === "gogobackup"
             ? "consumet"
@@ -133,36 +88,30 @@ export const getSources = async (
         episodeid: epid,
         episodenum: epnum,
         subtype: subdub,
+        serverRaw: server?.raw,
+        serverKey: server?.key,
       }),
-      headers: {
-        "Content-Type": "application/json",
-      },
     });
 
-    if (!response.ok) throw new Error("Failed to fetch episodes");
-
+    if (!response.ok) throw new Error("Failed to fetch source");
     const data = await response.json();
-    
+
     if (data?.sources?.length > 0) {
       const referer = data?.headers?.Referer || "";
-      const hasEmbedSourceFromApi = data.sources.some((source: { url: string }) => !source.url.includes(".m3u8"));
+      const hasDirectEmbedFromApi = data.sources.some((s: { url: string }) => !s.url.includes(".m3u8"));
 
-      // ✅ Khai báo isAnimepahe / isAnineko NGOÀI .map()
-      const isAnimepahe = data?.headers?.['x-provider'] === 'animepahe';
-      const isAnineko = provider === 'anineko';
-      const isAnimehay = provider === 'vietsub';
+      const isAnimepahe = data?.headers?.["x-provider"] === "animepahe";
+      const isAnineko = provider === "anineko";
+      const isAnimehay = provider === "animehay";
 
-      data.sources = data.sources.map((source: { url: string; quality: string; isM3U8: boolean }) => {
+      data.sources = data.sources.map((source: { url: string; quality: string }) => {
         const originalUrl = source.url;
 
         if (originalUrl.includes(".m3u8")) {
+          // animepahe/anineko/animehay: proxy_url trả về từ chính worker đã tự lo CORS +
+          // referer injection rồi -> KHÔNG bọc thêm qua /api/stream nữa.
           if (isAnimepahe || isAnineko || isAnimehay) {
-            // ✅ Anineko (proxy_url) và AnimePahe tự lo CORS/Referer riêng,
-            // không wrap thêm qua /api/stream để tránh double-proxy.
-            return {
-              ...source, 
-              isEmbed: false,
-            };
+            return { ...source, isEmbed: false };
           }
           return {
             ...source,
@@ -170,33 +119,33 @@ export const getSources = async (
             isEmbed: false,
           };
         }
-        return {
-          ...source,
-          url: `${checkEnvironment()}/api/embed?url=${encodeURIComponent(originalUrl)}`,
-          isEmbed: true,
-        };
+        return { ...source, isEmbed: true };
       });
+
       if (isAnimepahe) {
         data.sources.sort((a: { quality: string }, b: { quality: string }) => {
-          const q: Record<string, number> = { '1080': 3, '720': 2, '480': 1, '360': 0 };
+          const q: Record<string, number> = { "1080": 3, "720": 2, "480": 1, "360": 0 };
           return (q[b.quality] ?? 0) - (q[a.quality] ?? 0);
         });
       }
-      
-      if (!hasEmbedSourceFromApi && referer && provider !== "animepahe" && provider !== "anineko" && provider !== "vietsub") {
-        console.log("🛠️ API chỉ có HLS, đang tạo nguồn embed dự phòng...");
-        const fallbackEmbedUrl = `https://megaplay.buzz/stream/s-2/${epid.split('/')[0]}/${subdub}`;
+
+      // ✅ Fallback iframe khi provider chỉ trả HLS và không có embed dự phòng từ API.
+      // Dùng đúng format bạn yêu cầu: /stream/mal/{id}/{episoderaw}/{subdub}.
+      // "malid" ở đây CHÍNH LÀ `id` đang có sẵn (không thêm prop malId mới),
+      // "episoderaw" là số tập hiển thị trên UI (epnum), không phải epid nội bộ của provider.
+      if (!hasDirectEmbedFromApi && referer && provider !== "animepahe" && provider !== "anineko" && provider !== "animehay") {
+        const fallbackEmbedUrl = `https://megaplay.buzz/stream/mal/${id}/${epnum}/${subdub}`;
         data.sources.push({
-          url: `${checkEnvironment()}/api/embed?url=${encodeURIComponent(fallbackEmbedUrl)}`,
-          quality: 'auto-fallback',
+          url: fallbackEmbedUrl,
+          quality: "auto-fallback",
           isEmbed: true,
         });
       }
     }
 
-    console.log(`🎬 Phản hồi API Nguồn cho ID ${id}, Tập ${epnum}:`, JSON.stringify(data, null, 2));
-    return data as Source;
+    return data as VideoData;
   } catch (error) {
     console.error("Error fetching Episode sources:", error);
   }
 };
+

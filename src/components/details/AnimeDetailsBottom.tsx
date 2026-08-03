@@ -6,21 +6,18 @@ import { AnimatePresence, motion } from "framer-motion";
 import Characters from "./Characters";
 import Overview from "./tabs/Overview";
 import Image from "next/image";
-import { AnimeItem } from "@/lib/types";
+import { AnimeItem } from "@/types/anime";
 
-// Kiểu cho mỗi tab
 interface TabItem {
     name: string;
     label: string;
 }
 
-// Kiểu cho props chính
 interface AnimeDetailsBottomProps {
-  data: AnimeItem; 
-  id: number; 
+    data: AnimeItem;
 }
 
-const AnimeDetailsBottom: React.FC<AnimeDetailsBottomProps> = ({ data, id }) => {
+const AnimeDetailsBottom: React.FC<AnimeDetailsBottomProps> = ({ data }) => {
     const tabs: TabItem[] = [
         { name: "Overview", label: "Tổng quan" },
         { name: "Relations", label: "Mối quan hệ" },
@@ -36,6 +33,13 @@ const AnimeDetailsBottom: React.FC<AnimeDetailsBottomProps> = ({ data, id }) => 
     };
 
     const isSelected = (tab: TabItem): boolean => activeTab.name === tab.name;
+
+     const relatedAnime: AnimeItem[] = (data.relations?.edges ?? [])
+        .filter((edge) => edge.node != null)
+        .map((edge) => ({
+            ...edge.node,
+            relationType: edge.relationType ?? null,
+        } as AnimeItem));
 
     return (
         <div>
@@ -53,7 +57,7 @@ const AnimeDetailsBottom: React.FC<AnimeDetailsBottomProps> = ({ data, id }) => 
                     {tab.label}
                 </div>
                 {isSelected(tab) && (
-                    <motion.div layoutId="indicator" className={styles.indicator} />
+                    <motion.div layoutId="indicator" className={`${styles.indicator}`} />
                 )}
                 </div>
             ))}
@@ -67,31 +71,27 @@ const AnimeDetailsBottom: React.FC<AnimeDetailsBottomProps> = ({ data, id }) => 
                 exit="exit"
                 transition={{ duration: 0.3 }}
             >
-                {activeTab.name === "Overview" && <Overview data={{ ...data, id: Number(data.id) }} id={id} />}
+                {activeTab.name === "Overview" && <Overview data={data} />}
 
                 {activeTab.name === "Relations" && (
                 <div className={styles.relations}>
                     <h3 className={styles.relationsheading}>Phim liên quan</h3>
-                    <Animecards
-                    data={data.relations?.edges?.map(edge => edge.node) ?? null} 
-                    cardid="Related Anime"
-                    show={false}
-                    />
+                    <Animecards data={relatedAnime} cardid="Related Anime" show={false} />
                 </div>
                 )}
 
                 {activeTab.name === "Characters" && (
                 <div className={styles.characters}>
                     <h3 className={styles.relationsheading}>Nhân vật trong anime</h3>
-                    <Characters data={data?.characters?.edges} />
+                    <Characters data={data?.characters?.edges ?? []} />
                 </div>
                 )}
 
                 {activeTab.name === "Banner" && (
                 <div className={styles.detailscard}>
                     <div className={styles.detailsbgimage}>
-                        <Image 
-                        src={data?.bannerImage || data?.coverImage?.extraLarge || "/fallback.jpg"} 
+                        <Image
+                        src={data?.bannerImage || data?.coverImage?.extraLarge || "/fallback.jpg"}
                         alt="Banner"
                         fill
                         style={{ objectFit: "cover" }}

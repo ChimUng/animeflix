@@ -3,7 +3,11 @@ import React, { useRef } from "react";
 import Image from "next/image";
 import styles from "../../styles/Epimglist.module.css";
 import Link from "next/link";
-import { AnimeItem, EpisodeInfo } from "@/lib/types";
+import { AnimeItem } from "@/types/anime";
+import { EpisodeInfo } from "@/types/episode";
+import { EpPlayIcon } from '@/lib/SvgIcons';
+import { buildWatchUrl } from "@/utils/watchUrl";
+import { StarScoreIcon } from "@/lib/SvgIcons";
 
 interface EpImgContentProps {
     data: AnimeItem;
@@ -27,9 +31,13 @@ const EpImgContent: React.FC<EpImgContentProps> = ({data,epdata,defaultProvider,
 
             return (
             <Link
-                href={`/anime/watch?id=${data?.id}&host=${defaultProvider}&epid=${encodeURIComponent(
-                episode?.id || episode?.episodeId || ""
-                )}&ep=${episode?.number}&type=${subtype}`}
+                href={buildWatchUrl({
+                    id: data?.id ?? "",
+                    provider: defaultProvider,
+                    epId: episode?.id || episode?.episodeId || "",
+                    epNum: episode?.number ?? "",
+                    subdub: subtype,
+                })}
                 key={episode?.id || episode?.episodeId}
                 className={`flex flex-row items-center transition-all duration-300 ease-out hover:scale-[0.985] hover:bg-[#27272c] rounded-lg my-[5px] bg-[#18181b] ${
                 isCurrentEp
@@ -52,18 +60,15 @@ const EpImgContent: React.FC<EpImgContentProps> = ({data,epdata,defaultProvider,
                     className={styles.epimgcon}
                     quality={100}
                 />
+                {episode?.rating && (
+                    <div className="z-[10] absolute top-0 left-0 flex items-center justify-center gap-0.5 bg-black/60 backdrop-blur font-light text-white text-[10px] sm:text-xs px-1.5 py-0.5 rounded-br-lg rounded-tl-lg tracking-wider">
+                    <StarScoreIcon className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 fill-star text-star" />
+                    <span className="font-semibold text-white">{Number(episode.rating).toFixed(1)}</span>
+                    </div>
+                )}
                 {isCurrentEp && (
                     <div className={styles.epimgplayico}>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className={`play-buttonicon w-7 h-7 ${styles.play}`}
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                        fill="currentColor"
-                        d="M21.409 9.353a2.998 2.998 0 0 1 0 5.294L8.597 21.614C6.534 22.737 4 21.277 4 18.968V5.033c0-2.31 2.534-3.769 4.597-2.648z"
-                        />
-                    </svg>
+                        <EpPlayIcon className={`play-buttonicon w-7 h-7 ${styles.play}`} />
                     </div>
                 )}
                 <span className={styles.epimgnumber}>{"Tập " + episode?.number}</span>

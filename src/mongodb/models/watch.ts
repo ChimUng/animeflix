@@ -1,32 +1,8 @@
 import { Schema, model, models, Document } from 'mongoose';
+import { WatchData } from '@/types/watch';
 
-// 1. Định nghĩa Interface (Kiểu dữ liệu) cho Watch Document
-// Interface này sẽ được sử dụng trong toàn bộ ứng dụng của bạn (bao gồm cả file EpHistory)
-// để đảm bảo mọi đối tượng 'Watch' đều có cấu trúc giống nhau.
-export interface IWatch extends Document {
-    userName: string;
-    aniId: string;
-    aniTitle?: string | null;
-    epTitle?: string | null;
-    image?: string | null;
-    epId?: string | null;
-    epNum: number;
-    
-// optional field để tránh lỗi TypeScript khi gọi sai key
-    epid?: string | null;
-    epnum?: number | null;
+export interface IWatch extends WatchData, Document {}
 
-    timeWatched?: number | null;
-    duration?: number | null;
-    provider?: string | null;
-    nextepId?: string | null;
-    nextepNum?: number | null;
-    subtype?: 'sub' | 'dub' | string; // Có thể giới hạn là 'sub' | 'dub' để an toàn hơn
-    createdAt: Date;
-}
-
-// 2. Tạo Schema từ Interface
-// Bằng cách truyền <IWatch> vào, Mongoose sẽ đảm bảo schema này tuân thủ theo interface đã định nghĩa.
 const WatchSchema = new Schema<IWatch>({
     userName: {
         type: String,
@@ -86,8 +62,6 @@ const WatchSchema = new Schema<IWatch>({
     },
 });
 
-// 3. Xuất model
-// Đoạn code này kiểm tra xem model 'Watch' đã tồn tại chưa để tránh lỗi trong môi trường Next.js (hot-reloading)
 const watch = models.Watch || model<IWatch>('Watch', WatchSchema);
 
 export default watch;
