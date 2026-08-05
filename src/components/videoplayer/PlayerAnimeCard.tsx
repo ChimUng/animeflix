@@ -1,4 +1,3 @@
-// components/videoplayer/PlayerAnimeCard.tsx
 "use client"
 "use strict";
 
@@ -8,7 +7,8 @@ import styles from '../../styles/PlayAnimeCard.module.css';
 import Link from 'next/link';
 import { useTitle } from '../../lib/store';
 import { useStore } from "zustand";
-import { AnimeItem } from '@/lib/types'; // Import interface chung
+import { AnimeItem } from '@/types/anime';
+import { StarScoreIcon } from '@/lib/SvgIcons';
 
 
 interface DataItem {
@@ -50,18 +50,18 @@ useEffect(() => {
         </div>
         <div className={styles.playanimecard}>
             {data && data?.slice(0, visibleItems).map((item) => {
-            // Lấy URL ảnh ra một biến và kiểm tra nó
+
             const imageUrl = item?.node?.coverImage?.large || item?.mediaRecommendation?.coverImage?.extraLarge;
             const infoUrl = `/anime/info/${item?.node?.id || item?.mediaRecommendation?.id}`;
+            const averageScore = item?.node?.averageScore ?? item?.mediaRecommendation?.averageScore;
 
             return (
                 <div className={styles.playcarditem} key={item?.node?.id || item?.mediaRecommendation?.id}>
                 <div className={styles.playcardimgcon}>
-                    {/* Chỉ render Image khi imageUrl tồn tại */}
                     {imageUrl && (
                     item?.node?.format?.toLowerCase() === 'manga' || item?.node?.format?.toLowerCase() === 'novel' ? (
                         <Image
-                        src={imageUrl} // Bây giờ đã an toàn
+                        src={imageUrl} 
                         width={70}
                         height={90}
                         alt='image'
@@ -70,7 +70,7 @@ useEffect(() => {
                     ) : (
                         <Link href={infoUrl}>
                         <Image
-                            src={imageUrl} // Bây giờ đã an toàn
+                            src={imageUrl}
                             width={70}
                             height={90}
                             alt='image'
@@ -90,6 +90,13 @@ useEffect(() => {
                     </Link>
                     )}
                     <p className={styles.playepnum}>
+                    {averageScore != null && (
+                        <>
+                        <StarScoreIcon className="w-[13px] h-[13px] mr-[2px] fill-star text-star" />
+                        {(averageScore / 10).toFixed(1)}
+                        <span>.</span>
+                        </>
+                    )}
                     {item?.node?.format || item?.mediaRecommendation?.format} <span>.</span>
                     {item?.node ? (
                         (item.node.episodes && (
@@ -98,7 +105,7 @@ useEffect(() => {
                             {item.node.episodes}
                         </>
                         )) ||
-                        (item.node.chapters && `${item.node.chapters} CH`) ||
+                        (item.node.chapters != null && `${item.node.chapters} CH`) ||
                         '?'
                     ) : (
                         item?.mediaRecommendation?.episodes !== undefined && (

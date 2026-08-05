@@ -52,7 +52,7 @@ async function fetchRecentFromAnilist(): Promise<RecentEpisode[]> {
     if (!item?.media?.id || seen.has(item.media.id)) continue;
     seen.add(item.media.id);
     result.push({ ...item.media, currentEpisode: item.episode, airingAt: item.airingAt });
-    if (result.length === 12) break;
+    if (result.length === 10) break;
   }
   return result;
 }

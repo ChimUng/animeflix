@@ -69,6 +69,7 @@ export interface AnimeItem {
     bannerImage?: string | null;
     description?: string | null;
     episodes?: number | null;
+    chapters?: number | null; // dùng cho manga/novel (PlayerAnimeCard)
     status?: 'RELEASING' | 'FINISHED' | 'NOT_YET_RELEASED' | 'CANCELLED' | 'HIATUS' | null;
     duration?: number | null;
     genres?: string[] | null;

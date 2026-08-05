@@ -1,13 +1,11 @@
-// components/videoplayer/NextAiringDate.tsx
 "use client"
 import React, { useEffect, useState } from 'react';
-import { NextAiringEpisode } from '@/lib/types'; // Import từ types/anime.ts
+import { NextAiringEpisode } from '@/types/anime'; 
 
-// Định nghĩa kiểu cho prop được truyền từ page.tsx
 interface NextAiringDateProps {
   nextAiringEpisode: NextAiringEpisode | null;
 }
-// Định nghĩa kiểu cho state timeLeft
+
 interface TimeLeft {
   ngày: number;
   giờ: number;
@@ -24,7 +22,6 @@ const NextAiringDate: React.FC<NextAiringDateProps> = ({ nextAiringEpisode }) =>
     }
 
     const intervalId = setInterval(() => {
-      // Kiểm tra lại airingAt ngay trước khi sử dụng
       if (nextAiringEpisode.airingAt === undefined) {
         clearInterval(intervalId);
         setTimeLeft(null);
