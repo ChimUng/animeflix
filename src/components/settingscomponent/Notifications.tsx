@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { AniListNotification, Usernotifications } from '@/lib/AnilistUser';
 import Image from 'next/image';
 import Skeleton from "react-loading-skeleton";
@@ -14,15 +14,6 @@ interface PageInfo {
     hasNextPage: boolean;
 }
 
-// interface Notification {
-//     id: string;
-//     contexts?: string[];
-//     media?: { title: { romaji: string; english?: string; native?: string } };
-//     episode?: number;
-//     createdAt: number;
-//     // type?: string;
-// };
-
 interface NotificationResponse {
     pageInfo?: PageInfo;
     notifications?: AniListNotification[];
@@ -31,6 +22,15 @@ interface NotificationResponse {
 type NotificationProps = {
     session?: Session  | null;
 };
+
+function getNotifKey(item: AniListNotification): string | number {
+    if ("animeId" in item && item.animeId) return item.animeId;
+    if ("mediaId" in item && item.mediaId) return item.mediaId;
+    if ("deletedMediaTitle" in item) return `deleted-${item.deletedMediaTitle}`;
+    return item.media?.id ?? item.id;
+}
+
+const MAX_PER_ANIME = 3;
 
 function Notifications ( {session} :NotificationProps ) {
     const [notifications, setNotifications] = useState<AniListNotification[]>([]);
@@ -57,6 +57,20 @@ function Notifications ( {session} :NotificationProps ) {
         };
         fetchData();
     }, [page]);
+
+    const visibleNotifications = useMemo(() => {
+        const seenCount = new Map<string | number, number>();
+        const result: AniListNotification[] = [];
+        for (const item of notifications) {
+            const key = getNotifKey(item);
+            const count = seenCount.get(key) ?? 0;
+            if (count < MAX_PER_ANIME) {
+                result.push(item);
+                seenCount.set(key, count + 1);
+            }
+        }
+        return result;
+    }, [notifications]);
 
     if (!session || !session.user) {
         return (
@@ -87,7 +101,6 @@ function Notifications ( {session} :NotificationProps ) {
                                 <div>
                                     {session?.user?.list?.map((item: string, index: number) => (
                                         <div key={index}>
-                                            {/* <p className='text-[#DBDCDD] text-xs md:text-sm'>{index + 1} • </p> */}
                                             <p className="sm:top-2 sm:left-2 px-1.5 w-fit sm:w-fit sm:px-2 py-1 rounded-lg text-xs shadow-2xl font-semibold !backdrop-blur-2xl flex items-center gap-1 bg-green-700 text-green-50">
                                                 {item}
                                             </p>
@@ -99,13 +112,18 @@ function Notifications ( {session} :NotificationProps ) {
                     </div>
                 </div>
                 <div className='flex flex-col flex-grow gap-3'>
-                    {notifications?.length > 0 ? (
-                        notifications?.map((item: AniListNotification, index: number) => (
-                            <div key={index} className='group relative mb-2 flex flex-row w-full bg-[#151518] rounded-md items-center h-[80px] text-sm  md:text-base !leading-none overflow-hidden 
+                    {visibleNotifications?.length > 0 ? (
+                        visibleNotifications?.map((item: AniListNotification, index: number) => (
+                            <div key={item.id ?? index} className='group relative mb-2 flex flex-row w-full bg-[#151518] rounded-md items-center h-[80px] text-sm  md:text-base !leading-none overflow-hidden 
                             transition-transform duration-300 ease-in-out hover:-translate-y-[2px] hover:shadow-[0_4px_15px_rgba(209,72,54,0.4)]'> 
                                 <Image alt="Image" width="100" height="100" src={item?.media?.coverImage?.extraLarge || "/default.png"} className='w-[60px] rounded-md h-full' />
                                 <div className='mx-4'>
-                                    {"context" in item ? (
+                                    {"deletedMediaTitle" in item ? (
+                                        <div className='mb-1'>
+                                            <span className='font-semibold'>{item.deletedMediaTitle}</span>
+                                            {` ${item.context}`}
+                                        </div>
+                                    ) : "context" in item ? (
                                         <div className='mb-1'>
                                             <Link href={`/anime/info/${item?.media?.id}`} className='font-semibold hover:text-danger'> {item?.media?.title?.[animetitle as "romaji" | "english" | "native"] || item?.media?.title?.romaji} </Link>
                                             {` ${item?.context}`}

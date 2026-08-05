@@ -1,8 +1,10 @@
 import { Metadata } from "next";
-import { AnimeInfoAnilist } from "@/lib/Anilistfunctions";
+import { AnimeInfoAnilist, PopularThisSeason } from "@/lib/Anilistfunctions";
+import { getRecentEpisodes } from "@/lib/getData";
 import NextAiringDate from "@/components/videoplayer/NextAiringDate";
 import PlayerAnimeCard from "@/components/videoplayer/PlayerAnimeCard";
 import PlayerAnimeInfo from "@/components/videoplayer/PlayerAnimeInfo";
+import PlayerVerticalList from "@/components/videoplayer/PlayerVerticalList";
 import Navbarcomponent from "@/components/navbar/Navbar";
 import PlayerComponent from "@/components/videoplayer/PlayerComponent";
 import Animecards from "@/components/CardComponent/Animecards";
@@ -110,8 +112,12 @@ async function AnimeWatch({ params }: PageProps) {
     return <div>Error: Missing required parameters.</div>;
   }
 
-  const data = await getInfo(id);
-  const savedepRaw = await Ephistory(session, id, parseInt(epNum), data!, epId);
+  const [data, recentData, popularData] = await Promise.all([
+    getInfo(id),
+    getRecentEpisodes().catch(() => []),
+    PopularThisSeason().catch(() => []),
+  ]);
+  const savedepRaw = data ? await Ephistory(session, id, parseInt(epNum), data, epId) : null;
 
   const savedep: SavedEpisode[] = Array.isArray(savedepRaw)
     ? savedepRaw
@@ -143,9 +149,17 @@ async function AnimeWatch({ params }: PageProps) {
           <div className="rounded-lg hidden lg:block lg:max-w-[280px] xl:max-w-[380px] w-full xl:overflow-y-scroll xl:overflow-x-hidden overflow-hidden scrollbar-hide">
             <PlayerAnimeCard data={data?.recommendations?.nodes} id="Đề xuất" />
           </div>
+          <div className="hidden lg:block lg:max-w-[280px] xl:max-w-[380px] w-full overflow-hidden">
+            <PlayerVerticalList
+              recentData={recentData ?? []}
+              popularData={popularData ?? []}
+              title="Khám phá"
+              compact={true}
+            />
+          </div>
         </div>
       </div>
-      <div className="w-full flex flex-col lg:flex-row lg:max-w-[98%] mx-auto xl:max-w-[94%] lg:gap-[6px] mt-[3px]">
+      <div className="w-full flex flex-col lg:flex-row lg:max-w-[98%] mx-auto xl:max-w-[94%] lg:gap-[6px] mt-[40px]">
         <div className="flex-grow w-full h-full">
           <PlayerAnimeInfo data={data} />
         </div>
@@ -154,7 +168,15 @@ async function AnimeWatch({ params }: PageProps) {
             <PlayerAnimeCard data={data?.relations?.edges} id="Liên quan" />
           </div>
         </div>
-        <div className="lg:hidden">
+        <div className="lg:hidden mt-4">
+          <PlayerVerticalList
+            recentData={recentData ?? []}
+            popularData={popularData ?? []}
+            title="Top Anime"
+            compact={false}
+          />
+        </div>
+        <div className="lg:hidden mt-4">
           <Animecards
             data={data?.recommendations?.nodes?.map((item) => item.mediaRecommendation) || []}
             cardid="Đề xuất"

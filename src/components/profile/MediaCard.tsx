@@ -1,33 +1,21 @@
 "use client";
 import {useState, useEffect} from 'react';
 import Image from 'next/image';
-// import {AnimeItem} from '@/lib/types'
 import { useStore } from 'zustand';
 import { useTitle } from '@/lib/store';
 import Link from 'next/link';
 import { Modal, ModalContent, ModalBody } from "@nextui-org/react";
 import Addtolist from '../details/Addtolist';
-import { MediaListEntry } from '@/lib/AnilistUser';
-
-
-// interface Anime {
-//   id: number;
-//   mediaId: number;
-//   progress?: number;
-//   updatedAt?: number;
-//   media?: AnimeItem;
-// }
+import { MediaListEntry } from '@/types/anilist';
+import type { Session } from 'next-auth';
 
 interface MediaCardProps {
   anime: MediaListEntry;
-  session: {
-        user: {
-        token: string;
-        };
-    }; 
+  session: Session | null;
+  onDeleted?: (id: number) => void;
 }
 
-function MediaCard({ anime, session }: MediaCardProps) {
+function MediaCard({ anime, session, onDeleted }: MediaCardProps) {
     const animetitle = useStore(useTitle, (state) => state.animetitle);
     const [openlist, setOpenlist] = useState(false);
     const [list, setList] = useState<MediaListEntry | null>(null);
@@ -42,7 +30,13 @@ function MediaCard({ anime, session }: MediaCardProps) {
         setOpenlist(!openlist);
     }
 
-    // console.log(anime)
+    const handleSetList = (entry: MediaListEntry | null) => {
+        setList(entry);
+        if (entry === null) {
+            onDeleted?.(anime.id);
+        }
+    };
+
     return (
         <div className='flex flex-col'>
             <div className='relative overflow-hidden rounded-lg shadow-lg group p-1 flex-shrink-0 cursor-pointer'>
@@ -89,7 +83,7 @@ function MediaCard({ anime, session }: MediaCardProps) {
                                         </div>
                                     </div>
                                     <div className='mt-2 sm:mt-20 md:px-[5%] px-[2%] mb-2'>
-                                        <Addtolist session={session} setList={setList} list={list}
+                                        <Addtolist session={session} setList={handleSetList} list={list}
                                             id={anime?.id} eplength={anime.media?.episodes ?? (anime.media?.nextAiringEpisode?.episode ? anime.media.nextAiringEpisode.episode - 1 : undefined) ?? 24} Handlelist={Handlelist} />
                                     </div>
                                 </ModalBody>

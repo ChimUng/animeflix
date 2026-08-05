@@ -2,31 +2,17 @@
 import React, { useState, MouseEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import MediaCard from "./MediaCard";
-import { MediaListEntry } from "@/lib/AnilistUser";
+import type { Session } from 'next-auth';
+import { MediaListEntry } from '@/types/anilist';
 
-
-// export interface AnimeEntry {
-//   id: number;                
-//   mediaId: number;           
-//   updatedAt: number;         
-//   progress?: number;
-//   media: AnimeItem;          // AnimeItem chứa thông tin anime
-// }
-
-// Kiểu dữ liệu AniList tab
 interface ListTab {
   name: string;
   entries: MediaListEntry[];
 }
 
-// Props cho component
 interface UserInfoProps {
   lists: ListTab[];
-  session: {
-    user: {
-    token: string;
-    };
-  };
+  session: Session | null;
 }
 
 function UserInfo({ lists, session }: UserInfoProps) {
@@ -40,6 +26,15 @@ function UserInfo({ lists, session }: UserInfoProps) {
     setActiveTab(tab);
   };
 
+  const [localLists, setLocalLists] = useState<ListTab[]>(lists);
+  const handleDeleted = (deletedId: number) => {
+    setLocalLists(prev =>
+      prev.map(tab => ({
+        ...tab,
+        entries: tab.entries.filter(e => e.id !== deletedId),
+      }))
+    );
+  };
   const isSelected = (tab: ListTab) => activeTab?.name === tab?.name;
 
   return (
@@ -85,7 +80,7 @@ function UserInfo({ lists, session }: UserInfoProps) {
                 ?.slice()
                 .sort((a, b) => b.updatedAt - a.updatedAt)
                 .map((anime) => (
-                  <MediaCard key={anime.id} anime={anime} session={session} />
+                  <MediaCard key={anime.id} anime={anime} session={session} onDeleted={handleDeleted} />
                 ))}
             </div>
           </motion.div>

@@ -1,12 +1,12 @@
 "use client"
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { DropdownItem, DropdownTrigger, Dropdown, DropdownMenu, DropdownSection, Avatar, Badge, useDisclosure } from "@nextui-org/react";
 import Link from 'next/link';
 import styles from '../../styles/Navbar.module.css';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { FeedbackIcon, LoginIcon, LogoutIcon, SettingsIcon, ProfileIcon, NotificationIcon } from '@/lib/SvgIcons';
 import Feedbackform from './Feedbackform';
-import { Usernotifications } from '@/lib/AnilistUser';
+import { Usernotifications, type AniListNotification } from '@/lib/AnilistUser';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 import { NotificationTime } from '@/utils/TimeFunctions';
 import { useTitle, useSearchbar } from '@/lib/store';
@@ -32,22 +32,6 @@ type SessionData = {
     // expires: string;
 };
 
-type Notification = {
-    id: string;
-    contexts?: string[];
-    media?: { title: { romaji: string; english?: string; native?: string } };
-    episode?: number;
-    createdAt: number;
-    // type?: string;
-};
-
-// Định nghĩa kiểu cho dữ liệu trả về từ Usernotifications (để khớp với NotificationData["Page"] trong AnilistUser.ts)
-// NotificationData["Page"] có cấu trúc { notifications: any[] }
-type AniListNotificationPage = {
-    notifications: Notification[]; // Đây là mảng các thông báo
-    // Bạn có thể thêm các trường khác nếu Page object có, ví dụ pageInfo
-};
-
 interface TitleStore {
     animetitle: string;
 }
@@ -59,21 +43,78 @@ interface SearchbarStore {
 
 type TimeframeChangeEvent = React.ChangeEvent<HTMLSelectElement>;
 
+const MAX_PER_ANIME = 3;
+
+// Key để nhóm thông báo theo bộ anime — dùng lại logic đã áp dụng ở Notifications.tsx
+// để đảm bảo 2 nơi luôn nhất quán khi kiểu thông báo thay đổi.
+function getNotifKey(item: AniListNotification): string | number {
+    if ("animeId" in item && item.animeId) return item.animeId;
+    if ("mediaId" in item && item.mediaId) return item.mediaId;
+    if ("deletedMediaTitle" in item) return `deleted-${item.deletedMediaTitle}`;
+    return item.media?.id ?? item.id;
+}
+
+function dedupeByAnime(list: AniListNotification[], max: number = MAX_PER_ANIME): AniListNotification[] {
+    const seenCount = new Map<string | number, number>();
+    const result: AniListNotification[] = [];
+    for (const item of list) {
+        const key = getNotifKey(item);
+        const count = seenCount.get(key) ?? 0;
+        if (count < max) {
+            result.push(item);
+            seenCount.set(key, count + 1);
+        }
+    }
+    return result;
+}
+
+// Build title/description cho từng loại thông báo. Trước đây code chỉ xử lý đúng
+// AiringNotification (contexts + episode) — các loại còn lại (context số ít, deletedMediaTitle)
+// bị bỏ sót nên hiện trống. Thứ tự check: deletedMediaTitle trước "context" vì
+// MediaDeletionNotification cũng có field "context".
+function getNotificationText(item: AniListNotification, animetitle: string): { title: string; description: string } {
+    if ("deletedMediaTitle" in item) {
+        return { title: item.deletedMediaTitle, description: item.context };
+    }
+    const mediaTitle =
+        item.media?.title?.[animetitle as "romaji" | "english" | "native"] ||
+        item.media?.title?.romaji ||
+        '';
+    if ("context" in item) {
+        return { title: mediaTitle, description: item.context };
+    }
+    if ("contexts" in item) {
+        const description = [
+            item.contexts?.[0] ?? '',
+            item.episode ?? '',
+            item.contexts?.[1] ?? '',
+            mediaTitle,
+            item.contexts?.[item.contexts.length - 1] ?? '',
+        ].join(' ').replace(/\s+/g, ' ').trim();
+        return { title: mediaTitle, description };
+    }
+    return { title: mediaTitle, description: '' };
+}
+
 function Navbarcomponent({ home = false }: NavbarProps) {
     const animetitle = useStore(useTitle, (state: TitleStore) => state.animetitle);
     const Isopen = useStore(useSearchbar, (state: SearchbarStore) => state.Isopen);
-    const setIsopen = useStore(useSearchbar, (state: SearchbarStore) => state.setIsOpen); // Lấy hàm setter
+    const setIsopen = useStore(useSearchbar, (state: SearchbarStore) => state.setIsOpen);
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
     const iconClasses = 'w-5 h-5 text-xl text-default-500 pointer-events-none flex-shrink-0';
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
     const [isScrolled, setIsScrolled] = useState<boolean>(false);
     const [hidden, setHidden] = useState<boolean>(false);
     const { scrollY } = useScroll();
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [todayNotifications, setTodayNotifications] = useState<Notification[]>([]);
+    const [notifications, setNotifications] = useState<AniListNotification[]>([]);
+    const [todayNotifications, setTodayNotifications] = useState<AniListNotification[]>([]);
     const [selectedTimeframe, setSelectedTimeframe] = useState<string>('Today');
     const { data, status } = useSession() as { data: SessionData | null, status: string };
 
+    // Dedupe 3-thông-báo-mới-nhất/anime cho cả 2 tab (Hôm nay / Gần đây) trong dropdown,
+    // tránh trường hợp 1 bộ anime chiếm hết slot hiển thị.
+    const dedupedToday = useMemo(() => dedupeByAnime(todayNotifications), [todayNotifications]);
+    const dedupedAll = useMemo(() => dedupeByAnime(notifications), [notifications]);
 
     const handleTimeframeChange = (e: TimeframeChangeEvent) => {
         setSelectedTimeframe(e.target.value);
@@ -104,22 +145,17 @@ function Navbarcomponent({ home = false }: NavbarProps) {
         useEffect(() => {
         const fetchNotifications = async () => {
             try {
-                // Kiểm tra status và đảm bảo data.user.token tồn tại và là string
-                // Sử dụng type assertion (data.user as User) để đảm bảo TypeScript hiểu cấu trúc User
                 if (status === 'authenticated' && data?.user?.token) {
-                    const userToken: string = data.user.token; // Đảm bảo là string
+                    const userToken: string = data.user.token;
 
-                    // Gọi Usernotifications và ép kiểu kết quả
-                    const responseData: AniListNotificationPage | undefined = await Usernotifications(userToken, 1);
+                    const responseData = await Usernotifications(userToken, 1);
 
-                    if (responseData && responseData.notifications) {
-                        // Lọc các thông báo có đầy đủ dữ liệu (object không rỗng)
+                    if (responseData?.notifications) {
                         const notify = responseData.notifications.filter((item) => Object.keys(item).length > 0);
                         setNotifications(notify);
                         const filteredNotifications = filterNotifications(notify);
                         setTodayNotifications(filteredNotifications);
                     } else {
-                        // Xử lý trường hợp không có thông báo hoặc responseData là undefined
                         setNotifications([]);
                         setTodayNotifications([]);
                     }
@@ -129,11 +165,10 @@ function Navbarcomponent({ home = false }: NavbarProps) {
             }
         };
 
-        // Chỉ gọi fetchNotifications khi status hoặc data thay đổi
         fetchNotifications();
-    }, [status, data]); // Dependencies: status và data (để trigger re-fetch khi session thay đổi)
+    }, [status, data]);
 
-    function filterNotifications(notifications: Notification[]): Notification[] {
+    function filterNotifications(notifications: AniListNotification[]): AniListNotification[] {
         const currentTimestamp = Math.floor(Date.now() / 1000);
         const oneDayInSeconds = 24 * 60 * 60;
         return notifications.filter((notification) => {
@@ -147,14 +182,14 @@ function Navbarcomponent({ home = false }: NavbarProps) {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.code === 'KeyS' && e.ctrlKey) {
                 e.preventDefault();
-                setIsopen(!Isopen); // Sử dụng hàm setter từ Zustand store
+                setIsopen(!Isopen);
             }
         };
         window.addEventListener('keydown', handleKeyDown as EventListener);
         return () => {
             window.removeEventListener('keydown', handleKeyDown as EventListener);
         };
-    }, [Isopen, setIsopen]); // Thêm Isopen và setIsopen vào dependency array
+    }, [Isopen, setIsopen]);
     
     const navbarClass = isScrolled
         ? `${home ? styles.homenavbar : styles.navbar} ${home && styles.navbarscroll}`
@@ -192,7 +227,7 @@ function Navbarcomponent({ home = false }: NavbarProps) {
                 <button
                     type="button"
                     title="Search"
-                    onClick={() => setIsopen(true)} // Đã sửa: dùng setIsopen thay vì useSearchbar.setState
+                    onClick={() => setIsopen(true)}
                     className="w-[26px] h-[26px] outline-none transition duration-200 hover:scale-110 hover:text-warning"
                 >
                     <svg
@@ -218,13 +253,13 @@ function Navbarcomponent({ home = false }: NavbarProps) {
                         }}>
                             <DropdownTrigger>
                                 <div className='w-[26px] h-[26px] mr-2 mt-[2px] cursor-pointer '>
-                                    <Badge color="danger" content={todayNotifications?.length} shape="circle" showOutline={false} size="sm">
+                                    <Badge color="danger" content={dedupedToday?.length} shape="circle" showOutline={false} size="sm">
                                         <NotificationIcon className="text-white duration-200 hover:scale-110 hover:text-warning" style={{ filter: 'drop-shadow(1px 1px 2px rgba(0,0,0,0.6))' }}/>
                                     </Badge>
                                 </div>
                             </DropdownTrigger>
                             <DropdownMenu variant="flat" className='w-[320px] '
-                                aria-label="Notifications" // Đã đổi Avatar Actions thành Notifications
+                                aria-label="Notifications"
                                 emptyContent="Không có thông báo mới"
                             >
                                 <DropdownSection title="Thông báo">
@@ -253,20 +288,14 @@ function Navbarcomponent({ home = false }: NavbarProps) {
                                 </DropdownSection>
                                 <DropdownSection className="w-full">
                                     {selectedTimeframe === 'Hôm nay' ? (
-                                        todayNotifications && todayNotifications.length > 0 ? (
+                                        dedupedToday.length > 0 ? (
                                             <>
-                                                {todayNotifications.slice(0, 3).map((item) => {
-                                                    const { contexts, media, episode, createdAt, id } = item;
-                                                    const mediaTitle = media?.title?.[animetitle as keyof typeof media.title] || media?.title?.romaji || '';
+                                                {dedupedToday.slice(0, 3).map((item) => {
+                                                    const { title, description } = getNotificationText(item, animetitle);
                                                     return (
                                                         <DropdownItem
-                                                            key={id} // Sử dụng id làm key
-                                                            // showFullDescription // Đã comment/xóa prop này
-                                                            description={`${contexts?.[0] || ''} ${episode || ''} ${
-                                                                contexts?.[1] || ''
-                                                            } ${mediaTitle} ${
-                                                                contexts?.[contexts.length - 1] || ''
-                                                            }`}
+                                                            key={item.id}
+                                                            description={description}
                                                             className="py-2 w-full"
                                                             classNames={{
                                                                 description: 'text-[11px] text-[#A1A1AA]',
@@ -274,11 +303,11 @@ function Navbarcomponent({ home = false }: NavbarProps) {
                                                         >
                                                             <div className="flex flex-row items-center justify-between w-[290px]">
                                                                 <p className="font-semibold text-[14px] w-full">
-                                                                    {mediaTitle.slice(0, 24)}
-                                                                    {mediaTitle.length > 24 && '...'}
+                                                                    {title.slice(0, 24)}
+                                                                    {title.length > 24 && '...'}
                                                                 </p>
                                                                 <span className="text-[#f1f1f1b2] text-[10px]">
-                                                                    {NotificationTime(createdAt)}
+                                                                    {NotificationTime(item.createdAt)}
                                                                 </span>
                                                             </div>
                                                         </DropdownItem>
@@ -294,20 +323,14 @@ function Navbarcomponent({ home = false }: NavbarProps) {
                                             </DropdownItem>
                                         )
                                     ) : (
-                                        notifications && notifications.length > 0 ? (
+                                        dedupedAll.length > 0 ? (
                                             <>
-                                                {notifications.slice(0, 3).map((item) => {
-                                                    const { contexts, media, episode, createdAt, id } = item;
-                                                    const mediaTitle = media?.title?.[animetitle as keyof typeof media.title] || media?.title?.romaji || '';
+                                                {dedupedAll.slice(0, 3).map((item) => {
+                                                    const { title, description } = getNotificationText(item, animetitle);
                                                     return (
                                                         <DropdownItem
-                                                            key={id}
-                                                            // showFullDescription // Đã comment/xóa prop này
-                                                            description={`${contexts?.[0] || ''} ${episode || ''} ${
-                                                                contexts?.[1] || ''
-                                                            } ${mediaTitle} ${
-                                                                contexts?.[contexts.length - 1] || ''
-                                                            }`}
+                                                            key={item.id}
+                                                            description={description}
                                                             className="py-2 w-full"
                                                             classNames={{
                                                                 description: 'text-[11px] text-[#A1A1AA]',
@@ -315,11 +338,11 @@ function Navbarcomponent({ home = false }: NavbarProps) {
                                                         >
                                                             <div className="flex flex-row items-center justify-between w-[290px]">
                                                                 <p className="font-semibold text-[14px] w-full">
-                                                                    {mediaTitle.slice(0, 24)}
-                                                                    {mediaTitle.length > 24 && '...'}
+                                                                    {title.slice(0, 24)}
+                                                                    {title.length > 24 && '...'}
                                                                 </p>
                                                                 <span className="text-[#f1f1f1b2] text-[10px]">
-                                                                    {NotificationTime(createdAt)}
+                                                                    {NotificationTime(item.createdAt)}
                                                                 </span>
                                                             </div>
                                                         </DropdownItem>
@@ -335,8 +358,8 @@ function Navbarcomponent({ home = false }: NavbarProps) {
                                             </DropdownItem>
                                         )
                                     )}
-                                    {(selectedTimeframe === 'Hôm nay' && todayNotifications && todayNotifications.length > 0) ||
-                                    (selectedTimeframe !== 'Hôm nay' && notifications && notifications.length > 0) ? (
+                                    {(selectedTimeframe === 'Hôm nay' && dedupedToday.length > 0) ||
+                                    (selectedTimeframe !== 'Hôm nay' && dedupedAll.length > 0) ? (
                                         <DropdownItem
                                             key="show-all-notifications"
                                             className="py-2 w-full text-xl text-default-500 flex-shrink-0"
