@@ -5,12 +5,19 @@ import Schedule from "@/components/schedule/Schedule";
 import { WeeklyScheduleAnilist } from "@/lib/Anilistfunctions";
 import { redis } from "@/lib/rediscache";
 import { ScheduleAnimeItem, ScheduleResponse } from "@/types/schedule";
+import { AnimeItem } from "@/types/anime";
+
+interface AiringScheduleEntry {
+    media: AnimeItem;
+    episode: number;
+    airingAt: number;
+}
 
 const daysOfWeekVi = ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"];
 const CACHE_KEY = "schedule:weekly";
 const CACHE_TTL = 60 * 60; // 1h
 
-function transformSchedules(schedules: any[]): ScheduleResponse {
+function transformSchedules(schedules: AiringScheduleEntry[]): ScheduleResponse {
     const dayCountMap = new Map<string, number>();
     const animes: ScheduleAnimeItem[] = [];
 

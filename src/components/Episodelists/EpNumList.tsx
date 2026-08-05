@@ -22,6 +22,7 @@ const EpNumList: React.FC<EpNumListProps> = ({data,epdata,defaultProvider,subtyp
 
             return (
             <Link
+                key={episode.id || episode.episodeId || episode.number}
                 href={buildWatchUrl({
                     id: data?.id ?? "",
                     provider: defaultProvider,

@@ -146,9 +146,14 @@ function Herosection({ data }: HerosectionProps) {
     useEffect(() => {
         if (!useEmbed) return;
 
+        interface YoutubeMessageData {
+            event?: string;
+            info?: string | { playerState: number };
+        }
+
         const handleYoutubeMessage = (event: MessageEvent) => {
             if (!event.origin.includes('youtube.com')) return;
-            let data: any;
+            let data: YoutubeMessageData;
             try {
                 data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
             } catch {
@@ -160,7 +165,7 @@ function Herosection({ data }: HerosectionProps) {
                 setEmbedFailed(true);
             }
             // playerState 0 = ended → chuyển sang banner tiếp theo
-            if (data?.event === 'infoDelivery' && data?.info?.playerState === 0) {
+            if (data?.event === 'infoDelivery' && typeof data?.info === 'object' && data.info?.playerState === 0) {
                 handleVideoEnded();
             }
         };

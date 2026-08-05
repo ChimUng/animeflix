@@ -16,9 +16,8 @@ const ACTIVE_COLOR = "#A4E745";
 const deduplicateServers = (serversList: ServerOption[]) => {
   const unique = new Map<string, ServerOption>();
   serversList.forEach((s) => {
-    // Tùy theo interface của bạn, dùng s.label hoặc s.server để nhận diện tên server
-    const serverName = s.label || (s as any).server; 
-    
+    const serverName = s.label || (s as unknown as { server?: string }).server || "";
+
     if (unique.has(serverName)) {
       const existing = unique.get(serverName);
       // Nếu server đã có là hsub mà server hiện tại là sub -> ghi đè bằng sub
@@ -64,7 +63,7 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({ servers, activeKey, loa
                 isActive ? "" : "bg-[#403c44] hover:bg-[#A4E745]/30 text-white"
               }`}
             >
-              {s.label || (s as any).server}
+              {s.label || (s as unknown as { server?: string }).server}
             </button>
           );
         })}
