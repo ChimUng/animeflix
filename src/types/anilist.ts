@@ -113,8 +113,29 @@ export type UserListData = {
   };
 };
 
+export interface AniListViewerUser {
+  id: number;
+  name: string;
+  about?: string | null;
+  createdAt: number;
+  avatar?: {
+    large?: string;
+  } | null;
+  statistics?: {
+    anime?: {
+      count?: number;
+      episodesWatched?: number;
+      minutesWatched?: number;
+      meanScore?: number;
+    };
+  } | null;
+  bannerImage?: string | null;
+}
+
 export type MediaListCollection = {
+  user: AniListViewerUser;
   lists: {
+    status?: string;
     name: string;
     entries: MediaListEntry[];
   }[];
@@ -127,3 +148,5 @@ export type UserProfileData = {
 export type GraphQLResponse<T> = {
   data: T;
 };
+
+

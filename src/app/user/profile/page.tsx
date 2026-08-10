@@ -16,8 +16,11 @@ async function page() {
     }
 
     const data = await UserProfile(session.user.token, session.user.name);
+    if (!data) {
+      redirect('/');
+    }
     // console.log("Raw UserProfile data:", data);
-  const { user, lists } = data;
+    const { user, lists } = data;
 
   return (
     <div className='min-h-screen'>
@@ -51,7 +54,7 @@ async function page() {
         <div className="flex items-center gap-5 absolute top-32 max-w-[95%] lg:max-w-[90%] xl:max-w-[86%] left-0 right-0 mx-auto">
           <div className='flex items-center gap-4'>
             <Image
-              src={user?.avatar?.large}
+              src={user?.avatar?.large || '/placeholder.jpg'}
               alt="user avatar"
               width={100}
               height={100}

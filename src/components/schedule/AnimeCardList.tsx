@@ -3,12 +3,64 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useStore } from "zustand";
+import { useEffect, useState } from "react";
 import styles from '../../styles/Animecard.module.css';
 import type { ScheduleAnimeItem } from "@/types/schedule";
 import type { AnimeTitle } from "@/types/anime";
 import { useTitle } from "@/lib/store";
 import { CheckCircleIcon, ClockIcon } from "@/lib/SvgIcons";
-import { useCountdown, formatCountdown } from "@/utils/TimeFunctions";
+
+interface CountdownParts {
+    ngay: number;
+    gio: number;
+    phut: number;
+    giay: number;
+}
+
+function useCountdown(airingAt?: number | null): CountdownParts | null {
+  const [timeLeft, setTimeLeft] = useState<CountdownParts | null>(null);
+
+  useEffect(() => {
+    if (!airingAt) {
+      setTimeLeft(null);
+      return;
+    }
+
+    const tick = () => {
+      const diff = airingAt * 1000 - Date.now();
+      if (diff <= 0) {
+        setTimeLeft(null);
+        return false;
+      }
+      setTimeLeft({
+        ngay: Math.floor(diff / 86400000),
+        gio: Math.floor((diff % 86400000) / 3600000),
+        phut: Math.floor((diff % 3600000) / 60000),
+        giay: Math.floor((diff % 60000) / 1000),
+      });
+      return true;
+    };
+
+    if (!tick()) return;
+    const intervalId = setInterval(() => {
+      if (!tick()) clearInterval(intervalId);
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [airingAt]);
+
+  return timeLeft;
+}
+
+function formatCountdown(t: CountdownParts, short = false): string {
+  if (short) {
+    if (t.ngay > 0) return `${t.ngay} ngày ${t.gio} giờ`;
+    if (t.gio > 0) return `${t.gio} giờ ${t.phut} phút`;
+    return `${t.phut} phút ${t.giay} giây`;
+  }
+  return `${t.ngay} ngày, ${t.gio} giờ, ${t.phut} phút, ${t.giay} giây`;
+}
+// ──────────────────────────────────────────────────────────────────────────
 
 function ScheduleBadge({ airingAt }: { airingAt: number }) {
   const isAired = airingAt * 1000 <= Date.now();
