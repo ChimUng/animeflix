@@ -14,6 +14,7 @@ const releaseLogs: ReleaseLog[] = [
   {
     version: "New Version 2.0",
     changes: [
+      "10/8/2026 add comment section",
       "3/8/2026 add vietsub provider",
       "7/17/2026 add anineko provider",
       "Update new UI for animeflix",

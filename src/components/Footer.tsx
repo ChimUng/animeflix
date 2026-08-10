@@ -5,6 +5,8 @@ import { useTitle } from '@/lib/store';
 import { useStore } from 'zustand';
 import DonatePopup from '@/components/DonatePopup';
 
+const ALPHABET = ['All', '#', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+
 function Footer() {
     const animetitle = useStore(useTitle, (state) => state.animetitle);
 
@@ -60,33 +62,45 @@ function Footer() {
                                 Liên hệ quảng cáo qua email: <Link href="mailto:duynguyen19087@gmail.com">duynguyen19087@gmail.com</Link>
                             </p>
                         </div>
-                        <div className="grid grid-cols-2 lg:gap-16 sm:gap-6 sm:grid-cols-2">
-                            <div>
-                                <ul className=" font-semibold flex flex-col gap-2 lg:text-[0.85rem] text-[0.7rem] text-[#ffffffb2] ">
-                                    <li>
-                                        <Link href={`/anime/catalog?season=${getSeason(month + 1)}&year=${getYear()}`} className="hover:text-white">Mùa này</Link>
-                                    </li>
-                                    <li>
-                                        <Link href={`/anime/catalog?season=${nextSeason(getSeason(month + 1))}&year=${getYear() + 1}`} className="hover:text-white">Mùa tới</Link>
-                                    </li>
-                                    <li>
-                                        <Link href="/anime/catalog?format=MOVIE" className="hover:text-white">Movies</Link>
-                                    </li>
-                                    <li>
-                                        <Link href="/anime/catalog?format=TV" className="hover:text-white">Tv Shows</Link>
-                                    </li>
-                                </ul>
+
+                        {/* Danh sách A-Z */}
+                        <div className="flex flex-col items-center lg:items-start gap-4 lg:min-w-[460px]">
+                            <div className="text-center lg:text-left">
+                                <span className="font-bold text-[0.95rem] lg:text-[1rem] text-white tracking-wide">
+                                    DANH SÁCH A-Z
+                                </span>
+                                <span className="mx-2 text-[#ffffff4d]">|</span>
+                                <span className="font-karla text-[0.75rem] lg:text-[0.8rem] text-[#ffffffb2]">
+                                    Tìm phim theo thứ tự chữ cái từ A đến Z.
+                                </span>
                             </div>
-                            <div>
-                                <ul className="font-semibold flex flex-col gap-2 lg:text-[0.85rem] text-[0.7rem] text-[#ffffffb2]">
-                                    <li>
-                                        <Link href="/clause" className="hover:text-white">Điều khoản</Link>
-                                    </li>
-                                    <li>
-                                        <DonatePopup />
-                                    </li>
-                                </ul>
+
+                            <div className="flex flex-wrap gap-2 justify-center lg:grid lg:grid-cols-[repeat(14,minmax(0,1fr))] lg:justify-start lg:w-fit">
+                                {ALPHABET.map((letter) => (
+                                    <Link
+                                        key={letter}
+                                        href={letter === 'All' ? '/anime/catalog' : `/anime/catalog?search=${letter.toLowerCase()}`}
+                                        className="min-w-[36px] h-9 px-2 flex items-center justify-center rounded-md bg-[#232326] text-[0.8rem] font-semibold text-[#ffffffb2] hover:bg-d234 hover:text-white transition-colors"
+                                    >
+                                        {letter}
+                                    </Link>
+                                ))}
                             </div>
+
+                            <ul className="font-semibold flex flex-wrap items-center gap-x-6 gap-y-2 justify-center lg:justify-start lg:text-[0.85rem] text-[0.7rem] text-[#ffffffb2]">
+                                <li>
+                                    <Link href="/clause" className="hover:text-white">Điều khoản</Link>
+                                </li>
+                                <li>
+                                    <DonatePopup />
+                                </li>
+                                <li>
+                                    <Link href={`/anime/catalog?season=${getSeason(month + 1)}&year=${getYear()}`} className="hover:text-white">Mùa này</Link>
+                                </li>
+                                <li>
+                                    <Link href={`/anime/catalog?season=${nextSeason(getSeason(month + 1))}&year=${getYear() + 1}`} className="hover:text-white">Mùa tới</Link>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </div>
