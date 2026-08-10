@@ -8,11 +8,11 @@ interface ReleaseLog {
   changes: string[];
 }
 
-const newVersion: string = "New Version 2.0";
+const newVersion: string = "New Version 2.1";
 
 const releaseLogs: ReleaseLog[] = [
   {
-    version: "New Version 2.0",
+    version: "New Version 2.1",
     changes: [
       "10/8/2026 add comment section",
       "3/8/2026 add vietsub provider",
