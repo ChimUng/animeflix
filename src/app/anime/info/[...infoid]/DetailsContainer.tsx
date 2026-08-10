@@ -9,6 +9,8 @@ import { MediaListEntry } from '@/types/anilist';
 import { getUserLists } from '@/lib/AnilistUser';
 import type { Session } from "next-auth";
 
+import CoralComments from '@/components/CommentComponent/CoralComments';
+
 interface DetailsContainerProps {
     data: AnimeItem;
     id: number;
@@ -18,6 +20,7 @@ interface DetailsContainerProps {
 const DetailsContainer: React.FC<DetailsContainerProps> = ({ data, id, session }) => {
     const [list, setList] = useState<MediaListEntry | null>(null);
     const [url, setUrl] = useState<string | null>(null);
+    const appUrl = process.env.NEXT_PUBLIC_PRODUCTION_URL || 'http://localhost:3000';
 
     useEffect(() => {
         const fetchList = async () => {
@@ -50,6 +53,12 @@ const DetailsContainer: React.FC<DetailsContainerProps> = ({ data, id, session }
             <Animecards data={recommendations} cardid={"Đề xuất"} />
             </div>
         )}
+        <div className="max-w-[85%] max-[1200px]:max-w-[90%] max-[900px]:max-w-[95%] max-[600px]:max-w-[98%] mx-auto mb-6">
+            <CoralComments
+                storyId={`anime-info-${id}`}
+                storyUrl={`${appUrl}/anime/info/${id}`}
+            />
+        </div>
         </>
     );
 };

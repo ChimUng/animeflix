@@ -23,6 +23,7 @@
     "framer-motion": "^12.18.1",
     "hls-parser": "^0.13.6",
     "ioredis": "^5.6.1",
+    "jsonwebtoken": "^9.0.3",
     "media-icons": "^0.10.0",
     "mongodb": "^6.17.0",
     "mongoose": "^8.16.0",
@@ -43,6 +44,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
