@@ -100,8 +100,13 @@
   .text-animate-red {
     @apply bg-gradient-to-r from-red-500 via-white to-red-500 bg-[length:200%_100%] animate-gradient-x text-transparent bg-clip-text font-semibold;
   }
+  .text-animate-green {
+    @apply bg-gradient-to-r from-emerald-500 via-white to-emerald-500 bg-[length:200%_100%] animate-gradient-x text-transparent bg-clip-text font-semibold;
+  }
+  .text-animate-cyan {
+    @apply bg-gradient-to-r from-cyan-400 via-white to-cyan-400 bg-[length:200%_100%] animate-gradient-x text-transparent bg-clip-text font-semibold;
+  }
 }
-
 /* Card Hover Overlay hiện blur mờ (đã xóa do  backdrop-blur-sm quá lag) */
 @layer components {
   .card-hover-overlay {
