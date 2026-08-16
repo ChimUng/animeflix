@@ -294,6 +294,38 @@ export const VipBadgeIcon = (props: IconProps) => (
   </svg>
 );
 
+// Icon Boss — administrator (hình người)
+export const AdminIcon = (props: IconProps) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.42 0-8 2.24-8 5v3h16v-3c0-2.76-3.58-5-8-5Z" />
+  </svg>
+);
+
+// Icon Moderator — thanh kiếm
+export const SwordIcon = (props: IconProps) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M14.5 17.5 3 6V3h3l11.5 11.5" />
+    <path d="M13 19l6-6" />
+    <path d="M16 16l4.5 4.5" />
+    <path d="M19 21l2-2" />
+  </svg>
+);
+
+// Icon Fan cứng — flame thật, RIÊNG với AiringFlameIcon (icon đó dùng cho loa ghim comment)
+export const FlameIcon = (props: IconProps) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M12 23c4.97 0 9-3.58 9-8 0-3.5-2-6-3.5-8 .5 2-1 3-1 3s.5-4-3-7c-.2 2.5-1.5 4-3 5.5C8.5 10 7 11.5 7 14c0 .34.02.67.06 1C6.4 14.2 6 13.15 6 12c-2 2-3 4-3 6 0 4.42 4.03 8 9 8Zm0-3c-2.76 0-5-1.79-5-4 0-1.2.6-2.2 1.5-3-.02.9.34 1.6 1 2 0-.9.3-1.6.9-2.2.3.7.5 1.3.6 1.9.7-.5 1.1-1.1 1.3-1.9.7.9 1.7 2 1.7 3.2 0 2.21-2.24 4-5 4Z" />
+  </svg>
+);
+
+// Icon mũi tên kép — dùng cho thanh "Tải thêm bình luận"
+export const ChevronDoubleDownIcon = (props: IconProps) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <polyline points="6 8 12 14 18 8" />
+    <polyline points="6 13 12 19 18 13" />
+  </svg>
+);
+
 export const SmileIcon = (props: IconProps) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...props}>
     <circle cx="12" cy="12" r="10" />
