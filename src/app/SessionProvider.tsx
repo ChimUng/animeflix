@@ -31,7 +31,7 @@ export function AuthProvider({ children, session }: AuthProviderProps) {
     }, [session]);
 
     return (
-        <SessionProvider session={session}>
+        <SessionProvider session={session} refetchInterval={0} refetchOnWindowFocus={false}>
         <SkeletonTheme baseColor="#18181b" highlightColor="#1e1e24" borderRadius={"0.5rem"}>
             {children}
         </SkeletonTheme>

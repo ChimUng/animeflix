@@ -186,12 +186,6 @@ function Catalog({ searchParams }: { searchParams: SearchParams }) {
         !searchvalue &&
         !airingvalue;
 
-    const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-        if (isMobile) {
-            e.target.blur();
-        }
-    };
-
     return (
         <div className={styles.catalog}>
             <div className={styles.catalogtop}>
@@ -242,7 +236,6 @@ function Catalog({ searchParams }: { searchParams: SearchParams }) {
                                             }
                                             placeholder="Chọn thể loại"
                                             onChange={(event) => setQuery(event.target.value)}
-                                            onFocus={handleInputFocus}
                                             autoComplete="off"
                                             readOnly={isMobile}
                                             inputMode={isMobile ? "none" : "text"}

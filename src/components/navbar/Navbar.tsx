@@ -4,15 +4,15 @@ import { DropdownItem, DropdownTrigger, Dropdown, DropdownMenu, DropdownSection,
 import Link from 'next/link';
 import styles from '../../styles/Navbar.module.css';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { FeedbackIcon, LoginIcon, LogoutIcon, SettingsIcon, ProfileIcon, NotificationIcon } from '@/lib/SvgIcons';
+import { FeedbackIcon, LoginIcon, LogoutIcon, SettingsIcon, ProfileIcon, NotificationIcon, AtSignIcon } from '@/lib/SvgIcons';
 import Feedbackform from './Feedbackform';
 import { Usernotifications, type AniListNotification } from '@/lib/AnilistUser';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
-import { NotificationTime } from '@/utils/TimeFunctions';
+import { NotificationTime, formatRelativeTime } from '@/utils/TimeFunctions';
 import { useTitle, useSearchbar } from '@/lib/store';
 import { useStore } from 'zustand';
+import { buildCommentHref } from '@/utils/commentLinks';
 
-// Định nghĩa types
 type NavbarProps = {
     home?: boolean;
 };
@@ -29,7 +29,6 @@ type User = {
 
 type SessionData = {
     user?: User;
-    // expires: string;
 };
 
 interface TitleStore {
@@ -44,9 +43,8 @@ interface SearchbarStore {
 type TimeframeChangeEvent = React.ChangeEvent<HTMLSelectElement>;
 
 const MAX_PER_ANIME = 3;
+const MAX_COMMENT_NOTIF_IN_DROPDOWN = 3;
 
-// Key để nhóm thông báo theo bộ anime — dùng lại logic đã áp dụng ở Notifications.tsx
-// để đảm bảo 2 nơi luôn nhất quán khi kiểu thông báo thay đổi.
 function getNotifKey(item: AniListNotification): string | number {
     if ("animeId" in item && item.animeId) return item.animeId;
     if ("mediaId" in item && item.mediaId) return item.mediaId;
@@ -96,6 +94,25 @@ function getNotificationText(item: AniListNotification, animetitle: string): { t
     return { title: mediaTitle, description: '' };
 }
 
+interface CommentNotification {
+    id: string;
+    type: 'mention' | 'like' | 'system';
+    kind: 'reply' | 'tag' | null;
+    message: string;
+    filmId: string;
+    episodeNum: number;
+    commentId: string | null;
+    anchorCommentId: string | null;
+    provider: string | null;
+    epId: string | null;
+    subtype: string | null;
+    isRead: boolean;
+    createdAt: string;
+    sender: { name: string; avatar: string } | null;
+}
+
+type NotifTab = 'anime' | 'comment';
+
 function Navbarcomponent({ home = false }: NavbarProps) {
     const animetitle = useStore(useTitle, (state: TitleStore) => state.animetitle);
     const Isopen = useStore(useSearchbar, (state: SearchbarStore) => state.Isopen);
@@ -111,8 +128,11 @@ function Navbarcomponent({ home = false }: NavbarProps) {
     const [selectedTimeframe, setSelectedTimeframe] = useState<string>('Today');
     const { data, status } = useSession() as { data: SessionData | null, status: string };
 
-    // Dedupe 3-thông-báo-mới-nhất/anime cho cả 2 tab (Hôm nay / Gần đây) trong dropdown,
-    // tránh trường hợp 1 bộ anime chiếm hết slot hiển thị.
+    const [commentNotifications, setCommentNotifications] = useState<CommentNotification[]>([]);
+    const [commentUnreadCount, setCommentUnreadCount] = useState(0);
+    const [loadingCommentNotif, setLoadingCommentNotif] = useState(false);
+
+    const [notifTab, setNotifTab] = useState<NotifTab>('anime');
     const dedupedToday = useMemo(() => dedupeByAnime(todayNotifications), [todayNotifications]);
     const dedupedAll = useMemo(() => dedupeByAnime(notifications), [notifications]);
 
@@ -142,12 +162,11 @@ function Navbarcomponent({ home = false }: NavbarProps) {
     }
     }, [status]);
 
-        useEffect(() => {
+    useEffect(() => {
         const fetchNotifications = async () => {
             try {
                 if (status === 'authenticated' && data?.user?.token) {
                     const userToken: string = data.user.token;
-
                     const responseData = await Usernotifications(userToken, 1);
 
                     if (responseData?.notifications) {
@@ -166,7 +185,44 @@ function Navbarcomponent({ home = false }: NavbarProps) {
         };
 
         fetchNotifications();
-    }, [status, data]);
+    }, [status, data?.user?.token]);
+
+    useEffect(() => {
+        const fetchCommentNotifications = async () => {
+            if (status !== 'authenticated') return;
+            setLoadingCommentNotif(true);
+            try {
+                const res = await fetch(`/api/notifications?limit=${MAX_COMMENT_NOTIF_IN_DROPDOWN}`);
+                if (res.ok) {
+                    const json = await res.json();
+                    setCommentNotifications(json.items ?? []);
+                    setCommentUnreadCount(json.unreadCount ?? 0);
+                }
+            } catch (error) {
+                console.error('Error fetching comment notifications:', error);
+            } finally {
+                setLoadingCommentNotif(false);
+            }
+        };
+
+        fetchCommentNotifications();
+    }, [status]);
+
+    useEffect(() => {
+        if (notifTab !== 'comment' || commentUnreadCount === 0) return;
+        const markAllRead = async () => {
+            try {
+                const res = await fetch('/api/notifications/read-all', { method: 'POST' });
+                if (res.ok) {
+                    setCommentUnreadCount(0);
+                    setCommentNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+                }
+            } catch (error) {
+                console.error('Error marking comment notifications read:', error);
+            }
+        };
+        markAllRead();
+    }, [notifTab]);
 
     function filterNotifications(notifications: AniListNotification[]): AniListNotification[] {
         const currentTimestamp = Math.floor(Date.now() / 1000);
@@ -200,6 +256,9 @@ function Navbarcomponent({ home = false }: NavbarProps) {
         const year = new Date().getFullYear();
         return year;
     }
+
+    const totalBadgeCount = dedupedToday.length + commentUnreadCount;
+
     return (
         <motion.nav suppressHydrationWarning className={navbarClass}
             variants={{
@@ -253,124 +312,206 @@ function Navbarcomponent({ home = false }: NavbarProps) {
                         }}>
                             <DropdownTrigger>
                                 <div className='w-[26px] h-[26px] mr-2 mt-[2px] cursor-pointer '>
-                                    <Badge color="danger" content={dedupedToday?.length} shape="circle" showOutline={false} size="sm">
+                                    <Badge color="danger" content={totalBadgeCount > 0 ? totalBadgeCount : undefined} shape="circle" showOutline={false} size="sm">
                                         <NotificationIcon className="text-white duration-200 hover:scale-110 hover:text-warning" style={{ filter: 'drop-shadow(1px 1px 2px rgba(0,0,0,0.6))' }}/>
                                     </Badge>
                                 </div>
                             </DropdownTrigger>
-                            <DropdownMenu variant="flat" className='w-[320px] '
+                            <DropdownMenu variant="flat" className='w-[340px] '
                                 aria-label="Notifications"
                                 emptyContent="Không có thông báo mới"
                             >
-                                <DropdownSection title="Thông báo">
+                                <DropdownSection>
                                     <DropdownItem
                                         isReadOnly
-                                        classNames={{
-                                            base: 'py-0 !hover:bg-none'
-                                        }}
-                                        key="theme"
-                                        className="cursor-default"
-                                        endContent={
-                                            <select
-                                                className="z-10 outline-none cursor-pointer w-[72px] py-0.5 rounded-md text-tiny group-data-[hover=true]:border-default-500 border-small border-default-300 dark:border-default-200 bg-transparent text-default-500"
-                                                id="theme"
-                                                name="theme"
-                                                value={selectedTimeframe}
-                                                onChange={handleTimeframeChange}
-                                            >
-                                                <option>Hôm nay</option>
-                                                <option>Gần đây</option>
-                                            </select>
-                                        }
+                                        key="notif-tabs"
+                                        className="cursor-default py-1"
                                     >
-                                        Chọn thời gian
+                                        <div className="flex w-full rounded-lg overflow-hidden border border-default-200">
+                                            <button
+                                                type="button"
+                                                onClick={() => setNotifTab('anime')}
+                                                className={`flex-1 py-1.5 text-xs font-semibold transition-colors ${
+                                                    notifTab === 'anime'
+                                                        ? 'bg-[#d14836] text-white'
+                                                        : 'bg-transparent text-default-500 hover:text-default-700'
+                                                }`}
+                                            >
+                                                Thông báo phim
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setNotifTab('comment')}
+                                                className={`flex-1 py-1.5 text-xs font-semibold transition-colors relative ${
+                                                    notifTab === 'comment'
+                                                        ? 'bg-[#4d148c] text-white'
+                                                        : 'bg-transparent text-default-500 hover:text-default-700'
+                                                }`}
+                                            >
+                                                Bình luận
+                                                {commentUnreadCount > 0 && notifTab !== 'comment' && (
+                                                    <span className="absolute top-0.5 right-2 w-1.5 h-1.5 rounded-full bg-[#ef4444]" />
+                                                )}
+                                            </button>
+                                        </div>
                                     </DropdownItem>
                                 </DropdownSection>
-                                <DropdownSection className="w-full">
-                                    {selectedTimeframe === 'Hôm nay' ? (
-                                        dedupedToday.length > 0 ? (
+
+                                {notifTab === 'anime' ? (
+                                    <>
+                                        <DropdownSection title="Thông báo">
+                                            <DropdownItem
+                                                isReadOnly
+                                                classNames={{
+                                                    base: 'py-0 !hover:bg-none'
+                                                }}
+                                                key="theme"
+                                                className="cursor-default"
+                                                endContent={
+                                                    <select
+                                                        className="z-10 outline-none cursor-pointer w-[72px] py-0.5 rounded-md text-tiny group-data-[hover=true]:border-default-500 border-small border-default-300 dark:border-default-200 bg-transparent text-default-500"
+                                                        id="theme"
+                                                        name="theme"
+                                                        value={selectedTimeframe}
+                                                        onChange={handleTimeframeChange}
+                                                    >
+                                                        <option>Hôm nay</option>
+                                                        <option>Gần đây</option>
+                                                    </select>
+                                                }
+                                            >
+                                                Chọn thời gian
+                                            </DropdownItem>
+                                        </DropdownSection>
+                                        <DropdownSection className="w-full">
+                                            {selectedTimeframe === 'Hôm nay' ? (
+                                                dedupedToday.length > 0 ? (
+                                                    <>
+                                                        {dedupedToday.slice(0, 3).map((item) => {
+                                                            const { title, description } = getNotificationText(item, animetitle);
+                                                            return (
+                                                                <DropdownItem
+                                                                    key={item.id}
+                                                                    description={description}
+                                                                    className="py-2 w-full"
+                                                                    classNames={{
+                                                                        description: 'text-[11px] text-[#A1A1AA]',
+                                                                    }}
+                                                                >
+                                                                    <div className="flex flex-row items-center justify-between w-[290px]">
+                                                                        <p className="font-semibold text-[14px] w-full">
+                                                                            {title.slice(0, 24)}
+                                                                            {title.length > 24 && '...'}
+                                                                        </p>
+                                                                        <span className="text-[#f1f1f1b2] text-[10px]">
+                                                                            {NotificationTime(item.createdAt)}
+                                                                        </span>
+                                                                    </div>
+                                                                </DropdownItem>
+                                                            );
+                                                        })}
+                                                    </>
+                                                ) : (
+                                                    <DropdownItem
+                                                        key="no-today-notifications"
+                                                        className="py-3 w-full text-center"
+                                                    >
+                                                        Không có thông báo hôm nay!
+                                                    </DropdownItem>
+                                                )
+                                            ) : (
+                                                dedupedAll.length > 0 ? (
+                                                    <>
+                                                        {dedupedAll.slice(0, 3).map((item) => {
+                                                            const { title, description } = getNotificationText(item, animetitle);
+                                                            return (
+                                                                <DropdownItem
+                                                                    key={item.id}
+                                                                    description={description}
+                                                                    className="py-2 w-full"
+                                                                    classNames={{
+                                                                        description: 'text-[11px] text-[#A1A1AA]',
+                                                                    }}
+                                                                >
+                                                                    <div className="flex flex-row items-center justify-between w-[290px]">
+                                                                        <p className="font-semibold text-[14px] w-full">
+                                                                            {title.slice(0, 24)}
+                                                                            {title.length > 24 && '...'}
+                                                                        </p>
+                                                                        <span className="text-[#f1f1f1b2] text-[10px]">
+                                                                            {NotificationTime(item.createdAt)}
+                                                                        </span>
+                                                                    </div>
+                                                                </DropdownItem>
+                                                            );
+                                                        })}
+                                                    </>
+                                                ) : (
+                                                    <DropdownItem
+                                                        key="no-all-notifications"
+                                                        className="py-3 w-full text-center"
+                                                    >
+                                                        Không có thông báo nào!
+                                                    </DropdownItem>
+                                                )
+                                            )}
+                                            {(selectedTimeframe === 'Hôm nay' && dedupedToday.length > 0) ||
+                                            (selectedTimeframe !== 'Hôm nay' && dedupedAll.length > 0) ? (
+                                                <DropdownItem
+                                                    key="show-all-notifications"
+                                                    className="py-2 w-full text-xl text-default-500 flex-shrink-0"
+                                                    color="danger"
+                                                >
+                                                    <Link href={`/user/notifications`} className="w-full h-full block">
+                                                        Xem tất cả
+                                                    </Link>
+                                                </DropdownItem>
+                                            ) : null}
+                                        </DropdownSection>
+                                    </>
+                                ) : (
+                                    <DropdownSection title="Bình luận" className="w-full">
+                                        {loadingCommentNotif ? (
+                                            <DropdownItem key="loading-comment-notif" isReadOnly className="py-3 w-full text-center text-default-400">
+                                                Đang tải...
+                                            </DropdownItem>
+                                        ) : commentNotifications.length > 0 ? (
                                             <>
-                                                {dedupedToday.slice(0, 3).map((item) => {
-                                                    const { title, description } = getNotificationText(item, animetitle);
+                                                {commentNotifications.slice(0, MAX_COMMENT_NOTIF_IN_DROPDOWN).map((n) => {                                                   
+                                                    const anchorId = n.anchorCommentId ?? n.commentId;
+                                                    const href = anchorId
+                                                        ? buildCommentHref(
+                                                            { filmId: n.filmId, episodeNum: n.episodeNum, provider: n.provider, epId: n.epId, subtype: n.subtype },
+                                                            anchorId
+                                                        )
+                                                        : '#';
                                                     return (
                                                         <DropdownItem
-                                                            key={item.id}
-                                                            description={description}
+                                                            key={n.id}
                                                             className="py-2 w-full"
-                                                            classNames={{
-                                                                description: 'text-[11px] text-[#A1A1AA]',
-                                                            }}
+                                                            startContent={<AtSignIcon className="w-4 h-4 text-[#4d148c]" />}
                                                         >
-                                                            <div className="flex flex-row items-center justify-between w-[290px]">
-                                                                <p className="font-semibold text-[14px] w-full">
-                                                                    {title.slice(0, 24)}
-                                                                    {title.length > 24 && '...'}
-                                                                </p>
-                                                                <span className="text-[#f1f1f1b2] text-[10px]">
-                                                                    {NotificationTime(item.createdAt)}
-                                                                </span>
-                                                            </div>
+                                                            <Link href={href} className="w-full h-full block">
+                                                                <div className="flex flex-col w-[280px]">
+                                                                    <p className={`text-[13px] leading-snug ${!n.isRead ? 'font-semibold text-white' : 'text-default-500'}`}>
+                                                                        {n.message}
+                                                                    </p>
+                                                                    <span className="text-[10px] text-[#f1f1f1b2] mt-0.5">
+                                                                        {formatRelativeTime(n.createdAt)}
+                                                                    </span>
+                                                                </div>
+                                                            </Link>
                                                         </DropdownItem>
                                                     );
                                                 })}
                                             </>
                                         ) : (
-                                            <DropdownItem
-                                                key="no-today-notifications"
-                                                className="py-3 w-full text-center"
-                                            >
-                                                Không có thông báo hôm nay!
+                                            <DropdownItem key="no-comment-notifications" isReadOnly className="py-3 w-full text-center">
+                                                Không có thông báo bình luận nào!
                                             </DropdownItem>
-                                        )
-                                    ) : (
-                                        dedupedAll.length > 0 ? (
-                                            <>
-                                                {dedupedAll.slice(0, 3).map((item) => {
-                                                    const { title, description } = getNotificationText(item, animetitle);
-                                                    return (
-                                                        <DropdownItem
-                                                            key={item.id}
-                                                            description={description}
-                                                            className="py-2 w-full"
-                                                            classNames={{
-                                                                description: 'text-[11px] text-[#A1A1AA]',
-                                                            }}
-                                                        >
-                                                            <div className="flex flex-row items-center justify-between w-[290px]">
-                                                                <p className="font-semibold text-[14px] w-full">
-                                                                    {title.slice(0, 24)}
-                                                                    {title.length > 24 && '...'}
-                                                                </p>
-                                                                <span className="text-[#f1f1f1b2] text-[10px]">
-                                                                    {NotificationTime(item.createdAt)}
-                                                                </span>
-                                                            </div>
-                                                        </DropdownItem>
-                                                    );
-                                                })}
-                                            </>
-                                        ) : (
-                                            <DropdownItem
-                                                key="no-all-notifications"
-                                                className="py-3 w-full text-center"
-                                            >
-                                                Không có thông báo nào!
-                                            </DropdownItem>
-                                        )
-                                    )}
-                                    {(selectedTimeframe === 'Hôm nay' && dedupedToday.length > 0) ||
-                                    (selectedTimeframe !== 'Hôm nay' && dedupedAll.length > 0) ? (
-                                        <DropdownItem
-                                            key="show-all-notifications"
-                                            className="py-2 w-full text-xl text-default-500 flex-shrink-0"
-                                            color="danger"
-                                        >
-                                            <Link href={`/user/notifications`} className="w-full h-full block">
-                                                Xem tất cả
-                                            </Link>
-                                        </DropdownItem>
-                                    ) : null}
-                                </DropdownSection>
+                                        )}
+                                    </DropdownSection>
+                                )}
                             </DropdownMenu>
                         </Dropdown>
                     )}

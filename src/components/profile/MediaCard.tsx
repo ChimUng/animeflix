@@ -40,7 +40,7 @@ function MediaCard({ anime, session, onDeleted }: MediaCardProps) {
     return (
         <div className='flex flex-col'>
             <div className='relative overflow-hidden rounded-lg shadow-lg group p-1 flex-shrink-0 cursor-pointer'>
-                <Link href={`/anime/info/${anime?.id}`}>
+                <Link href={`/anime/info/${anime?.media?.id}`}>
                     <div className="aspect-[1/1.45] overflow-hidden rounded-lg">
                         <Image
                         src={anime?.media?.coverImage?.extraLarge || "/placeholder.jpg"}
@@ -84,7 +84,7 @@ function MediaCard({ anime, session, onDeleted }: MediaCardProps) {
                                     </div>
                                     <div className='mt-2 sm:mt-20 md:px-[5%] px-[2%] mb-2'>
                                         <Addtolist session={session} setList={handleSetList} list={list}
-                                            id={anime?.id} eplength={anime.media?.episodes ?? (anime.media?.nextAiringEpisode?.episode ? anime.media.nextAiringEpisode.episode - 1 : undefined) ?? 24} Handlelist={Handlelist} />
+                                            id={anime?.media?.id} eplength={anime.media?.episodes ?? (anime.media?.nextAiringEpisode?.episode ? anime.media.nextAiringEpisode.episode - 1 : undefined) ?? 24} Handlelist={Handlelist} />
                                     </div>
                                 </ModalBody>
                             </>
@@ -92,7 +92,7 @@ function MediaCard({ anime, session, onDeleted }: MediaCardProps) {
                     </ModalContent>
                 </Modal>
             </div>
-            <Link href={`/anime/info/${anime?.id}`}>
+            <Link href={`/anime/info/${anime?.media?.id}`}>
                 <div className="overflow-hidden flex flex-row justify-center items-center text-center text-white font-medium px-2.5 my-0 sm:my-1 cursor-pointer text-[12px] sm:text-sm !line-clamp-2">
                     <span className={`aspect-square w-2 h-2 inline-block mr-1 sm:mr-2 rounded-full ${anime?.media?.status === "NOT_YET_RELEASED" ? 'bg-red-500' : anime?.media?.status === 'RELEASING' ? 'bg-green-500' : 'hidden'}`}>
                     </span>

@@ -4,6 +4,7 @@ import { updatelist } from '@/lib/anilistqueries';
 import { toast } from 'sonner';
 import { MediaListEntry } from '@/types/anilist';
 import type { Session } from 'next-auth';
+import { syncFavouriteStatusAction } from '@/lib/Fanfavouriteactions';
 
 interface Props {
     list: MediaListEntry | null;
@@ -120,7 +121,7 @@ function Addtolist({ list, eplength, Handlelist, session, id, setList }: Props) 
                 body: JSON.stringify({
                     query: updatelist,
                     variables: {
-                        id: list?.id ?? null,
+                        id: list?.id || undefined,
                         mediaId: id,
                         progress: progress || 0,
                         status: status || null,
@@ -139,6 +140,33 @@ function Addtolist({ list, eplength, Handlelist, session, id, setList }: Props) 
             }
             setList(data.SaveMediaListEntry);
             toast.success("List entry updated");
+            // Tự động đánh dấu Favourite trên AniList khi thêm vào danh sách,
+            // CHỈ gọi nếu chưa favourite (ToggleFavourite là toggle, gọi 2 lần sẽ tắt lại)
+            const alreadyFavourite = data.SaveMediaListEntry?.media?.isFavourite;
+            if (!alreadyFavourite) {
+                try {
+                    await fetch("https://graphql.anilist.co/", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Accept: "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                            query: `mutation ($id: Int) { ToggleFavourite(animeId: $id) { anime { nodes { id isFavourite } } } }`,
+                            variables: { id },
+                        }),
+                    });
+
+                    // Cập nhật luôn cache trong Mongo (không đợi tới lần comment thứ 15+ / 24h)
+                    // filmId phải khớp đúng định dạng đang dùng ở CommentSection (`anime-info-${id}`)
+                    await syncFavouriteStatusAction(`anime-info-${id}`, true);
+                } catch (favError) {
+                    // Không toast lỗi ở đây — favourite là hành động phụ, không nên chặn luồng lưu list chính
+                    console.error("Không thể tự động đánh dấu favourite:", favError);
+                }
+            }
+
             Handlelist();
         } catch (error) {
             toast.error("Something went wrong");
@@ -175,6 +203,28 @@ function Addtolist({ list, eplength, Handlelist, session, id, setList }: Props) 
             if (data?.DeleteMediaListEntry?.deleted === true) {
                 toast.success("List entry deleted");
                 setList(null);
+                // Gỡ khỏi watchlist -> gỡ luôn Favourite trên AniList (giả định: favourite này
+                // là do app tự động bật lúc thêm vào list, nên khi bỏ list thì bỏ theo).
+                // Lưu ý: nếu user đã tự tay favourite phim này TRƯỚC KHI dùng app (ngoài luồng
+                // Addtolist), thao tác này sẽ vô tình bỏ favourite đó — đây là đánh đổi chấp nhận được
+                // vì không có cách nào phân biệt "favourite do app set" với "favourite user tự set" từ AniList.
+                try {
+                    await fetch("https://graphql.anilist.co/", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Accept: "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                            query: `mutation ($id: Int) { ToggleFavourite(animeId: $id) { anime { nodes { id isFavourite } } } }`,
+                            variables: { id },
+                        }),
+                    });
+                    await syncFavouriteStatusAction(`anime-info-${id}`, false);
+                } catch (favError) {
+                    console.error("Không thể tự động bỏ favourite:", favError);
+                }
                 Handlelist();
                 return;
             }

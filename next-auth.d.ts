@@ -14,6 +14,12 @@ declare module "next-auth" {
       token?: string;
       createdAt?: number;
       list?: string[];
+      // role/badge dùng để tự UI của chính user đang login
+      // (ẩn/hiện nút Pin/Lock/Delete). KHÔNG dùng field này để check role
+      // của người khác — role người khác luôn query Mongo riêng.
+      role?: 'user' | 'moderator' | 'boss';
+      badge?: string;
+      isBanned?: boolean;
     } & DefaultSession["user"];
   }
 
@@ -43,5 +49,8 @@ declare module "next-auth/jwt" {
     token?: string;
     createdAt?: number;
     list?: string[];
+    role?: 'user' | 'moderator' | 'boss';
+    badge?: string;
+    isBanned?: boolean;
   }
 }

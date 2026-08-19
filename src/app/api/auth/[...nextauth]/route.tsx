@@ -5,7 +5,8 @@ import { getServerSession } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import { User } from "next-auth";
 import { type Session } from "next-auth";
-
+import { connectMongo } from "@/mongodb/db";
+import UserModel from "@/mongodb/models/users";
 
 interface ExtendedUser extends User {
     token: string;
@@ -36,6 +37,8 @@ interface AniListResponse {
         };
     };
 }
+
+const BOSS_ANILIST_IDS = (process.env.BOSS_ANILIST_IDS ?? "").split(",").filter(Boolean);
 
 export const authOptions: NextAuthOptions = {
     adapter: MongoDBAdapter(clientPromise),
@@ -91,6 +94,19 @@ export const authOptions: NextAuthOptions = {
             const json: AniListResponse = await res.json();
             const viewerData = json.data.Viewer;
 
+            if (BOSS_ANILIST_IDS.includes(viewerData.id.toString())) {
+                try {
+                    await connectMongo();
+                    await UserModel.findOneAndUpdate(
+                        { name: viewerData.name },
+                        { $set: { role: 'boss' } },
+                        { upsert: true }
+                    );
+                } catch (e) {
+                    console.error('Gán role Boss thất bại:', e);
+                }
+            }
+
             return {
                 sub: viewerData.id.toString(),
                 name: viewerData.name,
@@ -118,7 +134,36 @@ export const authOptions: NextAuthOptions = {
     session: { strategy: "jwt" },
     callbacks: {
         async jwt({ token, user }) {
-        return { ...token, ...user };
+            if (user) {
+                token = { ...token, ...user };
+            }
+
+            try {
+                await connectMongo();
+                const dbUser = await UserModel.findOne({ name: token.name })
+                    .select('role badge isBanned')
+                    .lean<{ role?: 'user' | 'moderator' | 'boss'; badge?: string; isBanned?: boolean } | null>();
+
+                if (dbUser) {
+                    const missing: Partial<{ role: 'user' | 'moderator' | 'boss'; badge: string; isBanned: boolean }> = {};
+                    if (dbUser.role === undefined) missing.role = 'user';
+                    if (dbUser.badge === undefined) missing.badge = '';
+                    if (dbUser.isBanned === undefined) missing.isBanned = false;
+
+                    if (Object.keys(missing).length > 0) {
+                        // backfill 1 lần cho document cũ bị thiếu field do adapter tạo ra
+                        await UserModel.updateOne({ name: token.name }, { $set: missing });
+                    }
+
+                    token.role = dbUser.role ?? missing.role ?? 'user';
+                    token.badge = dbUser.badge ?? missing.badge ?? '';
+                    token.isBanned = dbUser.isBanned ?? missing.isBanned ?? false;
+                }
+            } catch (e) {
+                console.error('Sync role vào JWT thất bại:', e);
+            }
+
+            return token;
         },
         async session({ session, token }: { session: Session; token: JWT }) {
         session.user = token as Session["user"];

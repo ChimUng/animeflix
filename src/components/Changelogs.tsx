@@ -8,12 +8,14 @@ interface ReleaseLog {
   changes: string[];
 }
 
-const newVersion: string = "New Version 2.1";
+const newVersion: string = "New Version 3";
 
 const releaseLogs: ReleaseLog[] = [
   {
-    version: "New Version 2.1",
+    version: "New Version 3",
     changes: [
+      "Websocket realtime and GIF/Icon comment new coming soon",
+      "19/8/2026 add new UI comment and more" ,
       "10/8/2026 add comment section",
       "3/8/2026 add vietsub provider",
       "7/17/2026 add anineko provider",

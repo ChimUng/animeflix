@@ -15,8 +15,8 @@ import type { WatchData } from "@/types/watch";
 import type { Session } from "next-auth";
 import type { AnimeItem } from "@/types/anime";
 import type { SavedEpisode, WatchRouteParams } from "@/types/stream";
-
-import CoralComments from "@/components/CommentComponent/CoralComments";
+import CommentSection from "@/components/CommentComponent/Commentsection";
+import CommentVerticalList from "@/components/CommentComponent/CommentVerticalList";
 
 export interface PageProps {
   params: Promise<{ watchid: string[] }>;
@@ -109,8 +109,8 @@ async function AnimeWatch({ params }: PageProps) {
   const { watchid } = await params;
   const { id, provider, epId, epNum, subdub } = parseWatchParams(watchid);
   const session = await getAuthSession();
-  const appUrl = process.env.NEXT_PUBLIC_PRODUCTION_URL || "http://localhost:3000";
 
+  const episodeNum = parseInt(epNum, 10) || 0;
 
   if (!id || !epId) {
     return <div>Error: Missing required parameters.</div>;
@@ -161,17 +161,28 @@ async function AnimeWatch({ params }: PageProps) {
               compact={true}
             />
           </div>
+          <div className="hidden lg:block lg:max-w-[280px] xl:max-w-[380px] w-full overflow-hidden">
+            <CommentVerticalList />
+          </div>
         </div>
       </div>
       <div className="w-full flex flex-col lg:flex-row lg:max-w-[98%] mx-auto xl:max-w-[94%] lg:gap-[6px] mt-[40px]">
         <div className="flex-grow w-full h-full">
           <PlayerAnimeInfo data={data} />
-          <div className="mt-8">
-            <CoralComments
-              storyId={`anime-watch-${id}-ep-${epNum}`}
-              storyUrl={`${appUrl}/anime/watch/${id}/${epNum}`}
-            />
-          </div>
+          {data && (
+            <div className="mt-8">
+              <CommentSection
+                filmId={`anime-info-${id}`}
+                aniId={Number(id)}
+                episodeNum={episodeNum}
+                session={session}
+                animeTitle={{ romaji: data.title?.romaji, english: data.title?.english }}
+                provider={provider}
+                epId={epId}
+                subtype={subdub}
+              />
+            </div>
+          )}
         </div>
         <div className="h-full lg:flex lg:flex-col md:max-lg:w-full gap-10">
           <div className="rounded-lg hidden lg:block lg:max-w-[280px] xl:max-w-[380px] w-full xl:overflow-y-scroll xl:overflow-x-hidden overflow-hidden scrollbar-hide">
@@ -185,6 +196,9 @@ async function AnimeWatch({ params }: PageProps) {
             title="Top Anime"
             compact={false}
           />
+        </div>
+        <div className="lg:hidden mt-4">
+          <CommentVerticalList />
         </div>
         <div className="lg:hidden mt-4">
           <Animecards

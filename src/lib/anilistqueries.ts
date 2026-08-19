@@ -702,6 +702,9 @@ export const updatelist = `
         }
         progress
         repeat
+        media {
+        isFavourite
+        }
     }
     }
     `;

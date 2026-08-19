@@ -59,3 +59,19 @@ export function formatTime(totalSeconds?: number | null) {
 
     return `${formattedMinutes}:${formattedSeconds}`;
 }
+
+export function formatRelativeTime(iso: string): string {
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const sec = Math.floor(diffMs / 1000);
+    if (sec < 60) return 'vừa xong';
+    const min = Math.floor(sec / 60);
+    if (min < 60) return `${min} phút trước`;
+    const hour = Math.floor(min / 60);
+    if (hour < 24) return `${hour} giờ trước`;
+    const day = Math.floor(hour / 24);
+    if (day < 30) return `${day} ngày trước`;
+    const month = Math.floor(day / 30);
+    if (month < 12) return `${month} tháng trước`;
+    const year = Math.floor(month / 12);
+    return `${year} năm trước`;
+}
