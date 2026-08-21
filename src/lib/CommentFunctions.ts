@@ -7,7 +7,7 @@ import { Session } from "next-auth";
 import Comment, { IComment } from '@/mongodb/models/comment';
 import Reaction from '@/mongodb/models/reaction';
 import User from '@/mongodb/models/users';
-import { CommentData, ReactionType, AnimeTitleSnapshot, CommentMedia, CommentStatus } from '@/types/comment';
+import { CommentData, ReactionType, AnimeTitleSnapshot, CommentStatus } from '@/types/comment';
 import { trackCommentAndMaybeVerifyFan, getFanBadgeMap } from './FanStarsfuctions';
 import { createMentionNotifications } from './NotificationFunctions';
 
@@ -25,7 +25,6 @@ interface LeanCommentDoc {
         badge?: string;
     };
     content: string;
-    media?: CommentMedia | null;
     parentId?: Types.ObjectId | string | null;
     replyCount: number;
     likesCount: number;
@@ -63,7 +62,6 @@ function formatComment(doc: LeanCommentDoc): CommentData {
             badge: doc.userId.badge,
         },
         content: doc.content,
-        media: doc.media,
         parentId: doc.parentId ? doc.parentId.toString() : null,
         replyCount: doc.replyCount,
         likesCount: doc.likesCount,

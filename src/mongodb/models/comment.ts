@@ -17,11 +17,6 @@ const CommentSchema = new Schema<IComment>(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     content: { type: String, trim: true, default: "" },
 
-    media: {
-      type: { type: String, enum: ['gif', 'sticker'], default: null },
-      url: { type: String, default: null },
-    },
-
     parentId: { type: Schema.Types.ObjectId, ref: 'Comment', default: null, index: true },
 
     replyCount: { type: Number, default: 0 },
@@ -53,7 +48,7 @@ const CommentSchema = new Schema<IComment>(
 );
 
 CommentSchema.path('content').validate(function (value: string) {
-  return value.length > 0 || !!(this.media && this.media.url);
+  return value.length > 0;
 }, 'Bình luận không được để trống!');
 
 CommentSchema.index({ filmId: 1, episodeNum: 1, parentId: 1, createdAt: -1 });

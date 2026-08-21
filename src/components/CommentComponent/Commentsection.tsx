@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Modal, ModalContent, ModalBody, useDisclosure, Tooltip } from "@nextui-org/react";
 import { toast } from 'sonner';
@@ -27,6 +27,11 @@ interface Props {
     provider?: string | null;
     epId?: string | null;
     subtype?: string | null;
+    // ── dữ liệu fetch sẵn ở server (Server Component) — có thì bỏ qua lần load đầu ──
+    initialComments?: CommentData[];
+    initialTotal?: number;
+    initialHasMore?: boolean;
+    initialGlobalPins?: CommentData[];
 }
 
 type SortOption = 'newest' | 'top';
@@ -35,15 +40,21 @@ const PAGE_SIZE = 20;
 function CommentSection({
     filmId, aniId, episodeNum = 0, session,
     animeTitle, provider, epId, subtype,
+    initialComments, initialTotal, initialHasMore, initialGlobalPins,
 }: Props) {
-    const [comments, setComments] = useState<CommentData[]>([]);
-    // tách riêng khỏi comments.length — cập nhật cục bộ khi post mới/xoá,
-    // đây cũng là chỗ duy nhất cần đụng vào khi sau này gắn websocket realtime
-    const [totalCount, setTotalCount] = useState(0);
+    const initialMerged = initialComments
+        ? [
+            ...(initialGlobalPins ?? []),
+            ...initialComments.filter((d) => !(initialGlobalPins ?? []).some((g) => g.id === d.id)),
+          ]
+        : [];
+
+    const [comments, setComments] = useState<CommentData[]>(initialMerged);
+    const [totalCount, setTotalCount] = useState(initialTotal ?? 0);
     const [sort, setSort] = useState<SortOption>('newest');
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!initialComments);
     const [loadingMore, setLoadingMore] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
+    const [hasMore, setHasMore] = useState(initialHasMore ?? true);
 
     const { isOpen: openlist, onOpen: Handlelist, onOpenChange: setOpenList } = useDisclosure();
 
@@ -54,8 +65,23 @@ function CommentSection({
         subtype: subtype ?? undefined,
     };
 
+    // đánh dấu đã có dữ liệu SSR cho đúng filmId/episodeNum hiện tại — chỉ bỏ qua
+    // lần fetch đầu NẾU dữ liệu đó thực sự khớp với params đang render (tránh trường
+    // hợp component re-mount với filmId khác mà vẫn dùng nhầm data cũ)
+    const hasSSRData = useRef(!!initialComments);
+    const isFirstRun = useRef(true);
+
     useEffect(() => {
         let cancelled = false;
+
+        // lần chạy đầu tiên + đã có data SSR + đang ở sort mặc định ('newest', khớp
+        // với sort mà trang server dùng để fetch) => khỏi gọi lại action, dùng luôn state ban đầu
+        if (isFirstRun.current && hasSSRData.current && sort === 'newest') {
+            isFirstRun.current = false;
+            return;
+        }
+        isFirstRun.current = false;
+
         const load = async () => {
             setLoading(true);
             const [data, total, globalPins] = await Promise.all([

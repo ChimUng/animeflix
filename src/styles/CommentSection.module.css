@@ -33,9 +33,18 @@
 .loginlink:hover { text-decoration: underline; }
 
 .commentinputbox { background: #101012; border-radius: 12px; padding: 14px; }
-.inputrow { display: flex; gap: 10px; }
-.inputavatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; border: 2px solid #d14836; flex-shrink: 0; background: #262626; }
-.inputTextarea { background: #18181b !important; }
+.inputrow { display: flex; gap: 10px; align-items: flex-start; }
+.inputavatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; border: 2px solid #d14836; flex-shrink: 0; background: #262626; margin-top: 2px; }
+.inputTextarea {
+    background: #18181b !important;
+    border-radius: 20px;
+    padding: 10px 16px;
+    line-height: 1.5;
+    font-size: 14px;
+    color: #f4f4f5;
+    word-break: break-word;
+}
+.inputTextarea:focus { outline: none; box-shadow: 0 0 0 1px rgba(209, 72, 54, 0.4); }
 .inputfooter { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
 .redCheckbox { border-color: #d14836 !important; }
 .gifbtn { color: #ffffffb2; padding: 4px; border-radius: 6px; }

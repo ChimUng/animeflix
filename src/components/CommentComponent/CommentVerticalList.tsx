@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useTitle } from '@/lib/store';
 import { useStore } from 'zustand';
@@ -8,6 +8,7 @@ import { formatRelativeTime } from '@/utils/TimeFunctions';
 import { getGlobalRecentCommentsAction } from '@/lib/CommentFunctions';
 import { colorFromId } from './colorHash';
 import { buildCommentHref } from '@/utils/commentLinks';
+import { stripStickerTokens } from '@/lib/commentContent';
 import {
   AdminIcon, SwordIcon, FlameIcon, VipBadgeIcon, EpRefreshIcon, LockIcon,
 } from '@/lib/SvgIcons';
@@ -15,6 +16,8 @@ import {
 interface CommentVerticalListProps {
   title?: string;
   limit?: number;
+  initialComments?: CommentData[];
+  initialSort?: SortOption;
 }
 
 type SortOption = 'newest' | 'top';
@@ -41,13 +44,24 @@ const DEFAULT_LIMIT = 5;
 const CommentVerticalList: React.FC<CommentVerticalListProps> = ({
   title = 'Bình luận nổi bật',
   limit = DEFAULT_LIMIT,
+  initialComments,
+  initialSort = 'newest',
 }) => {
   const animetitle = useStore(useTitle, (state) => state.animetitle) as 'romaji' | 'english';
-  const [sort, setSort] = useState<SortOption>('newest');
-  const [comments, setComments] = useState<CommentData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [sort, setSort] = useState<SortOption>(initialSort);
+  const [comments, setComments] = useState<CommentData[]>(initialComments ?? []);
+  const [loading, setLoading] = useState(!initialComments);
+
+  const hasSSRData = useRef(!!initialComments);
+  const isFirstRun = useRef(true);
 
   useEffect(() => {
+    if (isFirstRun.current && hasSSRData.current && sort === initialSort) {
+      isFirstRun.current = false;
+      return;
+    }
+    isFirstRun.current = false;
+
     let cancelled = false;
     setLoading(true);
     getGlobalRecentCommentsAction(sort, limit).then((data) => {
@@ -165,7 +179,7 @@ const CommentVerticalList: React.FC<CommentVerticalListProps> = ({
                       </p>
                     ) : (
                       <p className="text-[13px] text-neutral-200 line-clamp-2 break-words">
-                        {c.content}
+                        {stripStickerTokens(c.content)}
                         {c.isEdited && (
                           <span className="text-[10px] text-neutral-500 italic ml-1">(đã chỉnh sửa)</span>
                         )}

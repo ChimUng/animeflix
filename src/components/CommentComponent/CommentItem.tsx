@@ -14,6 +14,8 @@ import {
     VipBadgeIcon, FlameIcon, AdminIcon, SwordIcon,
     LockIcon, EditIcon, PinIcon, GlobeIcon, TrashIcon
 } from '@/lib/SvgIcons';
+import CommentRichText from './CommentRichText';
+import { stripStickerTokens } from '@/lib/commentContent';
 import styles from '../../styles/CommentSection.module.css';
 
 interface Props {
@@ -324,14 +326,14 @@ function CommentItem({
                                     className="relative flex items-center justify-center w-full min-h-[50px] p-3 rounded-lg border border-red-900/30 bg-gradient-to-r from-red-950/20 via-black/40 to-black/40 cursor-pointer overflow-hidden group transition-all hover:border-red-900/50"
                                 >
                                     <div className="absolute inset-0 p-3 blur-sm opacity-30 pointer-events-none select-none text-neutral-500 overflow-hidden">
-                                        {displayContent}
+                                        {stripStickerTokens(displayContent)}
                                     </div>
                                     <div className="relative z-10 bg-[#e53935] text-white text-xs sm:text-sm font-bold px-4 py-1.5 rounded shadow-lg transition-transform group-hover:scale-105">
                                         SPOILER — Click để xem
                                     </div>
                                 </div>
                             ) : (
-                                <span className="whitespace-pre-wrap">{displayContent}</span>
+                                <CommentRichText content={displayContent} />
                             )}
 
                             {displayEdited && !isFlagged && <span className="text-xs text-neutral-500 italic ml-1">(đã chỉnh sửa)</span>}

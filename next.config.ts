@@ -14,7 +14,7 @@ if (process.env.NODE_ENV === "development") {
 }
 const nextConfig = {
     images: {
-        domains: ['s4.anilist.co','artworks.thetvdb.com','media.kitsu.io', 'image.tmdb.org', 'img.anili.st'],
+        domains: ['s4.anilist.co','artworks.thetvdb.com','media.kitsu.io', 'image.tmdb.org', 'img.anili.st', 'lh3.googleusercontent.com',],
         unoptimized: true
       },
     //   async headers() {

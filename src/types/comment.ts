@@ -2,11 +2,6 @@ export type UserRole = 'user' | 'moderator' | 'boss';
 export type ReactionType = 'like' | 'dislike';
 export type CommentStatus = 'active' | 'hidden' | 'flagged';
 
-export interface CommentMedia {
-    type: 'gif' | 'sticker';
-    url: string;
-}
-
 export interface AnimeTitleSnapshot {
     romaji?: string | null;
     english?: string | null;
@@ -41,7 +36,6 @@ export interface BaseComment {
     filmId: string;
     episodeNum: number;
     content: string;
-    media: CommentMedia | null;
     replyCount: number;
     likesCount: number;
     dislikesCount: number;
@@ -77,7 +71,6 @@ export interface CommentData {
 
     user: CommentUser;
     content: string;
-    media?: CommentMedia | null;
 
     parentId?: string | null;
     replyCount: number;

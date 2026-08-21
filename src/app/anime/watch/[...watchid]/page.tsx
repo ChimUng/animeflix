@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { AnimeInfoAnilist, PopularThisSeason } from "@/lib/Anilistfunctions";
+import { getCommentsAction, getTotalCommentCountAction, getGlobalPinnedCommentsAction, getGlobalRecentCommentsAction,} from "@/lib/CommentFunctions";
 import { getRecentEpisodes } from "@/lib/getData";
 import NextAiringDate from "@/components/videoplayer/NextAiringDate";
 import PlayerAnimeCard from "@/components/videoplayer/PlayerAnimeCard";
@@ -18,9 +19,16 @@ import type { SavedEpisode, WatchRouteParams } from "@/types/stream";
 import CommentSection from "@/components/CommentComponent/Commentsection";
 import CommentVerticalList from "@/components/CommentComponent/CommentVerticalList";
 
+
 export interface PageProps {
   params: Promise<{ watchid: string[] }>;
 }
+
+// ── const fetch comment ở server — tách riêng khỏi PAGE_SIZE phía client (CommentSection)
+// để 2 bên luôn khớp nhau, tránh trường hợp SSR trả 20 item nhưng client lỡ set 10 =>
+// hasMore tính sai ngay lần render đầu.
+const COMMENT_PAGE_SIZE = 20;
+const VERTICAL_LIST_LIMIT = 5;
 
 function parseWatchParams(watchid: string[] = []): WatchRouteParams {
   const [id, provider = "anineko", epidRaw = "", epnum = "1", type = "sub"] = watchid;
@@ -116,11 +124,24 @@ async function AnimeWatch({ params }: PageProps) {
     return <div>Error: Missing required parameters.</div>;
   }
 
-  const [data, recentData, popularData] = await Promise.all([
+  const [
+    data,
+    recentData,
+    popularData,
+    commentsData,
+    commentsTotal,
+    globalPins,
+    verticalComments,
+  ] = await Promise.all([
     getInfo(id),
     getRecentEpisodes().catch(() => []),
     PopularThisSeason().catch(() => []),
+    getCommentsAction(`anime-info-${id}`, episodeNum, "newest", null, COMMENT_PAGE_SIZE),
+    getTotalCommentCountAction(`anime-info-${id}`, episodeNum),
+    getGlobalPinnedCommentsAction(),
+    getGlobalRecentCommentsAction("newest", VERTICAL_LIST_LIMIT),
   ]);
+
   const savedepRaw = data ? await Ephistory(session, id, parseInt(epNum), data, epId) : null;
 
   const savedep: SavedEpisode[] = Array.isArray(savedepRaw)
@@ -128,7 +149,6 @@ async function AnimeWatch({ params }: PageProps) {
         .filter((item) => item.timeWatched != null)
         .map((item) => ({ timeWatched: item.timeWatched! }))
     : [];
-
 
   return (
     <>
@@ -162,7 +182,7 @@ async function AnimeWatch({ params }: PageProps) {
             />
           </div>
           <div className="hidden lg:block lg:max-w-[280px] xl:max-w-[380px] w-full overflow-hidden">
-            <CommentVerticalList />
+            <CommentVerticalList initialComments={verticalComments} />
           </div>
         </div>
       </div>
@@ -180,6 +200,10 @@ async function AnimeWatch({ params }: PageProps) {
                 provider={provider}
                 epId={epId}
                 subtype={subdub}
+                initialComments={commentsData}
+                initialTotal={commentsTotal}
+                initialHasMore={commentsData.length === COMMENT_PAGE_SIZE}
+                initialGlobalPins={globalPins}
               />
             </div>
           )}
@@ -198,7 +222,7 @@ async function AnimeWatch({ params }: PageProps) {
           />
         </div>
         <div className="lg:hidden mt-4">
-          <CommentVerticalList />
+          <CommentVerticalList initialComments={verticalComments} />
         </div>
         <div className="lg:hidden mt-4">
           <Animecards
