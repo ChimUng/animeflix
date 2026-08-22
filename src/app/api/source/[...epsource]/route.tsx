@@ -33,7 +33,7 @@ const SOURCE_CACHE_TTL = 60 * 5;
 // KHÔNG PHẢI link m3u8/iframe thật (đó là SOURCE_CACHE_TTL ở trên). Danh sách server gần
 // như không đổi theo thời gian (chỉ đổi khi provider thêm/bớt server hẳn), nên TTL có thể
 // dài hơn nhiều mà không sợ trả dữ liệu chết như link có token hết hạn.
-const SERVERS_CACHE_TTL = 60 * 30; // 30 phút
+const SERVERS_CACHE_TTL = 60 * 1440; // 24 giờ
 
 function buildSourceCacheKey(id: string, body: RequestBody): string {
   return `source:${body.provider}:${id}:${body.episodeid}:${body.subtype}:${body.serverRaw ?? 'auto'}`;

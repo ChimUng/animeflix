@@ -3,7 +3,8 @@ import { ServerOption, ServerType } from '@/types/stream';
 import { VideoData } from '@/types/episode';
 
 const ANINEKO_API_URL = process.env.ANINEKO_API_URL || '';
-const ANINEKO_SERVER_PRIORITY = ['HD-1', 'StreamHG', 'Earnvids'];
+const ANINEKO_SERVER_PRIORITY = ['StreamHG', 'Earnvids'];
+const BLOCKED_SERVERS = ['HD-1'];
 
 interface AninekoServerRaw {
   server: string;
@@ -42,7 +43,7 @@ export async function listAninekoServers(episodeid: string): Promise<ServerOptio
   if (!Array.isArray(servers)) return [];
 
   return servers
-    .filter((s) => s.supported)
+    .filter((s) => s.supported && s.type !== 'hsub' && !BLOCKED_SERVERS.includes(s.server))
     .sort((a, b) => {
       const ai = ANINEKO_SERVER_PRIORITY.indexOf(a.server);
       const bi = ANINEKO_SERVER_PRIORITY.indexOf(b.server);
@@ -56,6 +57,7 @@ export async function listAninekoServers(episodeid: string): Promise<ServerOptio
       raw: s.iframeUrl,
     }));
 }
+
 
 // Bước 4 — resolve 1 iframeUrl cụ thể thành m3u8 proxy. Không truyền serverRaw -> tự thử
 // lần lượt theo priority + fallback subtype (sub -> hsub) như logic cũ.
@@ -76,7 +78,7 @@ export async function resolveAninekoSource(
       candidates = [{ key: 'manual', label: 'manual', type: subtype as ServerType, supported: true, raw: serverRaw }];
     } else {
       const all = await listAninekoServers(episodeid);
-      const wantedTypes: ServerType[] = subtype === 'dub' ? ['dub'] : ['sub', 'hsub'];
+      const wantedTypes: ServerType[] = subtype === 'dub' ? ['dub'] : ['sub'];
       candidates = wantedTypes.flatMap((t) => all.filter((s) => s.type === t));
     }
 

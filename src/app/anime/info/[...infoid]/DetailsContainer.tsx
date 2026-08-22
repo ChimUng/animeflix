@@ -8,6 +8,7 @@ import { AnimeItem } from '@/types/anime';
 import { MediaListEntry } from '@/types/anilist';
 import { getUserLists } from '@/lib/AnilistUser';
 import type { Session } from "next-auth";
+import type { CommentData } from '@/types/comment';
 
 import CommentSection from '@/components/CommentComponent/Commentsection';
 
@@ -15,9 +16,21 @@ interface DetailsContainerProps {
     data: AnimeItem;
     id: number;
     session: Session | null;
+    initialComments?: CommentData[];
+    initialTotal?: number;
+    initialHasMore?: boolean;
+    initialGlobalPins?: CommentData[];
 }
 
-const DetailsContainer: React.FC<DetailsContainerProps> = ({ data, id, session }) => {
+const DetailsContainer: React.FC<DetailsContainerProps> = ({
+    data,
+    id,
+    session,
+    initialComments,
+    initialTotal,
+    initialHasMore,
+    initialGlobalPins,
+}) => {
     const [list, setList] = useState<MediaListEntry | null>(null);
     const [url, setUrl] = useState<string | null>(null);
 
@@ -59,6 +72,10 @@ const DetailsContainer: React.FC<DetailsContainerProps> = ({ data, id, session }
                 episodeNum={0}
                 session={session}
                 animeTitle={{ romaji: data.title?.romaji, english: data.title?.english }}
+                initialComments={initialComments}
+                initialTotal={initialTotal}
+                initialHasMore={initialHasMore}
+                initialGlobalPins={initialGlobalPins}
             />
         </div>
         </>

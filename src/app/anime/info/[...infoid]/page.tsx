@@ -5,12 +5,20 @@ import DetailsContainer from './DetailsContainer';
 import { getAuthSession } from '@/app/api/auth/[...nextauth]/route';
 import { AnimeInfoAnilist } from '@/lib/Anilistfunctions';
 import { redis } from '@/lib/rediscache';
+import {
+  getCommentsAction,
+  getTotalCommentCountAction,
+  getGlobalPinnedCommentsAction,
+} from '@/lib/CommentFunctions';
+
 
 interface Params {
   params: Promise<{
     infoid: string[];
   }>;
 }
+
+const COMMENT_PAGE_SIZE = 20;
 
 async function getInfo(id: number | string) {
   try {
@@ -75,13 +83,28 @@ const AnimeDetails = async ({ params }: Params) => {
   const resolvedParams = await params; 
   const session = await getAuthSession();
   const id = Number(resolvedParams.infoid[0]);
+  const filmId = `anime-info-${id}`;
 
-  const data = await getInfo(id);
+  const [data, commentsData, commentsTotal, globalPins] = await Promise.all([
+    getInfo(id),
+    getCommentsAction(filmId, 0, "newest", null, COMMENT_PAGE_SIZE),
+    getTotalCommentCountAction(filmId, 0),
+    getGlobalPinnedCommentsAction(),
+  ]);
 
   return (
     <div className="">
       <Navbarcomponent />
-      <DetailsContainer data={data} id={id} session={session} />
+      <DetailsContainer
+        data={data}
+        id={id}
+        session={session}
+        initialComments={commentsData}
+        initialTotal={commentsTotal}
+        initialHasMore={commentsData.length === COMMENT_PAGE_SIZE}
+        initialGlobalPins={globalPins}
+      />
+
     </div>
   );
 };
